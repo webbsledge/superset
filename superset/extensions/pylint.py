@@ -18,6 +18,7 @@ import os
 
 from astroid import nodes
 from pylint.checkers import BaseChecker
+from pylint.interfaces import IAstroidChecker
 from pylint.lint import PyLinter
 
 
@@ -72,6 +73,44 @@ class TransactionChecker(BaseChecker):
                 self.add_message("consider-using-transaction", node=node)
 
 
+class SQLParsingLibraryImportChecker(BaseChecker):
+    """
+    SQL Parsing library validation.
+
+    This linter ensures that:
+
+        1. `sqlglot` is not imported in files outside of `superset/sql/`.
+        2. `sqlparse` and `sqloxide` are not imported anywhere in the codebase.
+
+    """
+
+    __implements__ = IAstroidChecker
+
+    name = "sql-parsing-library-import-checker"
+    priority = -1
+    msgs = {
+        "C9999": (
+            "Disallowed SQL parsing import used",
+            "disallowed-import",
+            "Used when a disallowed import is used in a specific file.",
+        ),
+    }
+
+    def visit_import(self, node: nodes.Import) -> None:
+        for module_name, _ in node.names:
+            if (
+                module_name == "sqlglot" and "superset/sql/" not in node.root().file
+            ) or module_name in {"sqlparse", "sqloxide"}:
+                self.add_message("disallowed-import", node=node)
+
+    def visit_importfrom(self, node: nodes.ImportFrom) -> None:
+        if (
+            node.modname == "sqlglot" and "superset/sql/" not in node.root().file
+        ) or node.modname in {"sqlparse", "sqloxide"}:
+            self.add_message("disallowed-import", node=node)
+
+
 def register(linter: PyLinter) -> None:
     linter.register_checker(JSONLibraryImportChecker(linter))
     linter.register_checker(TransactionChecker(linter))
+    linter.register_checker(SQLParsingLibraryImportChecker(linter))
