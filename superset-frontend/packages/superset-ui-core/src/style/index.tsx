@@ -66,11 +66,11 @@ function adjustColor(
 const generateColorVariations = (color: string) => {
   return {
     base: color,
-    light1: adjustColor(color, 25),
-    light2: adjustColor(color, 50),
-    light3: adjustColor(color, 75),
-    light4: adjustColor(color, 85),
-    light5: adjustColor(color, 95),
+    light1: adjustColor(color, 25, 'white'),
+    light2: adjustColor(color, 50, 'white'),
+    light3: adjustColor(color, 75, 'white'),
+    light4: adjustColor(color, 85, 'white'),
+    light5: adjustColor(color, 95, 'white'),
     dark1: adjustColor(color, 15, 'black'),
     dark2: adjustColor(color, 30, 'black'),
     dark3: adjustColor(color, 45, 'black'),
@@ -85,16 +85,19 @@ const makeThemeDark = (theme: typeof defaultTheme): typeof defaultTheme => {
 
   for (const [key] of Object.entries(darkTheme.colors)) {
     if (key !== 'text') {
-      darkTheme.colors[key].dark1 = theme.colors[key].light1;
-      darkTheme.colors[key].dark2 = theme.colors[key].light2;
-      darkTheme.colors[key].dark3 = theme.colors[key].light3;
-      darkTheme.colors[key].dark4 = theme.colors[key].light4;
-      darkTheme.colors[key].dark5 = theme.colors[key].light5;
-      darkTheme.colors[key].light1 = theme.colors[key].dark1;
-      darkTheme.colors[key].light2 = theme.colors[key].dark2;
-      darkTheme.colors[key].light3 = theme.colors[key].dark3;
-      darkTheme.colors[key].light4 = theme.colors[key].dark4;
-      darkTheme.colors[key].light5 = theme.colors[key].dark5;
+      darkTheme.colors[key] = {
+        base: theme.colors[key].base,
+        dark1: theme.colors[key].light1,
+        dark2: theme.colors[key].light2,
+        dark3: theme.colors[key].light3,
+        dark4: theme.colors[key].light4,
+        dark5: theme.colors[key].light5,
+        light1: theme.colors[key].dark1,
+        light2: theme.colors[key].dark2,
+        light3: theme.colors[key].dark3,
+        light4: theme.colors[key].dark4,
+        light5: theme.colors[key].dark5,
+      };
     }
   }
 
@@ -126,8 +129,6 @@ const generateColors = (baseColors: Record<string, string>) => {
   return colors;
 };
 const colors = generateColors(baseColors);
-console.log(colors);
-
 let defaultTheme = {
   borderRadius: 4,
   body: {
@@ -194,5 +195,6 @@ export type SupersetTheme = ReturnType<typeof makeThemeDark>;
 export interface SupersetThemeProps {
   theme: SupersetTheme;
 }
-defaultTheme = makeThemeDark(defaultTheme);
-export const supersetTheme = defaultTheme;
+const darkTheme = makeThemeDark(defaultTheme);
+console.log('dark', darkTheme);
+export const supersetTheme = darkTheme;
