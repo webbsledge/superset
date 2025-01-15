@@ -100,7 +100,7 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({
     </div>
   );
 
-  const renderAlert = () => (
+  const renderAlert = closable => (
     <Alert
       description={renderDescription()}
       type={type}
@@ -130,14 +130,14 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({
           onCancel={() => setShowModal(false)}
           footer={null}
         >
-          {renderAlert()}
+          {renderAlert(false)}
           {children}
         </Modal>
       </>
     );
   }
 
-  return renderAlert();
+  return renderAlert(closable);
 };
 
 export default ErrorAlert;
