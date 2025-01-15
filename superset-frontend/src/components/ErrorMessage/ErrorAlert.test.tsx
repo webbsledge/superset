@@ -17,13 +17,12 @@
  * under the License.
  */
 
-import { screen, fireEvent } from '@testing-library/react';
-import { renderWithTheme } from 'spec/helpers/theming';
+import { screen, fireEvent, render } from 'spec/helpers/testing-library';
 import ErrorAlert from './ErrorAlert';
 
 describe('ErrorAlert', () => {
   it('renders the error message correctly', () => {
-    renderWithTheme(
+    render(
       <ErrorAlert
         errorType="Error"
         message="Something went wrong"
@@ -37,7 +36,7 @@ describe('ErrorAlert', () => {
 
   it('renders the description when provided', () => {
     const description = 'This is a detailed description';
-    renderWithTheme(
+    render(
       <ErrorAlert
         errorType="Error"
         message="Something went wrong"
@@ -51,7 +50,7 @@ describe('ErrorAlert', () => {
 
   it('toggles description details visibility when show more/less is clicked', () => {
     const descriptionDetails = 'Additional details about the error.';
-    renderWithTheme(
+    render(
       <ErrorAlert
         errorType="Error"
         message="Something went wrong"
@@ -73,7 +72,7 @@ describe('ErrorAlert', () => {
   });
 
   it('renders compact mode with a tooltip and modal', () => {
-    renderWithTheme(
+    render(
       <ErrorAlert
         errorType="Error"
         message="Compact mode example"

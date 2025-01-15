@@ -74,7 +74,7 @@ export default function ErrorMessageWithStackTrace({
       <>
         {link && (
           <a href={link} target="_blank" rel="noopener noreferrer">
-            (Request Access)
+            {t('Request Access')}
           </a>
         )}
         <br />

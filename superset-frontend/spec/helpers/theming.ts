@@ -18,11 +18,9 @@
  */
 import { shallow as enzymeShallow, mount as enzymeMount } from 'enzyme';
 // eslint-disable-next-line no-restricted-imports
+import { supersetTheme } from '@superset-ui/core';
 import { ReactElement } from 'react';
-import { render } from '@testing-library/react';
-import { ThemeProvider, supersetTheme } from '@superset-ui/core';
 import { ProviderWrapper } from './ProviderWrapper';
-import '@testing-library/jest-dom';
 
 type optionsType = {
   wrappingComponentProps?: any;
@@ -57,6 +55,3 @@ export function styledShallow(
     },
   });
 }
-
-export const renderWithTheme = (component: JSX.Element) =>
-  render(<ThemeProvider theme={supersetTheme}>{component}</ThemeProvider>);
