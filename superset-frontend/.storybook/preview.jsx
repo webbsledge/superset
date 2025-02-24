@@ -18,7 +18,6 @@
  */
 import { withJsx } from '@mihkeleidast/storybook-addon-source';
 import { themeObject } from '@superset-ui/core';
-import { theme } from 'src/preamble';
 import { combineReducers, createStore, applyMiddleware, compose } from 'redux';
 import thunk from 'redux-thunk';
 import { Provider } from 'react-redux';
