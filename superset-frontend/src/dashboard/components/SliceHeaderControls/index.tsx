@@ -32,6 +32,7 @@ import {
   css,
   isFeatureEnabled,
   FeatureFlag,
+  useTheme,
   getChartMetadataRegistry,
   styled,
   t,
@@ -61,9 +62,6 @@ import { ViewResultsModalTrigger } from './ViewResultsModalTrigger';
 
 // TODO: replace 3 dots with an icon
 const VerticalDotsContainer = styled.div`
-  padding: ${({ theme }) => theme.sizeUnit / 4}px
-    ${({ theme }) => theme.sizeUnit * 1.5}px;
-
   .dot {
     display: block;
 
@@ -503,7 +501,7 @@ const SliceHeaderControls = (
       )}
     </Menu>
   );
-
+  const theme = useTheme();
   return (
     <>
       {isFullSize && (
@@ -523,8 +521,9 @@ const SliceHeaderControls = (
         onOpenChange={visible => setIsDropdownVisible(visible)}
       >
         <Button
-          type="link"
           id={`slice_${slice.slice_id}-controls`}
+          buttonStyle="link"
+          css={{ padding: `0px ${theme.sizeUnit}px` }}
           aria-label="More Options"
           aria-haspopup="true"
         >
