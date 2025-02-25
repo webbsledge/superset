@@ -24,7 +24,7 @@ import Chart from 'src/types/Chart';
 
 import ListViewCard from 'src/components/ListViewCard';
 import Label from 'src/components/Label';
-import { Dropdown } from 'src/components/Dropdown';
+import { MenuDotsDropdown } from 'src/components/Dropdown';
 import { Menu } from 'src/components/Menu';
 import FaveStar from 'src/components/FaveStar';
 import FacePile from 'src/components/FacePile';
@@ -171,11 +171,14 @@ export default function ChartCard({
                 isStarred={favoriteStatus}
               />
             )}
-            <Dropdown dropdownRender={() => menu} trigger={['click', 'hover']}>
-              <Button buttonSize="xsmall" type="link">
-                <Icons.MoreVert iconColor={theme.colors.grayscale.base} />
+            <MenuDotsDropdown
+              dropdownRender={() => menu}
+              trigger={['click', 'hover']}
+            >
+              <Button type="link">
+                <Icons.MoreVert />
               </Button>
-            </Dropdown>
+            </MenuDotsDropdown>
           </ListViewCard.Actions>
         }
       />
