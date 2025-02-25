@@ -65,8 +65,8 @@ const Bar = styled.div<{ width: number }>`
     flex-grow: 1;
     width: ${width}px;
     background: ${theme.colors.grayscale.light5};
-    border-right: 1px solid ${theme.colors.grayscale.light2};
-    border-bottom: 1px solid ${theme.colors.grayscale.light2};
+    border-right: 1px solid ${theme.colorSplit};
+    border-bottom: 1px solid ${theme.colorSplit};
     min-height: 100%;
     display: none;
     &.open {

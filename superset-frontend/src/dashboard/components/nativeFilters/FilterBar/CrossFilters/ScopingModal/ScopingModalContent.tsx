@@ -58,7 +58,7 @@ export const ScopingModalContent = ({
       <div
         css={css`
           width: 35%;
-          border-right: 1px solid ${theme.colors.grayscale.light2};
+          border-right: 1px solid ${theme.colorSplit};
         `}
         data-test="scoping-list-panel"
       >

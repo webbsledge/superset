@@ -46,7 +46,7 @@ const HorizontalDivider = ({ title, description }: FilterDividerProps) => {
         display: flex;
         align-items: center;
         height: ${6 * theme.sizeUnit}px;
-        border-left: 1px solid ${theme.colors.grayscale.light2};
+        border-left: 1px solid ${theme.colorSplit};
         padding-left: ${4 * theme.sizeUnit}px;
 
         .filter-item-wrapper:first-child & {
@@ -102,7 +102,7 @@ const HorizontalOverflowDivider = ({
   return (
     <div
       css={css`
-        border-top: 1px solid ${theme.colors.grayscale.light2};
+        border-top: 1px solid ${theme.colorSplit};
         padding-top: ${theme.sizeUnit * 4}px;
         margin-bottom: ${theme.sizeUnit * 4}px;
       `}

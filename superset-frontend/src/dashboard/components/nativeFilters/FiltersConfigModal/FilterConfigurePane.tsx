@@ -48,7 +48,7 @@ const ContentHolder = styled.div`
 const TitlesContainer = styled.div`
   min-width: 300px;
   max-width: 300px;
-  border-right: 1px solid ${({ theme }) => theme.colors.grayscale.light2};
+  border-right: 1px solid ${({ theme }) => theme.colorSplit};
 `;
 
 const FilterConfigurePane: FC<Props> = ({

@@ -216,12 +216,12 @@ const RefreshIcon = styled(Icons.Refresh)`
 
 const StyledCollapse = styled(Collapse)`
   border-left: 0;
-  border-top: 1px solid ${({ theme }) => theme.colors.grayscale.light2};
+  border-top: 1px solid ${({ theme }) => theme.colorSplit};
   border-radius: 0;
 
   .ant-collapse-header {
-    border-bottom: 1px solid ${({ theme }) => theme.colors.grayscale.light2};
-    border-top: 1px solid ${({ theme }) => theme.colors.grayscale.light2};
+    border-bottom: 1px solid ${({ theme }) => theme.colorSplit};
+    border-top: 1px solid ${({ theme }) => theme.colorSplit};
     margin-top: -1px;
     border-radius: 0;
   }

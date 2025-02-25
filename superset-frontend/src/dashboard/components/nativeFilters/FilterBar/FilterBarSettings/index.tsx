@@ -263,12 +263,8 @@ const FilterBarSettings = () => {
         }}
         trigger={['click']}
       >
-        <Button type="link">
-          <Icons.Gear
-            name="gear"
-            iconColor={theme.colors.grayscale.base}
-            data-test="filterbar-orientation-icon"
-          />
+        <Button buttonStyle="link" style={{ color: theme.colorIcon }}>
+          <Icons.Gear name="gear" data-test="filterbar-orientation-icon" />
         </Button>
       </Dropdown>
       {scopingModal}

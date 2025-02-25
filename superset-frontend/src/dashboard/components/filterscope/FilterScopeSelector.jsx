@@ -94,7 +94,7 @@ const ScopeBody = styled.div`
 const ScopeHeader = styled.div`
   ${({ theme }) => css`
     height: ${theme.sizeUnit * 16}px;
-    border-bottom: 1px solid ${theme.colors.grayscale.light2};
+    border-bottom: 1px solid ${theme.colorSplit};
     padding-left: ${theme.sizeUnit * 6}px;
     margin-left: ${theme.sizeUnit * -6}px;
 
