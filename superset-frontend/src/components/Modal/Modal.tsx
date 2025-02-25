@@ -172,7 +172,7 @@ export const StyledModal = styled(BaseModal)<StyledModalProps>`
   .antd5-modal-footer {
     flex: 0 0 1;
     border-top: ${({ theme }) => theme.sizeUnit / 4}px solid
-      ${({ theme }) => theme.colors.grayscale.light2};
+      ${({ theme }) => theme.colorSplit};
     padding: ${({ theme }) => theme.sizeUnit * 4}px;
     margin-top: 0;
 

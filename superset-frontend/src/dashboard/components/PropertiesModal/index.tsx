@@ -601,6 +601,7 @@ const PropertiesModal = ({
           <Button
             htmlType="button"
             buttonSize="small"
+            buttonStyle="secondary"
             onClick={handleOnCancel}
             data-test="properties-modal-cancel-button"
             cta

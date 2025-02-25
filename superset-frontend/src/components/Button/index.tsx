@@ -83,6 +83,9 @@ export default function Button(props: ButtonProps) {
     height = 30;
     padding = 10;
   }
+  if (buttonStyle === 'link') {
+    padding = 4;
+  }
 
   let antdType: ButtonType = 'default';
   let variant: ButtonVariantType = 'solid';

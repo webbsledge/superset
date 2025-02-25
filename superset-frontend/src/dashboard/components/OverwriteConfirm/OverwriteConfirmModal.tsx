@@ -67,7 +67,7 @@ const StackableHeader = styled(Button)<{ top: number }>`
      border-radius: 0px;
      width: 100%;
      justify-content: flex-start;
-     border-bottom: 1px ${theme.colors.grayscale.light1} solid;
+     border-bottom: 1px ${theme.colorSplit} solid;
      &::before {
        display: inline-block;
        position: relative;
