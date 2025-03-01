@@ -22,7 +22,19 @@ import type { TooltipProps } from 'antd-v5';
 
 // Re-export the types
 export type { TooltipProps };
-export type { TooltipPlacement } from 'antd-v5';
+export type TooltipPlacement =
+  | 'top'
+  | 'left'
+  | 'right'
+  | 'bottom'
+  | 'topLeft'
+  | 'topRight'
+  | 'bottomLeft'
+  | 'bottomRight'
+  | 'leftTop'
+  | 'leftBottom'
+  | 'rightTop'
+  | 'rightBottom';
 
 export const Tooltip = ({ overlayStyle, ...props }: TooltipProps) => (
   <AntdTooltip
