@@ -51,19 +51,7 @@ export function useTheme() {
 const styled = emotionStyled;
 
 // launching in in dark mode for now while iterating
-const themeObject = Theme.fromSeed({}, false);
-/*
-const themeObject = Theme.fromSeed({
-  token: {
-    colorPrimary: '#20a7c9',
-    colorError: '#e04355',
-    colorWarning: '#fcc700',
-    colorSuccess: '#5ac189',
-    colorInfo: '#66bcfe',
-  },
-  algorithm: antdThemeImport.defaultAlgorithm,
-});
- */
+const themeObject = Theme.fromConfig({});
 
 const { theme } = themeObject;
 const supersetTheme = theme;

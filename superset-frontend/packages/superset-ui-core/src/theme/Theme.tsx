@@ -19,11 +19,7 @@
 /* eslint-disable react-prefer-function-component/react-prefer-function-component */
 // eslint-disable-next-line no-restricted-syntax
 import React from 'react';
-import {
-  theme as antdThemeImport,
-  ThemeConfig as AntdThemeConfig,
-  ConfigProvider,
-} from 'antd-v5';
+import { theme as antdThemeImport, ConfigProvider } from 'antd-v5';
 import tinycolor from 'tinycolor2';
 
 import {
@@ -31,20 +27,25 @@ import {
   CacheProvider as EmotionCacheProvider,
 } from '@emotion/react';
 import createCache from '@emotion/cache';
-// import { merge } from 'lodash';
 
 import {
-  AntdTokens,
+  AntdThemeConfig,
+  AnyThemeConfig,
+  SerializableThemeConfig,
   SupersetTheme,
   allowedAntdTokens,
   SharedAntdTokens,
-  SystemColors,
   ColorVariants,
-  DeprecatedColorVariations,
   DeprecatedThemeColors,
-  LegacySupersetTheme,
   FontSizeKey,
 } from './types';
+
+import {
+  normalizeThemeConfig,
+  serializeThemeConfig,
+  getSystemColors,
+  getDeprecatedColors,
+} from './utils';
 
 /* eslint-disable theme-colors/no-literal-colors */
 
@@ -84,111 +85,30 @@ export class Theme {
     xxl: 'fontSizeXXL',
   };
 
-  private constructor({
-    seed,
-    antdConfig,
-    isDark = false,
-  }: {
-    seed?: Partial<SupersetTheme>;
-    antdConfig?: AntdThemeConfig;
-    isDark?: boolean;
-  }) {
-    this.updateTheme = this.updateTheme.bind(this);
+  private constructor({ config }: { config?: AnyThemeConfig }) {
     this.SupersetThemeProvider = this.SupersetThemeProvider.bind(this);
 
-    if (seed && antdConfig) {
-      throw new Error('Pass either theme or antdConfig, not both.');
-    } else if (antdConfig) {
-      this.setThemeFromAntdConfig(antdConfig);
-    } else if (seed) {
-      this.setThemeFromSeed(seed || {}, isDark);
-    }
-  }
+    // Create a new config object with default tokens
+    const newConfig: AnyThemeConfig = config ? { ...config } : {};
 
-  static fromSeed(seed?: Partial<SupersetTheme>, isDark = false): Theme {
-    const theme = new Theme({ seed, isDark });
-    return theme;
-  }
-
-  static fromAntdConfig(antdConfig: AntdThemeConfig): Theme {
-    const theme = new Theme({ antdConfig });
-    return theme;
-  }
-
-  private static genDeprecatedColorVariations(
-    color: string,
-    isDark: boolean,
-  ): DeprecatedColorVariations {
-    const bg = isDark ? '#FFF' : '#000';
-    const fg = isDark ? '#000' : '#FFF';
-    const adjustColor = (c: string, perc: number, tgt: string): string =>
-      tinycolor.mix(c, tgt, perc).toHexString();
-    return {
-      base: color,
-      light1: adjustColor(color, 20, fg),
-      light2: adjustColor(color, 45, fg),
-      light3: adjustColor(color, 70, fg),
-      light4: adjustColor(color, 90, fg),
-      light5: adjustColor(color, 95, fg),
-      dark1: adjustColor(color, 10, bg),
-      dark2: adjustColor(color, 20, bg),
-      dark3: adjustColor(color, 40, bg),
-      dark4: adjustColor(color, 60, bg),
-      dark5: adjustColor(color, 80, bg),
-    };
-  }
-
-  private static getColors(
-    systemColors: SystemColors,
-    isDark: boolean,
-  ): DeprecatedThemeColors {
-    /* This method provides a set of color variations based on the system colors.
-     * Goal is to deprecate usage of these in the future
-     */
-    const sc = systemColors;
-    return {
-      primary: Theme.genDeprecatedColorVariations(sc.colorPrimary, isDark),
-      error: Theme.genDeprecatedColorVariations(sc.colorError, isDark),
-      warning: Theme.genDeprecatedColorVariations(sc.colorWarning, isDark),
-      success: Theme.genDeprecatedColorVariations(sc.colorSuccess, isDark),
-      info: Theme.genDeprecatedColorVariations(sc.colorInfo, isDark),
-      grayscale: Theme.genDeprecatedColorVariations('#666', isDark),
-    };
-  }
-
-  private static augmentSeedWithDefaults(
-    seed: Partial<SupersetTheme>,
-  ): Partial<SupersetTheme> {
-    return {
+    // Ensure token property exists with defaults
+    newConfig.token = {
       ...Theme.defaultTokens,
-      ...seed,
+      ...(config?.token || {}),
     };
+
+    this.setConfig(newConfig);
   }
 
-  private static getSystemColors(antdTokens: SharedAntdTokens): SystemColors {
-    return {
-      colorPrimary: antdTokens.colorPrimary,
-      colorError: antdTokens.colorError,
-      colorWarning: antdTokens.colorWarning,
-      colorSuccess: antdTokens.colorSuccess,
-      colorInfo: antdTokens.colorInfo,
-    };
-  }
-
-  private static getSupersetTheme(
-    seed: Partial<SupersetTheme>,
-    isDark = false,
-  ): SupersetTheme {
-    const antdConfig = Theme.getAntdConfig(seed, isDark);
-    const antdTokens = Theme.getFilteredAntdTheme(antdConfig);
-    const systemColors = Theme.getSystemColors(antdTokens);
-
-    const theme: SupersetTheme = {
-      colors: Theme.getColors(systemColors, isDark),
-      ...Theme.defaultTokens,
-      ...antdTokens,
-    };
-    return theme;
+  /**
+   * Create a theme from any theme configuration
+   * Automatically handles both AntdThemeConfig and SerializableThemeConfig
+   * If simple tokens are provided as { token: {...} }, they will be applied with defaults
+   * If no config is provided, uses default tokens
+   * Dark mode can be set via the algorithm property in the config
+   */
+  static fromConfig(config?: AnyThemeConfig): Theme {
+    return new Theme({ config });
   }
 
   private static getFilteredAntdTheme(
@@ -202,34 +122,57 @@ export class Theme {
     ) as SharedAntdTokens;
   }
 
-  private static getAntdConfig(
-    seed: Partial<SupersetTheme>,
-    isDark: boolean,
-  ): AntdThemeConfig {
-    const algorithm = isDark
-      ? antdThemeImport.darkAlgorithm
-      : antdThemeImport.defaultAlgorithm;
-    return {
-      token: seed,
-      algorithm,
+  private static getAntdTokens(
+    antdConfig: AntdThemeConfig,
+  ): Record<string, any> {
+    return antdThemeImport.getDesignToken(antdConfig);
+  }
+
+  /**
+   * Update the theme using any theme configuration
+   * Automatically handles both AntdThemeConfig and SerializableThemeConfig
+   * Dark mode should be specified via the algorithm property in the config
+   */
+  setConfig(config: AnyThemeConfig): void {
+    const antdConfig = normalizeThemeConfig(config);
+
+    // Apply default tokens to token property
+    antdConfig.token = {
+      ...Theme.defaultTokens,
+      ...(antdConfig.token || {}),
     };
-  }
 
-  mergeTheme(partialTheme: Partial<LegacySupersetTheme>): void {
-    // const mergedTheme = merge({}, this.theme, partialTheme);
-    // const isDark = tinycolor(mergedTheme.colorBgBase).isDark();
-    // const antdConfig = Theme.getAntdConfig(systemColors, isDark);
-    // this.updateTheme(mergedTheme, antdConfig, isDark);
-  }
+    // First phase: Let Ant Design compute the tokens
+    const tokens = Theme.getFilteredAntdTheme(antdConfig);
 
-  private updateTheme(theme: SupersetTheme, antdConfig: AntdThemeConfig): void {
-    this.theme = theme;
+    // Set the base theme properties
     this.antdConfig = antdConfig;
+    this.theme = {
+      ...Theme.defaultTokens,
+      ...antdConfig.token, // Passing through the extra, superset-specific tokens
+      ...tokens,
+      colors: {} as DeprecatedThemeColors, // Placeholder that will be filled in the second phase
+    };
+
+    // Second phase: Now that theme is initialized, we can determine if it's dark
+    // and generate the legacy colors correctly
+    const systemColors = getSystemColors(tokens);
+    const isDark = this.isThemeDark(); // Now we can safely call this
+    this.theme.colors = getDeprecatedColors(systemColors, isDark);
+
+    // Update the providers with the fully formed theme
     this.updateProviders(
       this.theme,
       this.antdConfig,
       createCache({ key: 'superset' }),
     );
+  }
+
+  /**
+   * Export the current theme as a serializable configuration
+   */
+  toSerializedConfig(): SerializableThemeConfig {
+    return serializeThemeConfig(this.antdConfig);
   }
 
   private getToken(token: string): any {
@@ -241,37 +184,40 @@ export class Theme {
     return this.getToken(fontSizeKey) || this.getToken('fontSize');
   }
 
-  private static getAntdTokens(antdConfig: AntdThemeConfig): AntdTokens {
-    return antdThemeImport.getDesignToken(antdConfig);
-  }
-
-  private isThemeDark(): boolean {
+  /**
+   * Check if the current theme is dark based on background color
+   */
+  isThemeDark(): boolean {
     return tinycolor(this.theme.colorBgContainer).isDark();
   }
 
-  setThemeFromSeed(seed: Partial<SupersetTheme>, isDark: boolean): void {
-    const augmentedSeed = Theme.augmentSeedWithDefaults(seed);
-    const theme = Theme.getSupersetTheme(augmentedSeed, isDark);
-    const antdConfig = Theme.getAntdConfig(augmentedSeed, isDark);
-    this.updateTheme(theme, antdConfig);
-  }
+  toggleDarkMode(isDark: boolean): void {
+    // Create a new config based on the current one
+    const newConfig = { ...this.antdConfig };
 
-  setThemeFromAntdConfig(antdConfig: AntdThemeConfig): void {
-    this.antdConfig = antdConfig;
-    const tokens = Theme.getFilteredAntdTheme(antdConfig);
-    const systemColors = Theme.getSystemColors(tokens);
-    const isDark = this.isThemeDark();
+    // Determine the new algorithm based on isDark
+    const newAlgorithm = isDark
+      ? antdThemeImport.darkAlgorithm
+      : antdThemeImport.defaultAlgorithm;
 
-    this.theme = {
-      colors: Theme.getColors(systemColors, isDark),
-      ...Theme.defaultTokens,
-      ...tokens,
-    };
-    this.updateProviders(
-      this.theme,
-      this.antdConfig,
-      createCache({ key: 'superset' }),
-    );
+    // Handle the case where algorithm is an array
+    if (Array.isArray(newConfig.algorithm)) {
+      // Filter out any existing dark/default algorithms
+      const otherAlgorithms = newConfig.algorithm.filter(
+        alg =>
+          alg !== antdThemeImport.darkAlgorithm &&
+          alg !== antdThemeImport.defaultAlgorithm,
+      );
+
+      // Add the new algorithm to the front of the array
+      newConfig.algorithm = [newAlgorithm, ...otherAlgorithms];
+    } else {
+      // Simple case: just replace the algorithm
+      newConfig.algorithm = newAlgorithm;
+    }
+
+    // Update the theme with the new configuration
+    this.setConfig(newConfig);
   }
 
   getColorVariants(color: string): ColorVariants {

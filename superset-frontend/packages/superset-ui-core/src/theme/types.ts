@@ -21,10 +21,37 @@
 import { theme as antdThemeImport } from 'antd-v5';
 
 /**
+ * Get AntdThemeConfig type from the theme object
+ */
+import type { ThemeConfig } from 'antd-v5';
+
+/**
  * Grab all antd tokens via getDesignToken(...).
  * (Same as in the original file.)
  */
 export type AntdTokens = ReturnType<typeof antdThemeImport.getDesignToken>;
+export type AntdThemeConfig = ThemeConfig;
+
+/**
+ * A serializable version of Ant Design's ThemeConfig
+ * Compatible with theme editor exports
+ */
+export type SerializableThemeConfig = {
+  token?: Record<string, any>;
+  components?: Record<string, any>;
+  algorithm?:
+    | 'default'
+    | 'dark'
+    | 'compact'
+    | ('default' | 'dark' | 'compact')[];
+  hashed?: boolean;
+  inherit?: boolean;
+};
+
+/**
+ * A combined type that can be either a regular AntdThemeConfig or a SerializableThemeConfig
+ */
+export type AnyThemeConfig = AntdThemeConfig | SerializableThemeConfig;
 
 /** Minimal color system references. */
 export type FontSizeKey = 'xs' | 's' | 'm' | 'l' | 'xl' | 'xxl';

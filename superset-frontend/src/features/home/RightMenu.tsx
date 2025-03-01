@@ -482,7 +482,7 @@ const RightMenu = ({
           <span>
             <Switch
               onChange={(checked: boolean) => {
-                themeObject.setThemeFromSeed({}, checked);
+                themeObject.toggleDarkMode(checked);
               }}
             />
           </span>
