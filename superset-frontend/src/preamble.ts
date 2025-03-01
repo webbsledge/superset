@@ -68,7 +68,7 @@ setupFormatters(
 setupDashboardComponents();
 
 if (Object.keys(bootstrapData?.common?.theme_overrides || {}).length > 0) {
-  themeObject.mergeTheme(bootstrapData.common.theme_overrides);
+  themeObject.setConfig(bootstrapData.common.theme_overrides);
 }
 
 const getMe = makeApi<void, User>({
