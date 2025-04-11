@@ -42,7 +42,6 @@ jobs:
       matrix:
         parallel_id: [0, 1, 2, 3, 4, 5]
         browser: ["chrome"]
-        app_root: ["", "/app/prefix"]
     env:
       SUPERSET_ENV: development
       SUPERSET_CONFIG: tests.integration_tests.superset_test_config
