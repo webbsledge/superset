@@ -17,6 +17,7 @@
  * under the License.
  */
 import { renderToStaticMarkup } from 'react-dom/server';
+import DOMPurify from 'dompurify';
 import { Tag } from '../Tag';
 
 type Props = {
@@ -27,31 +28,27 @@ type Props = {
   footer?: React.ReactNode;
 };
 
-export const Tooltip: React.FC<Props> = ({
+export function getTooltipHTML({
   title,
   icon,
   body,
   meta,
   footer,
-}) => (
-  <div className="tooltip-detail">
-    <div className="tooltip-detail-head">
-      <div className="tooltip-detail-title">
-        {icon}
-        {title}
+}: Props): string {
+  const html = `
+    <div class="tooltip-detail">
+      <div class="tooltip-detail-head">
+        <div class="tooltip-detail-title">
+          ${icon ? `<span class="tooltip-icon">${icon}</span>` : ''}${title}
+        </div>
+        ${meta ? `<span class="tooltip-detail-meta"><span class="ant-tag">${meta}</span></span>` : ''}
       </div>
-      {meta && (
-        <span className="tooltip-detail-meta">
-          <Tag color="default">{meta}</Tag>
-        </span>
-      )}
+      ${body ? `<div class="tooltip-detail-body">${body}</div>` : ''}
+      ${footer ? `<div class="tooltip-detail-footer">${footer}</div>` : ''}
     </div>
-    {body && <div className="tooltip-detail-body">{body ?? title}</div>}
-    {footer && <div className="tooltip-detail-footer">{footer}</div>}
-  </div>
-);
+  `;
 
-export const getTooltipHTML = (props: Props) =>
-  `${renderToStaticMarkup(<Tooltip {...props} />)}`;
+  return DOMPurify.sanitize(html);
+}
 
 export default Tooltip;
