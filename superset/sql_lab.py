@@ -15,9 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 # pylint: disable=consider-using-transaction
-
-from __future__ import annotations
-
 import dataclasses
 import logging
 import sys
@@ -32,7 +29,6 @@ import msgpack
 from celery.exceptions import SoftTimeLimitExceeded
 from flask import current_app
 from flask_babel import gettext as __
-from sqlalchemy import and_
 
 from superset import (
     app,
@@ -49,6 +45,7 @@ from superset.db_engine_specs import BaseEngineSpec
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import (
     OAuth2RedirectError,
+    SupersetDisallowedSQLFunctionException,
     SupersetDMLNotAllowedException,
     SupersetErrorException,
     SupersetErrorsException,
@@ -70,6 +67,7 @@ from superset.utils.core import (
 )
 from superset.utils.dates import now_as_float
 from superset.utils.decorators import stats_timing
+from superset.utils.rls import get_predicates_for_table
 
 if TYPE_CHECKING:
     from superset.models.core import Database
@@ -228,45 +226,6 @@ def apply_rls(query: Query, parsed_statement: BaseSQLStatement[Any]) -> None:
     }
 
     parsed_statement.apply_rls(query.catalog, default_schema, predicates, method)
-
-
-def get_predicates_for_table(
-    table: Table,
-    database: Database,
-    catalog: str | None,
-    schema: str,
-) -> list[str]:
-    """
-    Get the RLS predicates for a table.
-
-    This is used to inject RLS rules into SQL statements run in SQL Lab.
-    """
-    from superset.connectors.sqla.models import SqlaTable
-
-    dataset = (
-        db.session.query(SqlaTable)
-        .filter(
-            and_(
-                SqlaTable.database_id == database.id,
-                SqlaTable.catalog == table.catalog or catalog,
-                SqlaTable.schema == table.schema or schema,
-                SqlaTable.table_name == table.table,
-            )
-        )
-        .one_or_none()
-    )
-    if not dataset:
-        return []
-
-    return [
-        str(
-            and_(*filters).compile(
-                dialect=database.get_dialect(),
-                compile_kwargs={"literal_binds": True},
-            )
-        )
-        for filters in dataset.get_sqla_row_level_filters()
-    ]
 
 
 S = TypeVar("S", bound=BaseSQLStatement[Any])
@@ -462,6 +421,15 @@ def execute_sql_statements(  # noqa: C901
 
     parsed_script = SQLScript(rendered_query, engine=db_engine_spec.engine)
 
+    disallowed_functions = current_app.config["DISALLOWED_SQL_FUNCTIONS"].get(
+        db_engine_spec.engine,
+        set(),
+    )
+    if disallowed_functions and parsed_script.check_functions_present(
+        disallowed_functions
+    ):
+        raise SupersetDisallowedSQLFunctionException(disallowed_functions)
+
     if parsed_script.has_mutation() and not database.allow_dml:
         raise SupersetDMLNotAllowedException()
 
@@ -496,9 +464,12 @@ def execute_sql_statements(  # noqa: C901
     # statements if they're run separately (especially when using `NullPool`), so we run
     # the query as a single block.
     if db_engine_spec.run_multiple_statements_as_one:
-        blocks = [parsed_script.format()]
+        blocks = [parsed_script.format(comments=db_engine_spec.allows_sql_comments)]
     else:
-        blocks = [statement.format() for statement in parsed_script.statements]
+        blocks = [
+            statement.format(comments=db_engine_spec.allows_sql_comments)
+            for statement in parsed_script.statements
+        ]
 
     with database.get_raw_connection(
         catalog=query.catalog,
