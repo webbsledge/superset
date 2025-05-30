@@ -17,7 +17,6 @@
  * under the License.
  */
 import { useCallback, useMemo } from 'react';
-import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
 import {
   AdhocMetric,
   BinaryQueryObjectFilterClause,
@@ -35,6 +34,7 @@ import {
   t,
   useTheme,
 } from '@superset-ui/core';
+import { Icons } from '@superset-ui/core/components';
 import { aggregatorTemplates, PivotTable, sortAs } from './react-pivottable';
 import {
   FilterType,
@@ -63,12 +63,12 @@ const PivotTableWrapper = styled.div`
 const METRIC_KEY = t('Metric');
 const vals = ['value'];
 
-const StyledPlusSquareOutlined = styled(PlusSquareOutlined)`
+const StyledPlusSquareOutlined = styled(Icons.PlusSquareOutlined)`
   stroke: ${({ theme }) => theme.colors.grayscale.light2};
   stroke-width: 16px;
 `;
 
-const StyledMinusSquareOutlined = styled(MinusSquareOutlined)`
+const StyledMinusSquareOutlined = styled(Icons.MinusSquareOutlined)`
   stroke: ${({ theme }) => theme.colors.grayscale.light2};
   stroke-width: 16px;
 `;

@@ -19,14 +19,7 @@
  */
 import { ReactNode } from 'react';
 import { css, GenericDataType, styled, t } from '@superset-ui/core';
-import {
-  ClockCircleOutlined,
-  QuestionOutlined,
-  FunctionOutlined,
-  FieldBinaryOutlined,
-  FieldStringOutlined,
-  NumberOutlined,
-} from '@ant-design/icons';
+import { Icons } from '@superset-ui/core/components';
 
 export type ColumnLabelExtendedType = 'expression' | '';
 
@@ -54,19 +47,23 @@ const TypeIconWrapper = styled.div`
 
 export function ColumnTypeLabel({ type }: ColumnTypeLabelProps) {
   let typeIcon: ReactNode = (
-    <QuestionOutlined aria-label={t('unknown type icon')} />
+    <Icons.QuestionOutlined aria-label={t('unknown type icon')} />
   );
 
   if (type === '' || type === 'expression') {
-    typeIcon = <FunctionOutlined aria-label={t('function type icon')} />;
+    typeIcon = <Icons.FunctionOutlined aria-label={t('function type icon')} />;
   } else if (type === GenericDataType.String) {
-    typeIcon = <FieldStringOutlined aria-label={t('string type icon')} />;
+    typeIcon = <Icons.FieldStringOutlined aria-label={t('string type icon')} />;
   } else if (type === GenericDataType.Numeric) {
-    typeIcon = <NumberOutlined aria-label={t('numeric type icon')} />;
+    typeIcon = <Icons.NumberOutlined aria-label={t('numeric type icon')} />;
   } else if (type === GenericDataType.Boolean) {
-    typeIcon = <FieldBinaryOutlined aria-label={t('boolean type icon')} />;
+    typeIcon = (
+      <Icons.FieldBinaryOutlined aria-label={t('boolean type icon')} />
+    );
   } else if (type === GenericDataType.Temporal) {
-    typeIcon = <ClockCircleOutlined aria-label={t('temporal type icon')} />;
+    typeIcon = (
+      <Icons.ClockCircleOutlined aria-label={t('temporal type icon')} />
+    );
   }
 
   return <TypeIconWrapper>{typeIcon}</TypeIconWrapper>;
