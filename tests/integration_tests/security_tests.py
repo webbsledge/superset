@@ -1539,6 +1539,7 @@ class TestRolePermission(SupersetTestCase):
             ["AuthDBView", "logout"],
             ["CurrentUserRestApi", "get_me"],
             ["CurrentUserRestApi", "get_my_roles"],
+            ["CurrentUserRestApi", "update_me"],
             ["UserRestApi", "avatar"],
             # TODO (embedded) remove Dashboard:embedded after uuids have been shipped
             ["Dashboard", "embedded"],
