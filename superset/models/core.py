@@ -98,6 +98,95 @@ if TYPE_CHECKING:
     from superset.models.sql_lab import Query
 
 
+@contextmanager
+def temporarily_disconnect_db():  # type: ignore
+    """
+    Temporarily disconnects the current thread's metadata database session.
+
+    This is meant to be used during long, blocking operations, so that we can
+    release the database connection for the duration of, for example, a
+    potentially long running query against an analytics database.
+
+    The goal here is to lower the number of concurrent connections to the
+    metadata database, given that Superset has no control over the duration
+    of the analytics query.
+
+    This implementation:
+    - Only affects the current thread (thread-safe)
+    - Works with all pool types to release connections:
+      * NullPool: Actually closes the connection
+      * QueuePool/StaticPool: Returns connection to pool for reuse
+    - Never mutates global state
+    - Lets Flask-SQLAlchemy handle session recreation automatically
+
+    NOTE: only has an effect if feature flag DISABLE_METADATA_DB_DURING_ANALYTICS
+    is enabled
+    """
+    should_disconnect = is_feature_enabled("DISABLE_METADATA_DB_DURING_ANALYTICS")
+
+    if not should_disconnect:
+        yield
+        return
+
+    # Get initial connection info for logging
+    pool_type = db.engine.pool.__class__.__name__
+    try:
+        initial_conn = db.session.connection()
+        initial_conn_id = id(initial_conn)
+        initial_closed = initial_conn.closed
+        logger.debug(
+            "Disconnecting metadata database temporarily (thread-safe) - "
+            "Pool: %s, Initial connection: ID=%s, closed=%s",
+            pool_type,
+            initial_conn_id,
+            initial_closed,
+        )
+    except Exception as e:
+        logger.warning("Could not get initial connection info: %s", e)
+        initial_conn = None
+        initial_conn_id = 0  # Use 0 to indicate unknown
+
+    try:
+        # Close the current thread's session
+        # With NullPool: this closes the actual connection
+        # With other pools: this returns connection to pool
+        # The scoped_session proxy (db.session) remains unchanged
+        db.session.close()
+
+        # Log connection state after close
+        if initial_conn:
+            logger.debug(
+                "Connection closed - ID=%s, closed=%s",
+                initial_conn_id,
+                initial_conn.closed,
+            )
+
+        yield
+
+    finally:
+        # Log reconnection info
+        try:
+            new_conn = db.session.connection()
+            new_conn_id = id(new_conn)
+            new_closed = new_conn.closed
+            same_connection = (
+                initial_conn_id == new_conn_id
+                if initial_conn_id != 0
+                else False
+            )
+
+            logger.debug(
+                "Metadata database reconnected - Pool: %s, New connection: ID=%s, "
+                "closed=%s, same_as_initial=%s",
+                pool_type,
+                new_conn_id,
+                new_closed,
+                same_connection,
+            )
+        except Exception as e:
+            logger.warning("Could not get reconnection info: %s", e)
+
+
 class KeyValue(Model):  # pylint: disable=too-few-public-methods
     """Used for any type of key-value store"""
 
@@ -691,22 +780,23 @@ class Database(Model, AuditMixinNullable, ImportExportMixin):  # pylint: disable
         with self.get_raw_connection(catalog=catalog, schema=schema) as conn:
             cursor = conn.cursor()
             df = None
-            for i, statement in enumerate(script.statements):
-                sql_ = self.mutate_sql_based_on_config(
-                    statement.format(),
-                    is_split=True,
-                )
-                _log_query(sql_)
-                with event_logger.log_context(
-                    action="execute_sql",
-                    database=self,
-                    object_ref=__name__,
-                ):
-                    self.db_engine_spec.execute(cursor, sql_, self)
+            with temporarily_disconnect_db():
+                for i, statement in enumerate(script.statements):
+                    sql_ = self.mutate_sql_based_on_config(
+                        statement.format(),
+                        is_split=True,
+                    )
+                    _log_query(sql_)
+                    with event_logger.log_context(
+                        action="execute_sql",
+                        database=self,
+                        object_ref=__name__,
+                    ):
+                        self.db_engine_spec.execute(cursor, sql_, self)
 
-                rows = self.fetch_rows(cursor, i == len(script.statements) - 1)
-                if rows is not None:
-                    df = self.load_into_dataframe(cursor.description, rows)
+                    rows = self.fetch_rows(cursor, i == len(script.statements) - 1)
+                    if rows is not None:
+                        df = self.load_into_dataframe(cursor.description, rows)
 
             if mutator:
                 df = mutator(df)
