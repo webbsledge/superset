@@ -170,9 +170,7 @@ def temporarily_disconnect_db():  # type: ignore
             new_conn_id = id(new_conn)
             new_closed = new_conn.closed
             same_connection = (
-                initial_conn_id == new_conn_id
-                if initial_conn_id != 0
-                else False
+                initial_conn_id == new_conn_id if initial_conn_id != 0 else False
             )
 
             logger.debug(

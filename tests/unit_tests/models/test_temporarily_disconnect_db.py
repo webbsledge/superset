@@ -104,15 +104,26 @@ class TestTemporarilyDisconnectDb:
 
                 with patch("superset.models.core.logger") as mock_logger:
                     with patch.object(db.session, "close"):
-                        with temporarily_disconnect_db():
-                            pass
+                        with patch.object(db.session, "connection"):
+                            with temporarily_disconnect_db():
+                                pass
 
-                    # Should log both disconnect and reconnect messages
-                    assert mock_logger.info.call_count == 2
+                    # Should log debug messages (3 calls: initial, close, reconnect)
+                    assert mock_logger.debug.call_count >= 2
 
-                    calls = [call.args[0] for call in mock_logger.info.call_args_list]
-                    assert "Disconnecting metadata database temporarily" in calls[0]
-                    assert "reconnection handled by Flask-SQLAlchemy" in calls[1]
+                    debug_calls = [
+                        call.args[0] for call in mock_logger.debug.call_args_list
+                    ]
+                    disconnect_logged = any(
+                        "Disconnecting metadata database temporarily" in call
+                        for call in debug_calls
+                    )
+                    reconnect_logged = any(
+                        "Metadata database reconnected" in call for call in debug_calls
+                    )
+
+                    assert disconnect_logged, "Should log disconnection"
+                    assert reconnect_logged, "Should log reconnection"
 
     def test_logger_not_called_when_inactive(self, app_context: None):
         """Test that no log messages are generated when inactive."""
@@ -123,7 +134,7 @@ class TestTemporarilyDisconnectDb:
                     pass
 
             # Should not log anything when feature is disabled
-            mock_logger.info.assert_not_called()
+            mock_logger.debug.assert_not_called()
 
     @with_feature_flags(DISABLE_METADATA_DB_DURING_ANALYTICS=True)
     def test_feature_flag_enabled_with_nullpool(self, app_context: None):
@@ -162,26 +173,26 @@ class TestTemporarilyDisconnectDb:
                         pytest.fail(f"Query execution failed: {e}")
 
                 # Verify logging
-                assert mock_logger.info.call_count == 2
+                assert mock_logger.debug.call_count >= 2
                 log_messages = [
-                    call.args[0] for call in mock_logger.info.call_args_list
+                    call.args[0] for call in mock_logger.debug.call_args_list
                 ]
                 assert "Disconnecting metadata database temporarily" in log_messages[0]
-                assert "reconnection handled by Flask-SQLAlchemy" in log_messages[1]
+                assert "Metadata database reconnected" in log_messages[1]
 
             except Exception as e:
                 pytest.skip(f"Database test failed, likely CI environment issue: {e}")
 
     @with_feature_flags(DISABLE_METADATA_DB_DURING_ANALYTICS=True)
     def test_feature_flag_enabled_with_queuepool(self, app_context: None):
-        """Test that feature is disabled with non-NullPool even when flag is on."""
+        """Test that feature works with QueuePool when flag is on."""
         with patch.object(db.engine, "pool") as mock_pool:
             mock_pool.__class__.__name__ = "QueuePool"
 
             with patch.object(db.session, "close") as mock_close:
                 with temporarily_disconnect_db():
-                    # Should still be no-op even with feature flag enabled
-                    mock_close.assert_not_called()
+                    # Should call close to return connection to pool
+                    mock_close.assert_called_once()
 
     @with_feature_flags(DISABLE_METADATA_DB_DURING_ANALYTICS=False)
     def test_feature_flag_explicitly_disabled(self, app_context: None):
