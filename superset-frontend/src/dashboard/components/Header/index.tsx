@@ -34,6 +34,7 @@ import {
   Tooltip,
   DeleteModal,
   UnsavedChangesModal,
+  Grid,
 } from '@superset-ui/core/components';
 import { findPermission } from 'src/utils/findPermission';
 import { safeStringify } from 'src/utils/safeStringify';
@@ -219,8 +220,12 @@ const discardChanges = () => {
   window.location.assign(url);
 };
 
+const { useBreakpoint } = Grid;
+
 const Header = (): JSX.Element => {
   const dispatch = useDispatch();
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
   const [didNotifyMaxUndoHistoryToast, setDidNotifyMaxUndoHistoryToast] =
     useState(false);
   const [emphasizeUndo, setEmphasizeUndo] = useState(false);
@@ -635,7 +640,7 @@ const Header = (): JSX.Element => {
           onTogglePause={handlePauseToggle}
         />
       ),
-      !editMode && (
+      !editMode && !isMobile && (
         <PublishedStatus
           key="published-status"
           dashboardId={dashboardInfo.id}
@@ -645,12 +650,13 @@ const Header = (): JSX.Element => {
           userCanSave={userCanSaveAs}
         />
       ),
-      !editMode && !isEmbedded && metadataBar,
+      !editMode && !isEmbedded && !isMobile && metadataBar,
     ],
     [
       boundActionCreators.savePublished,
       dashboardInfo.id,
       editMode,
+      isMobile,
       metadataBar,
       isEmbedded,
       isPublished,
@@ -745,7 +751,7 @@ const Header = (): JSX.Element => {
         ) : (
           <div css={actionButtonsStyle}>
             {NavExtension && <NavExtension />}
-            {userCanEdit && (
+            {userCanEdit && !isMobile && (
               <Button
                 buttonStyle="secondary"
                 onClick={handleEnterEditMode}
@@ -772,6 +778,7 @@ const Header = (): JSX.Element => {
       handleCtrlZ,
       handleEnterEditMode,
       hasUnsavedChanges,
+      isMobile,
       overwriteDashboard,
       redoLength,
       undoLength,
@@ -808,6 +815,10 @@ const Header = (): JSX.Element => {
     userCanCurate,
     userCanExport,
     isLoading,
+    isMobile,
+    isStarred,
+    isPublished,
+    saveFaveStar: boundActionCreators.saveFaveStar,
     showReportModal,
     showPropertiesModal,
     showRefreshModal,
@@ -834,7 +845,7 @@ const Header = (): JSX.Element => {
           onOpenChange: setIsDropdownVisible,
         }}
         additionalActionsMenu={menu}
-        showFaveStar={Boolean(user?.userId && dashboardInfo?.id)}
+        showFaveStar={!!(user?.userId && dashboardInfo?.id && !isMobile)}
         showTitlePanelItems
       />
       {showingPropertiesModal && (
