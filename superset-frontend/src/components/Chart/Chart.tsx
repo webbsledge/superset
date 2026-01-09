@@ -160,6 +160,17 @@ const Styles = styled.div<{ height: number; width?: number }>`
       margin: ${({ theme }) => theme.sizeUnit * 2}px;
     }
   }
+
+  /* Full width charts on mobile */
+  @media (max-width: 767px) {
+    width: 100% !important;
+
+    .slice_container,
+    .slice_container div {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
 `;
 
 const LoadingDiv = styled.div`
@@ -329,6 +340,8 @@ class Chart extends PureComponent<ChartProps, {}> {
         {this.shouldRenderChart() ? (
           <ChartRenderer
             {...this.props}
+            // On mobile, pass '100%' to let charts fill container width
+            width={window.innerWidth > 767 ? this.props.width : '100%'}
             source={
               this.props.dashboardId
                 ? ChartSource.Dashboard
