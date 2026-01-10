@@ -40,6 +40,7 @@ import {
   ConfirmStatusChange,
   DeleteModal,
   FaveStar,
+  Grid,
   Loading,
   PublishedLabel,
   Tooltip,
@@ -146,6 +147,7 @@ const DASHBOARD_COLUMNS_TO_FETCH = [
 
 function DashboardList(props: DashboardListProps) {
   const { addDangerToast, addSuccessToast, user } = props;
+  const { md: isNotMobile } = Grid.useBreakpoint();
   const { roles } = useSelector<any, UserWithPermissionsAndRoles>(
     state => state.user,
   );
@@ -824,6 +826,8 @@ function DashboardList(props: DashboardListProps) {
                 }
                 renderCard={renderCard}
                 defaultViewMode={
+                  // Force card view on mobile
+                  !isNotMobile ||
                   isFeatureEnabled(FeatureFlag.ListviewsDefaultCardView)
                     ? 'card'
                     : 'table'
