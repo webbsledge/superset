@@ -23,7 +23,7 @@ import {
   FeatureFlag,
   getExtensionsRegistry,
 } from '@superset-ui/core';
-import { styled, css, SupersetTheme, t } from '@apache-superset/core/ui';
+import { styled, css, SupersetTheme, t, useTheme } from '@apache-superset/core/ui';
 import { Global } from '@emotion/react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -59,7 +59,11 @@ import {
   deleteActiveReport,
   DeletableReport,
 } from 'src/features/reports/ReportModal/actions';
-import { PageHeaderWithActions } from '@superset-ui/core/components/PageHeaderWithActions';
+import type { ReportObject } from 'src/features/reports/types';
+import {
+  PageHeaderWithActions,
+  menuTriggerStyles,
+} from '@superset-ui/core/components/PageHeaderWithActions';
 import { useUnsavedChangesPrompt } from 'src/hooks/useUnsavedChangesPrompt';
 import DashboardEmbedModal from '../EmbeddedModal';
 import OverwriteConfirm from '../OverwriteConfirm';
@@ -222,8 +226,13 @@ const discardChanges = () => {
 
 const { useBreakpoint } = Grid;
 
-const Header = (): JSX.Element => {
+interface HeaderComponentProps {
+  onOpenMobileFilters?: () => void;
+}
+
+const Header = ({ onOpenMobileFilters }: HeaderComponentProps): JSX.Element => {
   const dispatch = useDispatch();
+  const theme = useTheme();
   const screens = useBreakpoint();
   const isMobile = !screens.md;
   const [didNotifyMaxUndoHistoryToast, setDidNotifyMaxUndoHistoryToast] =
@@ -838,6 +847,22 @@ const Header = (): JSX.Element => {
         editableTitleProps={editableTitleProps}
         certificatiedBadgeProps={certifiedBadgeProps}
         faveStarProps={faveStarProps}
+        leftPanelItems={
+          onOpenMobileFilters && (
+            <Button
+              css={menuTriggerStyles}
+              buttonStyle="tertiary"
+              aria-label={t('Open filters')}
+              onClick={onOpenMobileFilters}
+              data-test="mobile-filters-trigger"
+            >
+              <Icons.FilterOutlined
+                iconColor={theme.colorPrimary}
+                iconSize="l"
+              />
+            </Button>
+          )
+        }
         titlePanelAdditionalItems={titlePanelAdditionalItems}
         rightPanelAdditionalItems={rightPanelAdditionalItems}
         menuDropdownProps={{
