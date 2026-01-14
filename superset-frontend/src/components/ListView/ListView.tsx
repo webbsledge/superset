@@ -423,7 +423,7 @@ export function ListView<T extends object = any>({
       )}
       <div data-test={className} className={`superset-list-view ${className} `}>
         <div className="header">
-          {cardViewEnabled && (
+          {cardViewEnabled && !forceViewMode && (
             <ViewModeToggle mode={viewMode} setMode={setViewMode} />
           )}
           <div className="controls" data-test="filters-select">
@@ -627,11 +627,12 @@ export function ListView<T extends object = any>({
         >
           <MobileFilterDrawerContent>
             <FilterControls
+              ref={filterControlsRef}
               filters={filters}
               internalFilters={internalFilters}
               updateFilterValue={applyFilterValue}
             />
-            {cardSortSelectOptions && (
+            {viewMode === 'card' && cardSortSelectOptions && (
               <CardSortSelect
                 initialSort={sortBy}
                 onChange={(value: SortColumn[]) => setSortBy(value)}
