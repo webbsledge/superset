@@ -273,7 +273,7 @@ SQLALCHEMY_CUSTOM_PASSWORD_STORE = None
 # "SINGLETON" reuses engines with connection pooling
 ENGINE_MANAGER_MODE = EngineModes.NEW
 
-# Cleanup interval for abandoned locks in seconds (default: 5 minutes)
+# Cleanup interval for abandoned locks (default: 5 minutes)
 ENGINE_MANAGER_CLEANUP_INTERVAL = timedelta(minutes=5)
 
 # Automatically start cleanup thread for SINGLETON mode (default: True)

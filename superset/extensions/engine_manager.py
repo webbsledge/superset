@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import atexit
 import logging
 from datetime import timedelta
 
@@ -50,6 +51,10 @@ class EngineManagerExtension:
         ssh_timeout = timedelta(seconds=app.config["SSH_TUNNEL_PACKET_TIMEOUT_SEC"])
         auto_start_cleanup = app.config["ENGINE_MANAGER_AUTO_START_CLEANUP"]
 
+        # Stop any existing manager's cleanup thread before creating a new one
+        if self.engine_manager:
+            self.engine_manager.stop_cleanup_thread()
+
         # Create the engine manager
         self.engine_manager = EngineManager(
             engine_context_manager,
@@ -67,15 +72,13 @@ class EngineManagerExtension:
             logger.info("Started EngineManager cleanup thread")
 
         # Register shutdown handler
-        def shutdown_engine_manager() -> None:
+        def shutdown_engine_manager(exc: BaseException | None = None) -> None:
             if self.engine_manager:
                 self.engine_manager.stop_cleanup_thread()
 
-        app.teardown_appcontext_funcs.append(lambda exc: None)
+        app.teardown_appcontext(shutdown_engine_manager)
 
         # Register with atexit for clean shutdown
-        import atexit
-
         atexit.register(shutdown_engine_manager)
 
         logger.info(
