@@ -114,7 +114,6 @@ DISTRIBUTED_COORDINATION_CONFIG = {
 ```
 
 See `superset/config.py` for complete configuration options.
-
 ### WebSocket config for GAQ with Docker
 
 [35896](https://github.com/apache/superset/pull/35896) and [37624](https://github.com/apache/superset/pull/37624) updated documentation on how to run and configure Superset with Docker. Specifically for the WebSocket configuration, a new `docker/superset-websocket/config.example.json` was added to the repo, so that users could copy it to create a `docker/superset-websocket/config.json` file. The existing `docker/superset-websocket/config.json` was removed and git-ignored, so if you're using GAQ / WebSocket make sure to:
