@@ -15,6 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import importlib.util
+import inspect
 import json  # noqa: TID251
 import re
 import shutil
@@ -28,11 +30,18 @@ from typing import Any, Callable
 import click
 import semver
 from jinja2 import Environment, FileSystemLoader
-from superset_core.extensions.types import (
+from superset_core.extensions import (
+    BackendContributions,
     ExtensionConfig,
+    FrontendContributions,
     Manifest,
     ManifestBackend,
     ManifestFrontend,
+    McpPromptContribution,
+    McpToolContribution,
+    RegistrationMode,
+    RestApiContribution,
+    get_context,
 )
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
@@ -53,6 +62,115 @@ from superset_extensions_cli.utils import (
 
 REMOTE_ENTRY_REGEX = re.compile(r"^remoteEntry\..+\.js$")
 FRONTEND_DIST_REGEX = re.compile(r"/frontend/dist")
+
+
+def discover_backend_contributions(
+    cwd: Path, files_patterns: list[str]
+) -> BackendContributions:
+    """
+    Discover backend contributions by importing modules and inspecting decorated objects.
+
+    Sets context to BUILD mode so decorators only store metadata, no registration.
+    """
+    contributions = BackendContributions()
+
+    # Set build mode so decorators don't try to register
+    ctx = get_context()
+    ctx.set_mode(RegistrationMode.BUILD)
+
+    try:
+        # Collect all Python files matching patterns
+        py_files: list[Path] = []
+        for pattern in files_patterns:
+            py_files.extend(cwd.glob(pattern))
+
+        for py_file in py_files:
+            if not py_file.is_file() or py_file.suffix != ".py":
+                continue
+
+            try:
+                # Import module dynamically
+                module = _import_module_from_path(py_file)
+                if module is None:
+                    continue
+
+                # Inspect all members for decorated objects
+                for name, obj in inspect.getmembers(module):
+                    if name.startswith("_"):
+                        continue
+
+                    # Check for @tool metadata
+                    if hasattr(obj, "__tool_metadata__"):
+                        meta = obj.__tool_metadata__
+                        contributions.mcp_tools.append(
+                            McpToolContribution(
+                                id=meta.id,
+                                name=meta.name,
+                                description=meta.description,
+                                module=meta.module,
+                                tags=list(meta.tags),
+                                protect=meta.protect,
+                            )
+                        )
+
+                    # Check for @prompt metadata
+                    if hasattr(obj, "__prompt_metadata__"):
+                        meta = obj.__prompt_metadata__
+                        contributions.mcp_prompts.append(
+                            McpPromptContribution(
+                                id=meta.id,
+                                name=meta.name,
+                                title=meta.title,
+                                description=meta.description,
+                                module=meta.module,
+                                tags=list(meta.tags),
+                                protect=meta.protect,
+                            )
+                        )
+
+                    # Check for @extension_api metadata
+                    if hasattr(obj, "__rest_api_metadata__"):
+                        meta = obj.__rest_api_metadata__
+                        contributions.rest_apis.append(
+                            RestApiContribution(
+                                id=meta.id,
+                                name=meta.name,
+                                description=meta.description,
+                                module=meta.module,
+                                basePath=meta.base_path,
+                                resourceName=meta.resource_name,
+                                openapiSpecTag=meta.openapi_spec_tag,
+                                classPermissionName=meta.class_permission_name,
+                            )
+                        )
+
+            except Exception as e:
+                click.secho(f"⚠️  Failed to analyze {py_file}: {e}", fg="yellow")
+
+    finally:
+        # Reset to host mode
+        ctx.set_mode(RegistrationMode.HOST)
+
+    return contributions
+
+
+def _import_module_from_path(py_file: Path) -> Any:
+    """Import a Python module from a file path."""
+    module_name = py_file.stem
+    spec = importlib.util.spec_from_file_location(module_name, py_file)
+    if spec is None or spec.loader is None:
+        return None
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+
+    try:
+        spec.loader.exec_module(module)
+        return module
+    except Exception:
+        # Clean up on failure
+        sys.modules.pop(module_name, None)
+        raise
 
 
 def validate_npm() -> None:
@@ -151,17 +269,48 @@ def build_manifest(cwd: Path, remote_entry: str | None) -> Manifest:
     # Generate composite ID from publisher and name
     composite_id = f"{extension.publisher}.{extension.name}"
 
+    # Build frontend manifest
     frontend: ManifestFrontend | None = None
     if extension.frontend and remote_entry:
+        # Use manually specified contributions if present, otherwise empty
+        # (frontend discovery will be added later)
+        frontend_contributions = (
+            extension.frontend.contributions
+            if extension.frontend.contributions
+            else FrontendContributions()
+        )
         frontend = ManifestFrontend(
-            contributions=extension.frontend.contributions,
+            contributions=frontend_contributions,
             moduleFederation=extension.frontend.moduleFederation,
             remoteEntry=remote_entry,
         )
 
+    # Build backend manifest with contributions
     backend: ManifestBackend | None = None
-    if extension.backend and extension.backend.entryPoints:
-        backend = ManifestBackend(entryPoints=extension.backend.entryPoints)
+    if extension.backend:
+        # Use manually specified contributions if present, otherwise discover
+        if extension.backend.contributions:
+            backend_contributions = extension.backend.contributions
+            click.secho("📋 Using manually specified backend contributions", fg="cyan")
+        elif extension.backend.files:
+            click.secho("🔍 Discovering backend contributions...", fg="cyan")
+            backend_contributions = discover_backend_contributions(
+                cwd, extension.backend.files
+            )
+            tool_count = len(backend_contributions.mcp_tools)
+            prompt_count = len(backend_contributions.mcp_prompts)
+            api_count = len(backend_contributions.rest_apis)
+            click.secho(
+                f"   Found: {tool_count} tools, {prompt_count} prompts, {api_count} APIs",
+                fg="green",
+            )
+        else:
+            backend_contributions = BackendContributions()
+
+        backend = ManifestBackend(
+            entryPoints=extension.backend.entryPoints,
+            contributions=backend_contributions,
+        )
 
     return Manifest(
         id=composite_id,
