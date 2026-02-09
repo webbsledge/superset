@@ -222,11 +222,6 @@ class BaseExtension(BaseModel):
 class ExtensionConfigFrontend(BaseModel):
     """Frontend section in extension.json."""
 
-    # Optional: if provided, takes precedence over discovery
-    contributions: FrontendContributions | None = Field(
-        default=None,
-        description="Frontend contributions (optional, overrides discovery)",
-    )
     moduleFederation: ModuleFederationConfig = Field(  # noqa: N815
         default_factory=ModuleFederationConfig,
         description="Module Federation configuration",
@@ -242,12 +237,8 @@ class ExtensionConfigBackend(BaseModel):
     )
     files: list[str] = Field(
         default_factory=list,
-        description="Glob patterns for backend Python files",
-    )
-    # Optional: if provided, takes precedence over discovery
-    contributions: BackendContributions | None = Field(
-        default=None,
-        description="Backend contributions (optional, overrides discovery)",
+        description="Glob patterns for backend Python files (defaults to"
+        "backend/src/**/*.py)",
     )
 
 

@@ -84,10 +84,10 @@ def discover_backend_contributions(
         for pattern in files_patterns:
             py_files.extend(cwd.glob(pattern))
 
-        for py_file in py_files:
-            if not py_file.is_file() or py_file.suffix != ".py":
-                continue
+        # Filter to only process Python files
+        python_files = [f for f in py_files if f.is_file() and f.suffix == ".py"]
 
+        for py_file in python_files:
             try:
                 # Import module dynamically
                 module = _import_module_from_path(py_file)
@@ -152,6 +152,26 @@ def discover_backend_contributions(
         ctx.set_mode(RegistrationMode.HOST)
 
     return contributions
+
+
+def discover_frontend_contributions(cwd: Path) -> FrontendContributions:
+    """
+    Discover frontend contributions from webpack plugin output.
+
+    The webpack plugin outputs a contributions.json file during build.
+    """
+    contributions_file = cwd / "frontend" / "dist" / "contributions.json"
+
+    if not contributions_file.exists():
+        # No frontend contributions found - this is normal for extensions without frontend
+        return FrontendContributions()
+
+    try:
+        contributions_data = json.loads(contributions_file.read_text())
+        return FrontendContributions.model_validate(contributions_data)
+    except Exception as e:
+        click.secho(f"⚠️  Failed to parse frontend contributions: {e}", fg="yellow")
+        return FrontendContributions()
 
 
 def _import_module_from_path(py_file: Path) -> Any:
@@ -266,46 +286,48 @@ def build_manifest(cwd: Path, remote_entry: str | None) -> Manifest:
 
     extension = ExtensionConfig.model_validate(extension_data)
 
-    # Generate composite ID from publisher and name
-    composite_id = f"{extension.publisher}.{extension.name}"
-
-    # Build frontend manifest
+    # Build frontend manifest with auto-discovery
     frontend: ManifestFrontend | None = None
     if extension.frontend and remote_entry:
-        # Use manually specified contributions if present, otherwise empty
-        # (frontend discovery will be added later)
-        frontend_contributions = (
-            extension.frontend.contributions
-            if extension.frontend.contributions
-            else FrontendContributions()
-        )
+        click.secho("🔍 Auto-discovering frontend contributions...", fg="cyan")
+        frontend_contributions = discover_frontend_contributions(cwd)
+
+        # Count contributions for feedback
+        command_count = len(frontend_contributions.commands)
+        view_count = sum(len(views) for views in frontend_contributions.views.values())
+        menu_count = len(frontend_contributions.menus)
+        editor_count = len(frontend_contributions.editors)
+
+        total_count = command_count + view_count + menu_count + editor_count
+        if total_count > 0:
+            click.secho(
+                f"   Found: {command_count} commands, {view_count} views, {menu_count} menus, {editor_count} editors",
+                fg="green",
+            )
+        else:
+            click.secho("   No frontend contributions found", fg="yellow")
+
         frontend = ManifestFrontend(
             contributions=frontend_contributions,
             moduleFederation=extension.frontend.moduleFederation,
             remoteEntry=remote_entry,
         )
 
-    # Build backend manifest with contributions
+    # Build backend manifest with auto-discovered contributions
     backend: ManifestBackend | None = None
     if extension.backend:
-        # Use manually specified contributions if present, otherwise discover
-        if extension.backend.contributions:
-            backend_contributions = extension.backend.contributions
-            click.secho("📋 Using manually specified backend contributions", fg="cyan")
-        elif extension.backend.files:
-            click.secho("🔍 Discovering backend contributions...", fg="cyan")
-            backend_contributions = discover_backend_contributions(
-                cwd, extension.backend.files
-            )
-            tool_count = len(backend_contributions.mcp_tools)
-            prompt_count = len(backend_contributions.mcp_prompts)
-            api_count = len(backend_contributions.rest_apis)
-            click.secho(
-                f"   Found: {tool_count} tools, {prompt_count} prompts, {api_count} APIs",
-                fg="green",
-            )
-        else:
-            backend_contributions = BackendContributions()
+        click.secho("🔍 Auto-discovering backend contributions...", fg="cyan")
+        backend_contributions = discover_backend_contributions(
+            cwd, extension.backend.files
+        )
+
+        tool_count = len(backend_contributions.mcp_tools)
+        prompt_count = len(backend_contributions.mcp_prompts)
+        api_count = len(backend_contributions.rest_apis)
+        click.secho(
+            f"   Found: {tool_count} tools, {prompt_count} prompts, {api_count} APIs",
+            fg="green",
+        )
 
         backend = ManifestBackend(
             entryPoints=extension.backend.entryPoints,

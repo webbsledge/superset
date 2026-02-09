@@ -38,9 +38,9 @@ The contribution system provides several key benefits:
 
 ## How Contributions Work
 
-Contributions are automatically inferred from source code during build. The build tool scans your code and generates a `manifest.json` with all discovered contributions.
+Contributions are automatically discovered from source code at build time. Simply use the `@extension_api`, `@tool`, `@prompt` decorators in Python or `define*()` functions in TypeScript - the build system finds them and generates a `manifest.json` with all discovered contributions.
 
-For advanced use cases, contributions can be manually specified in `extension.json` (overrides auto-discovery).
+No manual configuration needed!
 
 ## Backend Contributions
 
@@ -91,98 +91,74 @@ See [MCP Integration](./mcp) for more details.
 
 ### Views
 
-Add panels or views to the UI:
+Add panels or views to the UI using `defineView()`:
 
-```json
-"frontend": {
-  "contributions": {
-    "views": {
-      "sqllab": {
-        "panels": [
-          {
-            "id": "my_extension.main",
-            "name": "My Panel Name"
-          }
-        ]
-      }
-    }
-  }
-}
+```tsx
+import React from 'react';
+import { defineView } from '@apache-superset/core';
+import MyPanel from './MyPanel';
+
+export const myView = defineView({
+  id: 'main',
+  title: 'My Panel',
+  location: 'sqllab.panels', // or dashboard.tabs, explore.panels, etc.
+  component: () => <MyPanel />,
+});
 ```
 
 ### Commands
 
-Define executable commands:
+Define executable commands using `defineCommand()`:
 
-```json
-"frontend": {
-  "contributions": {
-    "commands": [
-      {
-        "command": "my_extension.copy_query",
-        "icon": "CopyOutlined",
-        "title": "Copy Query",
-        "description": "Copy the current query"
-      }
-    ]
-  }
-}
+```tsx
+import { defineCommand } from '@apache-superset/core';
+
+export const copyQuery = defineCommand({
+  id: 'copy_query',
+  title: 'Copy Query',
+  icon: 'CopyOutlined',
+  execute: async () => {
+    // Copy the current query
+    navigator.clipboard.writeText(getCurrentQuery());
+  },
+});
 ```
 
 ### Menus
 
-Add items to menus:
+Add items to menus using `defineMenu()`:
 
-```json
-"frontend": {
-  "contributions": {
-    "menus": {
-      "sqllab": {
-        "editor": {
-          "primary": [
-            {
-              "view": "builtin.editor",
-              "command": "my_extension.copy_query"
-            }
-          ],
-          "secondary": [
-            {
-              "view": "builtin.editor",
-              "command": "my_extension.prettify"
-            }
-          ],
-          "context": [
-            {
-              "view": "builtin.editor",
-              "command": "my_extension.clear"
-            }
-          ]
-        }
-      }
-    }
-  }
-}
+```tsx
+import { defineMenu } from '@apache-superset/core';
+
+export const contextMenu = defineMenu({
+  id: 'clear_editor',
+  title: 'Clear Editor',
+  location: 'sqllab.editor.context',
+  action: () => {
+    clearEditor();
+  },
+});
 ```
 
 ### Editors
 
-Replace the default text editor:
+Replace the default text editor using `defineEditor()`:
 
-```json
-"frontend": {
-  "contributions": {
-    "editors": [
-      {
-        "id": "my_extension.monaco_sql",
-        "name": "Monaco SQL Editor",
-        "languages": ["sql"]
-      }
-    ]
-  }
-}
+```tsx
+import React from 'react';
+import { defineEditor } from '@apache-superset/core';
+import MonacoEditor from './MonacoEditor';
+
+export const monacoSqlEditor = defineEditor({
+  id: 'monaco_sql',
+  name: 'Monaco SQL Editor',
+  mimeTypes: ['text/x-sql'],
+  component: MonacoEditor,
+});
 ```
 
-See [Editors Extension Point](./extension-points/editors) for implementation details.
+All contributions are automatically discovered at build time and registered at runtime - no manual configuration needed!
 
 ## Configuration
 
