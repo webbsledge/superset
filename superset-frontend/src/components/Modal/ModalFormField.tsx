@@ -125,8 +125,8 @@ export function ModalFormField({
   bottomSpacing = true,
   children,
   testId,
-  validateStatus,
-  hasFeedback = false,
+  validateStatus: _validateStatus,
+  hasFeedback: _hasFeedback = false,
 }: ModalFormFieldProps) {
   return (
     <StyledFieldContainer bottomSpacing={bottomSpacing} data-test={testId}>

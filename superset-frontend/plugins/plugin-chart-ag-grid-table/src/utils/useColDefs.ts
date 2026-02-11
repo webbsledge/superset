@@ -216,7 +216,7 @@ export const useColDefs = ({
   defaultAlignPN,
   showCellBars,
   colorPositiveNegative,
-  totals,
+  totals: _totals,
   columnColorFormatters,
   allowRearrangeColumns,
   basicColorFormatters,

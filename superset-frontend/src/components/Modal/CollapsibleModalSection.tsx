@@ -41,7 +41,7 @@ export function CollapsibleModalSection({
   sectionKey,
   title,
   subtitle,
-  defaultExpanded = false,
+  defaultExpanded: _defaultExpanded = false,
   hasErrors = false,
   testId,
   children,

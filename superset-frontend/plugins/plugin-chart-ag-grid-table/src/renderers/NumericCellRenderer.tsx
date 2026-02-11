@@ -106,8 +106,8 @@ function cellOffset({
 function cellBackground({
   value,
   colorPositiveNegative = false,
-  isDarkTheme = false,
-  theme,
+  isDarkTheme: _isDarkTheme = false,
+  theme: _theme,
 }: {
   value: number;
   colorPositiveNegative: boolean;

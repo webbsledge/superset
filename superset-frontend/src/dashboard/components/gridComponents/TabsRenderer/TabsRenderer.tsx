@@ -117,7 +117,7 @@ interface DraggableTabNodeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const DraggableTabNode: React.FC<Readonly<DraggableTabNodeProps>> = ({
-  className,
+  className: _className,
   disabled = false,
   ...props
 }) => {
@@ -170,7 +170,7 @@ const TabsRenderer = memo<TabsRendererProps>(
     tabBarPaddingLeft = 0,
     onTabsReorder,
     isEditingTabTitle = false,
-    onTabTitleEditingChange,
+    onTabTitleEditingChange: _onTabTitleEditingChange,
   }) => {
     const [activeId, setActiveId] = useState<string | null>(null);
 

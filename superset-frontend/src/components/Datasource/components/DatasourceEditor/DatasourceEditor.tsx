@@ -472,9 +472,9 @@ function CollectionTabTitle({
 
 function ColumnCollectionTable({
   columns,
-  datasource,
+  datasource: _datasource,
   onColumnsChange,
-  onDatasourceChange,
+  onDatasourceChange: _onDatasourceChange,
   editableColumnName = false,
   showExpression = false,
   allowAddItem = false,
