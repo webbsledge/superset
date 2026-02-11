@@ -212,7 +212,7 @@ function Chart({
     suppressLoadingSpinner,
   } = restProps;
 
-  const renderStartTimeRef = useRef<number>(0);
+  const renderStartTimeRef = useRef<number>(Logger.getTimestamp());
 
   const shouldRenderChart = useCallback(
     () =>

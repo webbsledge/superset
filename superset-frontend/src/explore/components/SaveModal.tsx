@@ -774,6 +774,7 @@ const SaveModal = ({
         id="btn_modal_save_goto_dash"
         buttonSize="small"
         disabled={
+          isLoading ||
           !newSliceName ||
           !dashboard ||
           (datasource?.type !== DatasourceType.Table && !datasetName)
