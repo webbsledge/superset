@@ -62,6 +62,7 @@ import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
 import type { MenuObjectProps } from 'src/types/bootstrapTypes';
 import DatabaseModal from 'src/features/databases/DatabaseModal';
 import UploadDataModal from 'src/features/databases/UploadDataModel';
+import SemanticLayerModal from 'src/features/semanticLayers/SemanticLayerModal';
 import { DatabaseObject } from 'src/features/databases/types';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
 import { WIDER_DROPDOWN_WIDTH } from 'src/components/ListView/utils';
@@ -155,6 +156,8 @@ function DatabaseList({
   const [excelUploadDataModalOpen, setExcelUploadDataModalOpen] =
     useState<boolean>(false);
   const [columnarUploadDataModalOpen, setColumnarUploadDataModalOpen] =
+    useState<boolean>(false);
+  const [semanticLayerModalOpen, setSemanticLayerModalOpen] =
     useState<boolean>(false);
 
   const [allowUploads, setAllowUploads] = useState<boolean>(false);
@@ -343,7 +346,7 @@ function DatabaseList({
                     key: 'semantic-layer',
                     label: t('Semantic Layer'),
                     onClick: () => {
-                      // TODO: open semantic layer creation flow
+                      setSemanticLayerModalOpen(true);
                     },
                   },
                 ],
@@ -730,6 +733,12 @@ function DatabaseList({
         show={columnarUploadDataModalOpen}
         allowedExtensions={COLUMNAR_EXTENSIONS}
         type="columnar"
+      />
+      <SemanticLayerModal
+        show={semanticLayerModalOpen}
+        onHide={() => setSemanticLayerModalOpen(false)}
+        addDangerToast={addDangerToast}
+        addSuccessToast={addSuccessToast}
       />
       {databaseCurrentlyDeleting && (
         <DeleteModal

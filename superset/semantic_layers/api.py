@@ -16,10 +16,11 @@
 # under the License.
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
-from flask import request, Response
+from flask import make_response, request, Response
 from flask_appbuilder.api import expose, protect, safe
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from marshmallow import ValidationError
@@ -229,7 +230,9 @@ class SemanticLayerRestApi(BaseSupersetApi):
                 parsed_config = None
 
         schema = cls.get_configuration_schema(parsed_config)
-        return self.response(200, result=schema)
+        resp = make_response(json.dumps({"result": schema}, sort_keys=False), 200)
+        resp.headers["Content-Type"] = "application/json; charset=utf-8"
+        return resp
 
     @expose("/<uuid>/schema/runtime", methods=("POST",))
     @protect()
