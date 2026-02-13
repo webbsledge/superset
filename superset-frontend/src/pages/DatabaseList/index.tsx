@@ -23,7 +23,7 @@ import {
   isFeatureEnabled,
   FeatureFlag,
 } from '@superset-ui/core';
-import { styled, useTheme } from '@apache-superset/core/ui';
+import { css, styled, useTheme } from '@apache-superset/core/ui';
 import { useState, useMemo, useEffect } from 'react';
 import rison from 'rison';
 import { useSelector } from 'react-redux';
@@ -38,9 +38,9 @@ import {
 import withToasts from 'src/components/MessageToasts/withToasts';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import {
+  Button,
   DeleteModal,
-  DropdownButton,
-  Menu,
+  Dropdown,
   Tooltip,
   List,
   Loading,
@@ -326,49 +326,45 @@ function DatabaseList({
       handleDatabaseEditModal({ modalOpen: true });
 
     if (isFeatureEnabled(FeatureFlag.SemanticLayers)) {
-      const dropdownMenu = (
-        <Menu
-          items={[
-            {
-              key: 'database',
-              label: t('Database'),
-              onClick: openDatabaseModal,
-            },
-            {
-              key: 'semantic-layer',
-              label: t('Semantic Layer'),
-              onClick: () => {
-                // TODO: open semantic layer creation flow
-              },
-            },
-          ]}
-        />
-      );
-
       menuData.buttons = [
         {
           name: t('New'),
           buttonStyle: 'primary',
           component: (
-            <DropdownButton
-              data-test="btn-create-new"
-              type="primary"
-              onClick={openDatabaseModal}
-              popupRender={() => dropdownMenu}
-              icon={
-                <Icons.DownOutlined
-                  iconSize="xs"
-                  iconColor={theme.colorTextLightSolid}
-                />
-              }
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'database',
+                    label: t('Database'),
+                    onClick: openDatabaseModal,
+                  },
+                  {
+                    key: 'semantic-layer',
+                    label: t('Semantic Layer'),
+                    onClick: () => {
+                      // TODO: open semantic layer creation flow
+                    },
+                  },
+                ],
+              }}
               trigger={['click']}
             >
-              <Icons.PlusOutlined
-                iconSize="m"
-                iconColor={theme.colorTextLightSolid}
-              />
-              {t('New')}
-            </DropdownButton>
+              <Button
+                data-test="btn-create-new"
+                buttonStyle="primary"
+                icon={<Icons.PlusOutlined iconSize="m" />}
+              >
+                {t('New')}
+                <Icons.DownOutlined
+                  iconSize="s"
+                  css={css`
+                    margin-left: ${theme.sizeUnit * 1.5}px;
+                    margin-right: -${theme.sizeUnit * 2}px;
+                  `}
+                />
+              </Button>
+            </Dropdown>
           ),
         },
       ];
