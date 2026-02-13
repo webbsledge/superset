@@ -22,11 +22,23 @@ import { styled } from '@apache-superset/core/ui';
 import { SupersetClient } from '@superset-ui/core';
 import { Select } from '@superset-ui/core/components';
 import { Icons } from '@superset-ui/core/components/Icons';
-import { JsonForms } from '@jsonforms/react';
-import type { JsonSchema, UISchemaElement } from '@jsonforms/core';
+import { JsonForms, withJsonFormsControlProps } from '@jsonforms/react';
+import type {
+  JsonSchema,
+  UISchemaElement,
+  ControlProps,
+} from '@jsonforms/core';
+import {
+  rankWith,
+  and,
+  isStringControl,
+  formatIs,
+  schemaMatches,
+} from '@jsonforms/core';
 import {
   rendererRegistryEntries,
   cellRegistryEntries,
+  TextControl,
 } from '@great-expectations/jsonforms-antd-renderers';
 import type { ErrorObject } from 'ajv';
 import {
@@ -36,8 +48,49 @@ import {
   MODAL_MEDIUM_WIDTH,
 } from 'src/components/Modal';
 
+/**
+ * Custom renderer that renders `Input.Password` for fields with
+ * `format: "password"` in the JSON Schema (e.g. Pydantic `SecretStr`).
+ */
+function PasswordControl(props: ControlProps) {
+  const uischema = {
+    ...props.uischema,
+    options: { ...props.uischema.options, type: 'password' },
+  };
+  return TextControl({ ...props, uischema });
+}
+const PasswordRenderer = withJsonFormsControlProps(PasswordControl);
+const passwordEntry = {
+  tester: rankWith(3, and(isStringControl, formatIs('password'))),
+  renderer: PasswordRenderer,
+};
+
+/**
+ * Renderer for `const` properties (e.g. Pydantic discriminator fields).
+ * Renders nothing visually but ensures the const value is set in form data,
+ * so discriminated unions resolve correctly on the backend.
+ */
+function ConstControl({ data, handleChange, path, schema }: ControlProps) {
+  const constValue = (schema as Record<string, unknown>).const;
+  useEffect(() => {
+    if (constValue !== undefined && data !== constValue) {
+      handleChange(path, constValue);
+    }
+  }, [constValue, data, handleChange, path]);
+  return null;
+}
+const ConstRenderer = withJsonFormsControlProps(ConstControl);
+const constEntry = {
+  tester: rankWith(10, schemaMatches(s => s !== undefined && 'const' in s)),
+  renderer: ConstRenderer,
+};
+
+const renderers = [...rendererRegistryEntries, passwordEntry, constEntry];
+
 type Step = 'type' | 'config';
 type ValidationMode = 'ValidateAndHide' | 'ValidateAndShow';
+
+const SCHEMA_REFRESH_DEBOUNCE_MS = 500;
 
 /**
  * Removes empty `enum` arrays from schema properties. The JSON Schema spec
@@ -108,6 +161,69 @@ function buildUiSchema(
   return { type: 'VerticalLayout', elements } as UISchemaElement;
 }
 
+/**
+ * Extracts dynamic field dependency mappings from the schema.
+ * Returns a map of field name → list of dependency field names.
+ */
+function getDynamicDependencies(
+  schema: JsonSchema,
+): Record<string, string[]> {
+  const deps: Record<string, string[]> = {};
+  if (!schema.properties) return deps;
+  for (const [key, prop] of Object.entries(schema.properties)) {
+    if (
+      typeof prop === 'object' &&
+      prop !== null &&
+      'x-dynamic' in prop &&
+      'x-dependsOn' in prop &&
+      Array.isArray((prop as Record<string, unknown>)['x-dependsOn'])
+    ) {
+      deps[key] = (prop as Record<string, unknown>)[
+        'x-dependsOn'
+      ] as string[];
+    }
+  }
+  return deps;
+}
+
+/**
+ * Checks whether all dependency values are filled (non-empty).
+ * Handles nested objects (like auth) by checking they have at least one key.
+ */
+function areDependenciesSatisfied(
+  dependencies: string[],
+  data: Record<string, unknown>,
+): boolean {
+  return dependencies.every(dep => {
+    const value = data[dep];
+    if (value === null || value === undefined || value === '') return false;
+    if (typeof value === 'object' && Object.keys(value).length === 0)
+      return false;
+    return true;
+  });
+}
+
+/**
+ * Serializes the dependency values for a set of fields into a stable string
+ * for comparison, so we only re-fetch when dependency values actually change.
+ */
+function serializeDependencyValues(
+  dynamicDeps: Record<string, string[]>,
+  data: Record<string, unknown>,
+): string {
+  const allDepKeys = new Set<string>();
+  for (const deps of Object.values(dynamicDeps)) {
+    for (const dep of deps) {
+      allDepKeys.add(dep);
+    }
+  }
+  const snapshot: Record<string, unknown> = {};
+  for (const key of [...allDepKeys].sort()) {
+    snapshot[key] = data[key];
+  }
+  return JSON.stringify(snapshot);
+}
+
 const ModalContent = styled.div`
   padding: ${({ theme }) => theme.sizeUnit * 4}px;
 `;
@@ -161,6 +277,9 @@ export default function SemanticLayerModal({
   const [validationMode, setValidationMode] =
     useState<ValidationMode>('ValidateAndHide');
   const errorsRef = useRef<ErrorObject[]>([]);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastDepSnapshotRef = useRef<string>('');
+  const dynamicDepsRef = useRef<Record<string, string[]>>({});
 
   const fetchTypes = useCallback(async () => {
     setLoading(true);
@@ -178,27 +297,35 @@ export default function SemanticLayerModal({
     }
   }, [addDangerToast]);
 
+  const applySchema = useCallback((rawSchema: JsonSchema) => {
+    const schema = sanitizeSchema(rawSchema);
+    setConfigSchema(schema);
+    setUiSchema(buildUiSchema(schema));
+    dynamicDepsRef.current = getDynamicDependencies(rawSchema);
+  }, []);
+
   const fetchConfigSchema = useCallback(
-    async (type: string) => {
-      setLoading(true);
+    async (type: string, configuration?: Record<string, unknown>) => {
+      const isInitialFetch = !configuration;
+      if (isInitialFetch) setLoading(true);
       try {
         const { json } = await SupersetClient.post({
           endpoint: '/api/v1/semantic_layer/schema/configuration',
-          jsonPayload: { type },
+          jsonPayload: { type, configuration },
         });
-        const schema: JsonSchema = sanitizeSchema(json.result);
-        setConfigSchema(schema);
-        setUiSchema(buildUiSchema(schema));
-        setStep('config');
+        applySchema(json.result);
+        if (isInitialFetch) setStep('config');
       } catch {
-        addDangerToast(
-          t('An error occurred while fetching the configuration schema'),
-        );
+        if (isInitialFetch) {
+          addDangerToast(
+            t('An error occurred while fetching the configuration schema'),
+          );
+        }
       } finally {
-        setLoading(false);
+        if (isInitialFetch) setLoading(false);
       }
     },
-    [addDangerToast],
+    [addDangerToast, applySchema],
   );
 
   useEffect(() => {
@@ -213,6 +340,9 @@ export default function SemanticLayerModal({
       setFormData({});
       setValidationMode('ValidateAndHide');
       errorsRef.current = [];
+      lastDepSnapshotRef.current = '';
+      dynamicDepsRef.current = {};
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     }
   }, [show, fetchTypes]);
 
@@ -229,6 +359,9 @@ export default function SemanticLayerModal({
     setFormData({});
     setValidationMode('ValidateAndHide');
     errorsRef.current = [];
+    lastDepSnapshotRef.current = '';
+    dynamicDepsRef.current = {};
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
   };
 
   const handleCreate = async () => {
@@ -258,22 +391,46 @@ export default function SemanticLayerModal({
     }
   };
 
-  const handleFormChange = ({
-    data,
-    errors,
-  }: {
-    data: Record<string, unknown>;
-    errors?: ErrorObject[];
-  }) => {
-    setFormData(data);
-    errorsRef.current = errors ?? [];
-    if (
-      validationMode === 'ValidateAndShow' &&
-      errorsRef.current.length === 0
-    ) {
-      handleCreate();
-    }
-  };
+  const maybeRefreshSchema = useCallback(
+    (data: Record<string, unknown>) => {
+      if (!selectedType) return;
+
+      const dynamicDeps = dynamicDepsRef.current;
+      if (Object.keys(dynamicDeps).length === 0) return;
+
+      // Check if any dynamic field has all dependencies satisfied
+      const hasSatisfiedDeps = Object.values(dynamicDeps).some(deps =>
+        areDependenciesSatisfied(deps, data),
+      );
+      if (!hasSatisfiedDeps) return;
+
+      // Only re-fetch if dependency values actually changed
+      const snapshot = serializeDependencyValues(dynamicDeps, data);
+      if (snapshot === lastDepSnapshotRef.current) return;
+      lastDepSnapshotRef.current = snapshot;
+
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
+        fetchConfigSchema(selectedType, data);
+      }, SCHEMA_REFRESH_DEBOUNCE_MS);
+    },
+    [selectedType, fetchConfigSchema],
+  );
+
+  const handleFormChange = useCallback(
+    ({ data, errors }: { data: Record<string, unknown>; errors?: ErrorObject[] }) => {
+      setFormData(data);
+      errorsRef.current = errors ?? [];
+      if (
+        validationMode === 'ValidateAndShow' &&
+        errorsRef.current.length === 0
+      ) {
+        handleCreate();
+      }
+      maybeRefreshSchema(data);
+    },
+    [validationMode, handleCreate, maybeRefreshSchema],
+  );
 
   const selectedTypeName =
     types.find(type => type.id === selectedType)?.name ?? '';
@@ -328,7 +485,7 @@ export default function SemanticLayerModal({
               schema={configSchema}
               uischema={uiSchema}
               data={formData}
-              renderers={rendererRegistryEntries}
+              renderers={renderers}
               cells={cellRegistryEntries}
               validationMode={validationMode}
               onChange={handleFormChange}
