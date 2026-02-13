@@ -20,6 +20,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { t } from '@apache-superset/core';
 import { styled } from '@apache-superset/core/ui';
 import { SupersetClient } from '@superset-ui/core';
+import { Input, Spin } from 'antd';
 import { Select } from '@superset-ui/core/components';
 import { Icons } from '@superset-ui/core/components/Icons';
 import { JsonForms, withJsonFormsControlProps } from '@jsonforms/react';
@@ -85,7 +86,53 @@ const constEntry = {
   renderer: ConstRenderer,
 };
 
-const renderers = [...rendererRegistryEntries, passwordEntry, constEntry];
+/**
+ * Renderer for fields marked `x-dynamic` in the JSON Schema.
+ * Shows a loading spinner inside the input while the schema is being
+ * refreshed with dynamic values from the backend.
+ */
+function DynamicFieldControl(props: ControlProps) {
+  const { refreshingSchema, formData: cfgData } = props.config ?? {};
+  const deps = (props.schema as Record<string, unknown>)?.['x-dependsOn'];
+  const refreshing =
+    refreshingSchema &&
+    Array.isArray(deps) &&
+    areDependenciesSatisfied(deps as string[], (cfgData as Record<string, unknown>) ?? {});
+
+  if (!refreshing) {
+    return TextControl(props);
+  }
+
+  const uischema = {
+    ...props.uischema,
+    options: {
+      ...props.uischema.options,
+      placeholderText: t('Loading...'),
+      inputProps: { suffix: <Spin size="small" /> },
+    },
+  };
+  return TextControl({ ...props, uischema, enabled: false });
+}
+const DynamicFieldRenderer = withJsonFormsControlProps(DynamicFieldControl);
+const dynamicFieldEntry = {
+  tester: rankWith(
+    3,
+    and(
+      isStringControl,
+      schemaMatches(
+        s => (s as Record<string, unknown>)?.['x-dynamic'] === true,
+      ),
+    ),
+  ),
+  renderer: DynamicFieldRenderer,
+};
+
+const renderers = [
+  ...rendererRegistryEntries,
+  passwordEntry,
+  constEntry,
+  dynamicFieldEntry,
+];
 
 type Step = 'type' | 'config';
 type ValidationMode = 'ValidateAndHide' | 'ValidateAndShow';
@@ -265,6 +312,7 @@ export default function SemanticLayerModal({
   addSuccessToast,
 }: SemanticLayerModalProps) {
   const [step, setStep] = useState<Step>('type');
+  const [name, setName] = useState('');
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [types, setTypes] = useState<SemanticLayerType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -274,6 +322,8 @@ export default function SemanticLayerModal({
   );
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
+  const [hasErrors, setHasErrors] = useState(true);
+  const [refreshingSchema, setRefreshingSchema] = useState(false);
   const [validationMode, setValidationMode] =
     useState<ValidationMode>('ValidateAndHide');
   const errorsRef = useRef<ErrorObject[]>([]);
@@ -308,6 +358,7 @@ export default function SemanticLayerModal({
     async (type: string, configuration?: Record<string, unknown>) => {
       const isInitialFetch = !configuration;
       if (isInitialFetch) setLoading(true);
+      else setRefreshingSchema(true);
       try {
         const { json } = await SupersetClient.post({
           endpoint: '/api/v1/semantic_layer/schema/configuration',
@@ -323,6 +374,7 @@ export default function SemanticLayerModal({
         }
       } finally {
         if (isInitialFetch) setLoading(false);
+        else setRefreshingSchema(false);
       }
     },
     [addDangerToast, applySchema],
@@ -333,11 +385,14 @@ export default function SemanticLayerModal({
       fetchTypes();
     } else {
       setStep('type');
+      setName('');
       setSelectedType(null);
       setTypes([]);
       setConfigSchema(null);
       setUiSchema(undefined);
       setFormData({});
+      setHasErrors(true);
+      setRefreshingSchema(false);
       setValidationMode('ValidateAndHide');
       errorsRef.current = [];
       lastDepSnapshotRef.current = '';
@@ -369,7 +424,7 @@ export default function SemanticLayerModal({
     try {
       await SupersetClient.post({
         endpoint: '/api/v1/semantic_layer/',
-        jsonPayload: { type: selectedType, configuration: formData },
+        jsonPayload: { name, type: selectedType, configuration: formData },
       });
       addSuccessToast(t('Semantic layer created'));
       onHide();
@@ -421,6 +476,7 @@ export default function SemanticLayerModal({
     ({ data, errors }: { data: Record<string, unknown>; errors?: ErrorObject[] }) => {
       setFormData(data);
       errorsRef.current = errors ?? [];
+      setHasErrors(errorsRef.current.length > 0);
       if (
         validationMode === 'ValidateAndShow' &&
         errorsRef.current.length === 0
@@ -448,7 +504,9 @@ export default function SemanticLayerModal({
       title={title}
       icon={<Icons.PlusOutlined />}
       width={step === 'type' ? MODAL_STANDARD_WIDTH : MODAL_MEDIUM_WIDTH}
-      saveDisabled={step === 'type' ? !selectedType : saving}
+      saveDisabled={
+        step === 'type' ? !selectedType : saving || !name.trim() || hasErrors
+      }
       saveText={step === 'type' ? undefined : t('Create')}
       saveLoading={saving}
       contentLoading={loading}
@@ -480,6 +538,13 @@ export default function SemanticLayerModal({
             <Icons.CaretLeftOutlined iconSize="s" />
             {t('Back')}
           </BackLink>
+          <ModalFormField label={t('Name')} required>
+            <Input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder={t('Name of the semantic layer')}
+            />
+          </ModalFormField>
           {configSchema && (
             <JsonForms
               schema={configSchema}
@@ -487,6 +552,7 @@ export default function SemanticLayerModal({
               data={formData}
               renderers={renderers}
               cells={cellRegistryEntries}
+              config={{ refreshingSchema, formData }}
               validationMode={validationMode}
               onChange={handleFormChange}
             />
