@@ -17,8 +17,13 @@
  * under the License.
  */
 import { t } from '@apache-superset/core';
-import { getExtensionsRegistry, SupersetClient } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/ui';
+import {
+  getExtensionsRegistry,
+  SupersetClient,
+  isFeatureEnabled,
+  FeatureFlag,
+} from '@superset-ui/core';
+import { styled, useTheme } from '@apache-superset/core/ui';
 import { useState, useMemo, useEffect } from 'react';
 import rison from 'rison';
 import { useSelector } from 'react-redux';
@@ -34,6 +39,8 @@ import withToasts from 'src/components/MessageToasts/withToasts';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import {
   DeleteModal,
+  DropdownButton,
+  Menu,
   Tooltip,
   List,
   Loading,
@@ -108,6 +115,7 @@ function DatabaseList({
   addSuccessToast,
   user,
 }: DatabaseListProps) {
+  const theme = useTheme();
   const {
     state: {
       loading,
@@ -314,18 +322,67 @@ function DatabaseList({
   };
 
   if (canCreate) {
-    menuData.buttons = [
-      {
-        'data-test': 'btn-create-database',
-        icon: <Icons.PlusOutlined iconSize="m" />,
-        name: t('Database'),
-        buttonStyle: 'primary',
-        onClick: () => {
-          // Ensure modal will be opened in add mode
-          handleDatabaseEditModal({ modalOpen: true });
+    const openDatabaseModal = () =>
+      handleDatabaseEditModal({ modalOpen: true });
+
+    if (isFeatureEnabled(FeatureFlag.SemanticLayers)) {
+      const dropdownMenu = (
+        <Menu
+          items={[
+            {
+              key: 'database',
+              label: t('Database'),
+              onClick: openDatabaseModal,
+            },
+            {
+              key: 'semantic-layer',
+              label: t('Semantic Layer'),
+              onClick: () => {
+                // TODO: open semantic layer creation flow
+              },
+            },
+          ]}
+        />
+      );
+
+      menuData.buttons = [
+        {
+          name: t('New'),
+          buttonStyle: 'primary',
+          component: (
+            <DropdownButton
+              data-test="btn-create-new"
+              type="primary"
+              onClick={openDatabaseModal}
+              popupRender={() => dropdownMenu}
+              icon={
+                <Icons.DownOutlined
+                  iconSize="xs"
+                  iconColor={theme.colorTextLightSolid}
+                />
+              }
+              trigger={['click']}
+            >
+              <Icons.PlusOutlined
+                iconSize="m"
+                iconColor={theme.colorTextLightSolid}
+              />
+              {t('New')}
+            </DropdownButton>
+          ),
         },
-      },
-    ];
+      ];
+    } else {
+      menuData.buttons = [
+        {
+          'data-test': 'btn-create-database',
+          icon: <Icons.PlusOutlined iconSize="m" />,
+          name: t('Database'),
+          buttonStyle: 'primary',
+          onClick: openDatabaseModal,
+        },
+      ];
+    }
   }
 
   async function handleDatabaseExport(database: DatabaseObject) {
