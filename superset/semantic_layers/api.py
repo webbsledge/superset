@@ -24,6 +24,7 @@ from flask import make_response, request, Response
 from flask_appbuilder.api import expose, protect, safe
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from marshmallow import ValidationError
+from pydantic import ValidationError as PydanticValidationError
 
 from superset import event_logger
 from superset.commands.semantic_layer.create import CreateSemanticLayerCommand
@@ -71,6 +72,79 @@ def _serialize_layer(layer: SemanticLayer) -> dict[str, Any]:
         "type": layer.type,
         "cache_timeout": layer.cache_timeout,
     }
+
+
+def _infer_discriminators(
+    schema: dict[str, Any],
+    data: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Infer discriminator values for union fields when the frontend omits them.
+
+    Walks the schema's properties looking for discriminated unions (fields with a
+    ``discriminator.mapping``). For each one, tries to match the submitted data
+    against one of the variants by checking which variant's required fields are
+    present, then injects the discriminator value.
+    """
+    defs = schema.get("$defs", {})
+    for prop_name, prop_schema in schema.get("properties", {}).items():
+        value = data.get(prop_name)
+        if not isinstance(value, dict):
+            continue
+
+        # Find discriminated union via discriminator mapping
+        mapping = (
+            prop_schema.get("discriminator", {}).get("mapping")
+            if "discriminator" in prop_schema
+            else None
+        )
+        if not mapping:
+            continue
+
+        discriminator_field = prop_schema["discriminator"].get("propertyName")
+        if not discriminator_field or discriminator_field in value:
+            continue
+
+        # Try each variant: match by required fields present in the data
+        for disc_value, ref in mapping.items():
+            ref_name = ref.rsplit("/", 1)[-1] if "/" in ref else ref
+            variant_def = defs.get(ref_name, {})
+            required = set(variant_def.get("required", []))
+            # Exclude the discriminator itself from the check
+            required.discard(discriminator_field)
+            if required and required.issubset(value.keys()):
+                data = {
+                    **data,
+                    prop_name: {**value, discriminator_field: disc_value},
+                }
+                break
+
+    return data
+
+
+def _parse_partial_config(
+    cls: Any,
+    config: dict[str, Any],
+) -> Any:
+    """
+    Parse a partial configuration, handling discriminator inference and
+    falling back to lenient validation when strict parsing fails.
+    """
+    config_class = cls.configuration_class
+
+    # Infer discriminator values the frontend may have omitted
+    schema = config_class.model_json_schema()
+    config = _infer_discriminators(schema, config)
+
+    try:
+        return config_class.model_validate(config)
+    except (PydanticValidationError, ValueError):
+        pass
+
+    try:
+        return config_class.model_validate(config, context={"partial": True})
+    except (PydanticValidationError, ValueError):
+        return None
 
 
 class SemanticViewRestApi(BaseSupersetModelRestApi):
@@ -224,12 +298,15 @@ class SemanticLayerRestApi(BaseSupersetApi):
 
         parsed_config = None
         if config := body.get("configuration"):
-            try:
-                parsed_config = cls.from_configuration(config).configuration
-            except Exception:  # pylint: disable=broad-except
-                parsed_config = None
+            parsed_config = _parse_partial_config(cls, config)
 
-        schema = cls.get_configuration_schema(parsed_config)
+        try:
+            schema = cls.get_configuration_schema(parsed_config)
+        except Exception:  # pylint: disable=broad-except
+            # Connection or query failures during schema enrichment should not
+            # prevent the form from rendering — return the base schema instead.
+            schema = cls.get_configuration_schema(None)
+
         resp = make_response(json.dumps({"result": schema}, sort_keys=False), 200)
         resp.headers["Content-Type"] = "application/json; charset=utf-8"
         return resp

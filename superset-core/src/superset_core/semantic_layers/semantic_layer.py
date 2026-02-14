@@ -33,6 +33,8 @@ class SemanticLayer(Protocol[ConfigT, SemanticViewT]):
     A protocol for semantic layers.
     """
 
+    configuration_class: type[BaseModel]
+
     @classmethod
     def from_configuration(
         cls,
