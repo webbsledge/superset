@@ -90,7 +90,7 @@ export function getXAxisFormatter(
   format?: string,
 ): TimeFormatter | StringConstructor | undefined {
   if (format === SMART_DATE_ID || !format) {
-    return undefined;
+    return getSmartDateFormatter();
   }
   if (format) {
     return getTimeFormatter(format);
