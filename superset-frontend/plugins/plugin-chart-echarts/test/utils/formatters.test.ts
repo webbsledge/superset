@@ -16,8 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { NumberFormats } from '@superset-ui/core';
-import { getPercentFormatter } from '../../src/utils/formatters';
+import { NumberFormats, SMART_DATE_ID, TimeFormatter } from '@superset-ui/core';
+import {
+  getPercentFormatter,
+  getXAxisFormatter,
+} from '../../src/utils/formatters';
 
 describe('getPercentFormatter', () => {
   const value = 0.6;
@@ -33,5 +36,46 @@ describe('getPercentFormatter', () => {
     expect(
       getPercentFormatter(NumberFormats.PERCENT_2_POINT).format(value),
     ).toEqual('60.00%');
+  });
+});
+
+describe('getXAxisFormatter', () => {
+  test('should return smart date formatter for SMART_DATE_ID format', () => {
+    const formatter = getXAxisFormatter(SMART_DATE_ID);
+    expect(formatter).toBeDefined();
+    expect(formatter).toBeInstanceOf(TimeFormatter);
+    expect((formatter as TimeFormatter).id).toBe(SMART_DATE_ID);
+  });
+
+  test('should return smart date formatter for undefined format', () => {
+    const formatter = getXAxisFormatter();
+    expect(formatter).toBeDefined();
+    expect(formatter).toBeInstanceOf(TimeFormatter);
+    expect((formatter as TimeFormatter).id).toBe(SMART_DATE_ID);
+  });
+
+  test('should return custom time formatter for custom format', () => {
+    const customFormat = '%Y-%m-%d';
+    const formatter = getXAxisFormatter(customFormat);
+    expect(formatter).toBeDefined();
+    expect(formatter).toBeInstanceOf(TimeFormatter);
+    expect((formatter as TimeFormatter).id).toBe(customFormat);
+  });
+
+  test('smart date formatter should be returned and not undefined', () => {
+    const formatter = getXAxisFormatter(SMART_DATE_ID);
+    expect(formatter).toBeDefined();
+    expect(formatter).toBeInstanceOf(TimeFormatter);
+    expect((formatter as TimeFormatter).id).toBe(SMART_DATE_ID);
+
+    const undefinedFormatter = getXAxisFormatter(undefined);
+    expect(undefinedFormatter).toBeDefined();
+    expect(undefinedFormatter).toBeInstanceOf(TimeFormatter);
+    expect((undefinedFormatter as TimeFormatter).id).toBe(SMART_DATE_ID);
+
+    const emptyFormatter = getXAxisFormatter();
+    expect(emptyFormatter).toBeDefined();
+    expect(emptyFormatter).toBeInstanceOf(TimeFormatter);
+    expect((emptyFormatter as TimeFormatter).id).toBe(SMART_DATE_ID);
   });
 });
