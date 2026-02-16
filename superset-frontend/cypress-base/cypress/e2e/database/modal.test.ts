@@ -68,12 +68,11 @@ describe('Add database', () => {
     cy.get('input[name="username"]').type('testusername', { force: true });
     cy.get('input[name="database"]').type('testdb', { force: true });
     cy.get('input[name="password"]').type('testpass', { force: true });
-    cy.get('input[name="password"]').blur();
+    cy.get('body').click(0, 0);
 
-    // Wait for the button to be enabled after validation completes on blur
-    cy.getBySel('btn-submit-connection').should('not.be.disabled', {
-      timeout: 30000,
-    });
+    cy.wait('@validateParams', { timeout: 30000 });
+
+    cy.getBySel('btn-submit-connection').should('not.be.disabled');
     cy.getBySel('btn-submit-connection').click({ force: true });
 
     cy.wait('@createDb', { timeout: 60000 }).then(() => {
@@ -92,12 +91,11 @@ describe('Add database', () => {
     cy.get('input[name="database"]').type('testdb', { force: true });
     cy.get('input[name="username"]').type('testusername', { force: true });
     cy.get('input[name="password"]').type('testpass', { force: true });
-    cy.get('input[name="password"]').blur();
+    cy.get('body').click(0, 0);
 
-    // Wait for the button to be enabled after validation completes on blur
-    cy.getBySel('btn-submit-connection').should('not.be.disabled', {
-      timeout: 30000,
-    });
+    cy.wait('@validateParams', { timeout: 30000 });
+
+    cy.getBySel('btn-submit-connection').should('not.be.disabled');
     cy.getBySel('btn-submit-connection').click({ force: true });
 
     cy.wait('@createDb', { timeout: 60000 }).then(() => {
