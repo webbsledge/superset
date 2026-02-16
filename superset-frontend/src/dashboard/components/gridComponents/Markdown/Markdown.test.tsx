@@ -430,9 +430,8 @@ test('shouldFocusMarkdown keeps focus when clicking on menu items', async () => 
   const editButton = screen.getByText('Edit');
 
   userEvent.click(editButton);
-  await new Promise(resolve => setTimeout(resolve, 50));
 
-  expect(screen.queryByRole('textbox')).toBeInTheDocument();
+  expect(await screen.findByRole('textbox')).toBeInTheDocument();
 });
 
 test('should exit edit mode when clicking outside in same row', async () => {
