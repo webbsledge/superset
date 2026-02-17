@@ -28,8 +28,10 @@ from superset.commands.base import BaseCommand
 from superset.commands.semantic_layer.exceptions import (
     SemanticLayerCreateFailedError,
     SemanticLayerInvalidError,
+    SemanticLayerNotFoundError,
+    SemanticViewCreateFailedError,
 )
-from superset.daos.semantic_layer import SemanticLayerDAO
+from superset.daos.semantic_layer import SemanticLayerDAO, SemanticViewDAO
 from superset.semantic_layers.registry import registry
 from superset.utils.decorators import on_error, transaction
 
@@ -67,3 +69,28 @@ class CreateSemanticLayerCommand(BaseCommand):
         # Validate configuration against the plugin
         cls = registry[sl_type]
         cls.from_configuration(self._properties["configuration"])
+
+
+class CreateSemanticViewCommand(BaseCommand):
+    def __init__(self, data: dict[str, Any]):
+        self._properties = data.copy()
+
+    @transaction(
+        on_error=partial(
+            on_error,
+            catches=(SQLAlchemyError, ValueError),
+            reraise=SemanticViewCreateFailedError,
+        )
+    )
+    def run(self) -> Model:
+        self.validate()
+        if isinstance(self._properties.get("configuration"), dict):
+            self._properties["configuration"] = json.dumps(
+                self._properties["configuration"]
+            )
+        return SemanticViewDAO.create(attributes=self._properties)
+
+    def validate(self) -> None:
+        layer_uuid = self._properties.get("semantic_layer_uuid")
+        if not SemanticLayerDAO.find_by_uuid(layer_uuid):
+            raise SemanticLayerNotFoundError()
