@@ -303,6 +303,7 @@ interface SemanticLayerModalProps {
   onHide: () => void;
   addDangerToast: (msg: string) => void;
   addSuccessToast: (msg: string) => void;
+  semanticLayerUuid?: string;
 }
 
 export default function SemanticLayerModal({
@@ -310,7 +311,9 @@ export default function SemanticLayerModal({
   onHide,
   addDangerToast,
   addSuccessToast,
+  semanticLayerUuid,
 }: SemanticLayerModalProps) {
+  const isEditMode = !!semanticLayerUuid;
   const [step, setStep] = useState<Step>('type');
   const [name, setName] = useState('');
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -380,9 +383,47 @@ export default function SemanticLayerModal({
     [addDangerToast, applySchema],
   );
 
+  const fetchExistingLayer = useCallback(
+    async (uuid: string) => {
+      setLoading(true);
+      try {
+        const { json } = await SupersetClient.get({
+          endpoint: `/api/v1/semantic_layer/${uuid}`,
+        });
+        const layer = json.result;
+        setName(layer.name ?? '');
+        setSelectedType(layer.type);
+        setFormData(layer.configuration ?? {});
+        setHasErrors(false);
+        // Fetch base schema (no configuration → no Snowflake connection) to
+        // show the form immediately. The existing maybeRefreshSchema machinery
+        // will trigger an enriched fetch in the background once deps are
+        // satisfied, and DynamicFieldControl will show per-field spinners.
+        const { json: schemaJson } = await SupersetClient.post({
+          endpoint: '/api/v1/semantic_layer/schema/configuration',
+          jsonPayload: { type: layer.type },
+        });
+        applySchema(schemaJson.result);
+        setStep('config');
+      } catch {
+        addDangerToast(
+          t('An error occurred while fetching the semantic layer'),
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [addDangerToast, applySchema],
+  );
+
   useEffect(() => {
     if (show) {
-      fetchTypes();
+      if (isEditMode && semanticLayerUuid) {
+        fetchTypes();
+        fetchExistingLayer(semanticLayerUuid);
+      } else {
+        fetchTypes();
+      }
     } else {
       setStep('type');
       setName('');
@@ -399,7 +440,7 @@ export default function SemanticLayerModal({
       dynamicDepsRef.current = {};
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     }
-  }, [show, fetchTypes]);
+  }, [show, fetchTypes, isEditMode, semanticLayerUuid, fetchExistingLayer]);
 
   const handleStepAdvance = () => {
     if (selectedType) {
@@ -422,14 +463,26 @@ export default function SemanticLayerModal({
   const handleCreate = async () => {
     setSaving(true);
     try {
-      await SupersetClient.post({
-        endpoint: '/api/v1/semantic_layer/',
-        jsonPayload: { name, type: selectedType, configuration: formData },
-      });
-      addSuccessToast(t('Semantic layer created'));
+      if (isEditMode && semanticLayerUuid) {
+        await SupersetClient.put({
+          endpoint: `/api/v1/semantic_layer/${semanticLayerUuid}`,
+          jsonPayload: { name, configuration: formData },
+        });
+        addSuccessToast(t('Semantic layer updated'));
+      } else {
+        await SupersetClient.post({
+          endpoint: '/api/v1/semantic_layer/',
+          jsonPayload: { name, type: selectedType, configuration: formData },
+        });
+        addSuccessToast(t('Semantic layer created'));
+      }
       onHide();
     } catch {
-      addDangerToast(t('An error occurred while creating the semantic layer'));
+      addDangerToast(
+        isEditMode
+          ? t('An error occurred while updating the semantic layer')
+          : t('An error occurred while creating the semantic layer'),
+      );
     } finally {
       setSaving(false);
     }
@@ -491,8 +544,9 @@ export default function SemanticLayerModal({
   const selectedTypeName =
     types.find(type => type.id === selectedType)?.name ?? '';
 
-  const title =
-    step === 'type'
+  const title = isEditMode
+    ? t('Edit %s', selectedTypeName || t('Semantic Layer'))
+    : step === 'type'
       ? t('New Semantic Layer')
       : t('Configure %s', selectedTypeName);
 
@@ -502,12 +556,12 @@ export default function SemanticLayerModal({
       onHide={onHide}
       onSave={handleSave}
       title={title}
-      icon={<Icons.PlusOutlined />}
+      icon={isEditMode ? <Icons.EditOutlined /> : <Icons.PlusOutlined />}
       width={step === 'type' ? MODAL_STANDARD_WIDTH : MODAL_MEDIUM_WIDTH}
       saveDisabled={
         step === 'type' ? !selectedType : saving || !name.trim() || hasErrors
       }
-      saveText={step === 'type' ? undefined : t('Create')}
+      saveText={step === 'type' ? undefined : isEditMode ? t('Save') : t('Create')}
       saveLoading={saving}
       contentLoading={loading}
     >
@@ -534,10 +588,12 @@ export default function SemanticLayerModal({
         </ModalContent>
       ) : (
         <ModalContent>
-          <BackLink type="button" onClick={handleBack}>
-            <Icons.CaretLeftOutlined iconSize="s" />
-            {t('Back')}
-          </BackLink>
+          {!isEditMode && (
+            <BackLink type="button" onClick={handleBack}>
+              <Icons.CaretLeftOutlined iconSize="s" />
+              {t('Back')}
+            </BackLink>
+          )}
           <ModalFormField label={t('Name')} required>
             <Input
               value={name}

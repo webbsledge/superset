@@ -24,7 +24,7 @@ import {
   FeatureFlag,
 } from '@superset-ui/core';
 import { css, styled, useTheme } from '@apache-superset/core/ui';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import rison from 'rison';
 import { useSelector } from 'react-redux';
 import { useQueryParams, BooleanParam } from 'use-query-params';
@@ -50,6 +50,7 @@ import {
   ListView,
   ListViewFilterOperator as FilterOperator,
   ListViewFilters,
+  type ListViewFetchDataConfig,
 } from 'src/components';
 import { Typography } from '@superset-ui/core/components/Typography';
 import { getUrlParam } from 'src/utils/urlUtils';
@@ -77,6 +78,11 @@ const dbConfigExtraExtension = extensionsRegistry.get(
 );
 
 const PAGE_SIZE = 25;
+
+type ConnectionItem = DatabaseObject & {
+  source_type?: 'database' | 'semantic_layer';
+  sl_type?: string;
+};
 
 interface DatabaseDeleteObject extends DatabaseObject {
   charts: any;
@@ -117,20 +123,105 @@ function DatabaseList({
   user,
 }: DatabaseListProps) {
   const theme = useTheme();
+  const showSemanticLayers = isFeatureEnabled(FeatureFlag.SemanticLayers);
+
+  // Standard database list view resource (used when SL flag is OFF)
   const {
     state: {
-      loading,
-      resourceCount: databaseCount,
-      resourceCollection: databases,
+      loading: dbLoading,
+      resourceCount: dbCount,
+      resourceCollection: dbCollection,
     },
     hasPerm,
-    fetchData,
-    refreshData,
+    fetchData: dbFetchData,
+    refreshData: dbRefreshData,
   } = useListViewResource<DatabaseObject>(
     'database',
     t('database'),
     addDangerToast,
   );
+
+  // Combined endpoint state (used when SL flag is ON)
+  const [combinedItems, setCombinedItems] = useState<ConnectionItem[]>([]);
+  const [combinedCount, setCombinedCount] = useState(0);
+  const [combinedLoading, setCombinedLoading] = useState(true);
+  const [lastFetchConfig, setLastFetchConfig] =
+    useState<ListViewFetchDataConfig | null>(null);
+
+  const combinedFetchData = useCallback(
+    (config: ListViewFetchDataConfig) => {
+      setLastFetchConfig(config);
+      setCombinedLoading(true);
+      const { pageIndex, pageSize, sortBy, filters: filterValues } = config;
+
+      const sourceTypeFilter = filterValues.find(f => f.id === 'source_type');
+      const otherFilters = filterValues
+        .filter(f => f.id !== 'source_type')
+        .filter(
+          ({ value }) => value !== '' && value !== null && value !== undefined,
+        )
+        .map(({ id, operator: opr, value }) => ({
+          col: id,
+          opr,
+          value:
+            value && typeof value === 'object' && 'value' in value
+              ? value.value
+              : value,
+        }));
+
+      const sourceTypeValue =
+        sourceTypeFilter?.value && typeof sourceTypeFilter.value === 'object'
+          ? (sourceTypeFilter.value as { value: string }).value
+          : sourceTypeFilter?.value;
+      if (sourceTypeValue) {
+        otherFilters.push({
+          col: 'source_type',
+          opr: 'eq',
+          value: sourceTypeValue,
+        });
+      }
+
+      const queryParams = rison.encode_uri({
+        order_column: sortBy[0].id,
+        order_direction: sortBy[0].desc ? 'desc' : 'asc',
+        page: pageIndex,
+        page_size: pageSize,
+        ...(otherFilters.length ? { filters: otherFilters } : {}),
+      });
+
+      return SupersetClient.get({
+        endpoint: `/api/v1/semantic_layer/connections/?q=${queryParams}`,
+      })
+        .then(({ json = {} }) => {
+          setCombinedItems(json.result);
+          setCombinedCount(json.count);
+        })
+        .catch(() => {
+          addDangerToast(t('An error occurred while fetching connections'));
+        })
+        .finally(() => {
+          setCombinedLoading(false);
+        });
+    },
+    [addDangerToast],
+  );
+
+  const combinedRefreshData = useCallback(() => {
+    if (lastFetchConfig) {
+      return combinedFetchData(lastFetchConfig);
+    }
+    return undefined;
+  }, [lastFetchConfig, combinedFetchData]);
+
+  // Select the right data source based on feature flag
+  const loading = showSemanticLayers ? combinedLoading : dbLoading;
+  const databaseCount = showSemanticLayers ? combinedCount : dbCount;
+  const databases: ConnectionItem[] = showSemanticLayers
+    ? combinedItems
+    : dbCollection;
+  const fetchData = showSemanticLayers ? combinedFetchData : dbFetchData;
+  const refreshData = showSemanticLayers ? combinedRefreshData : dbRefreshData;
+
   const fullUser = useSelector<any, UserWithPermissionsAndRoles>(
     state => state.user,
   );
@@ -159,6 +250,11 @@ function DatabaseList({
     useState<boolean>(false);
   const [semanticLayerModalOpen, setSemanticLayerModalOpen] =
     useState<boolean>(false);
+  const [slCurrentlyEditing, setSlCurrentlyEditing] = useState<string | null>(
+    null,
+  );
+  const [slCurrentlyDeleting, setSlCurrentlyDeleting] =
+    useState<ConnectionItem | null>(null);
 
   const [allowUploads, setAllowUploads] = useState<boolean>(false);
   const isAdmin = isUserAdmin(fullUser);
@@ -440,6 +536,23 @@ function DatabaseList({
 
   const initialSort = [{ id: 'changed_on_delta_humanized', desc: true }];
 
+  function handleSemanticLayerDelete(item: ConnectionItem) {
+    SupersetClient.delete({
+      endpoint: `/api/v1/semantic_layer/${item.uuid}`,
+    }).then(
+      () => {
+        refreshData();
+        addSuccessToast(t('Deleted: %s', item.database_name));
+        setSlCurrentlyDeleting(null);
+      },
+      createErrorHandler(errMsg =>
+        addDangerToast(
+          t('There was an issue deleting %s: %s', item.database_name, errMsg),
+        ),
+      ),
+    );
+  }
+
   const columns = useMemo(
     () => [
       {
@@ -452,7 +565,7 @@ function DatabaseList({
         accessor: 'backend',
         Header: t('Backend'),
         size: 'xl',
-        disableSortBy: true, // TODO: api support for sorting by 'backend'
+        disableSortBy: true,
         id: 'backend',
       },
       {
@@ -466,13 +579,12 @@ function DatabaseList({
             <span>{t('AQE')}</span>
           </Tooltip>
         ),
-        Cell: ({
-          row: {
-            original: { allow_run_async: allowRunAsync },
-          },
-        }: {
-          row: { original: { allow_run_async: boolean } };
-        }) => <BooleanDisplay value={allowRunAsync} />,
+        Cell: ({ row: { original } }: any) =>
+          original.source_type === 'semantic_layer' ? (
+            <span>–</span>
+          ) : (
+            <BooleanDisplay value={original.allow_run_async} />
+          ),
         size: 'sm',
         id: 'allow_run_async',
       },
@@ -487,33 +599,36 @@ function DatabaseList({
             <span>{t('DML')}</span>
           </Tooltip>
         ),
-        Cell: ({
-          row: {
-            original: { allow_dml: allowDML },
-          },
-        }: any) => <BooleanDisplay value={allowDML} />,
+        Cell: ({ row: { original } }: any) =>
+          original.source_type === 'semantic_layer' ? (
+            <span>–</span>
+          ) : (
+            <BooleanDisplay value={original.allow_dml} />
+          ),
         size: 'sm',
         id: 'allow_dml',
       },
       {
         accessor: 'allow_file_upload',
         Header: t('File upload'),
-        Cell: ({
-          row: {
-            original: { allow_file_upload: allowFileUpload },
-          },
-        }: any) => <BooleanDisplay value={allowFileUpload} />,
+        Cell: ({ row: { original } }: any) =>
+          original.source_type === 'semantic_layer' ? (
+            <span>–</span>
+          ) : (
+            <BooleanDisplay value={original.allow_file_upload} />
+          ),
         size: 'md',
         id: 'allow_file_upload',
       },
       {
         accessor: 'expose_in_sqllab',
         Header: t('Expose in SQL Lab'),
-        Cell: ({
-          row: {
-            original: { expose_in_sqllab: exposeInSqllab },
-          },
-        }: any) => <BooleanDisplay value={exposeInSqllab} />,
+        Cell: ({ row: { original } }: any) =>
+          original.source_type === 'semantic_layer' ? (
+            <span>–</span>
+          ) : (
+            <BooleanDisplay value={original.expose_in_sqllab} />
+          ),
         size: 'md',
         id: 'expose_in_sqllab',
       },
@@ -533,6 +648,49 @@ function DatabaseList({
       },
       {
         Cell: ({ row: { original } }: any) => {
+          const isSemanticLayer =
+            original.source_type === 'semantic_layer';
+
+          if (isSemanticLayer) {
+            if (!canEdit && !canDelete) return null;
+            return (
+              <Actions className="actions">
+                {canDelete && (
+                  <Tooltip
+                    id="delete-action-tooltip"
+                    title={t('Delete')}
+                    placement="bottom"
+                  >
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="action-button"
+                      onClick={() => setSlCurrentlyDeleting(original)}
+                    >
+                      <Icons.DeleteOutlined iconSize="l" />
+                    </span>
+                  </Tooltip>
+                )}
+                {canEdit && (
+                  <Tooltip
+                    id="edit-action-tooltip"
+                    title={t('Edit')}
+                    placement="bottom"
+                  >
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="action-button"
+                      onClick={() => setSlCurrentlyEditing(original.uuid)}
+                    >
+                      <Icons.EditOutlined iconSize="l" />
+                    </span>
+                  </Tooltip>
+                )}
+              </Actions>
+            );
+          }
+
           const handleEdit = () =>
             handleDatabaseEditModal({ database: original, modalOpen: true });
           const handleDelete = () => openDatabaseDeleteModal(original);
@@ -619,6 +777,12 @@ function DatabaseList({
         disableSortBy: true,
       },
       {
+        accessor: 'source_type',
+        hidden: true,
+        disableSortBy: true,
+        id: 'source_type',
+      },
+      {
         accessor: QueryObjectColumns.ChangedBy,
         hidden: true,
         id: QueryObjectColumns.ChangedBy,
@@ -627,8 +791,8 @@ function DatabaseList({
     [canDelete, canEdit, canExport],
   );
 
-  const filters: ListViewFilters = useMemo(
-    () => [
+  const filters: ListViewFilters = useMemo(() => {
+    const baseFilters: ListViewFilters = [
       {
         Header: t('Name'),
         key: 'search',
@@ -636,62 +800,83 @@ function DatabaseList({
         input: 'search',
         operator: FilterOperator.Contains,
       },
-      {
-        Header: t('Expose in SQL Lab'),
-        key: 'expose_in_sql_lab',
-        id: 'expose_in_sqllab',
+    ];
+
+    if (showSemanticLayers) {
+      baseFilters.push({
+        Header: t('Source'),
+        key: 'source_type',
+        id: 'source_type',
         input: 'select',
         operator: FilterOperator.Equals,
         unfilteredLabel: t('All'),
         selects: [
-          { label: t('Yes'), value: true },
-          { label: t('No'), value: false },
+          { label: t('Database'), value: 'database' },
+          { label: t('Semantic Layer'), value: 'semantic_layer' },
         ],
-      },
-      {
-        Header: (
-          <Tooltip
-            id="allow-run-async-filter-header-tooltip"
-            title={t('Asynchronous query execution')}
-            placement="top"
-          >
-            <span>{t('AQE')}</span>
-          </Tooltip>
-        ),
-        key: 'allow_run_async',
-        id: 'allow_run_async',
-        input: 'select',
-        operator: FilterOperator.Equals,
-        unfilteredLabel: t('All'),
-        selects: [
-          { label: t('Yes'), value: true },
-          { label: t('No'), value: false },
-        ],
-      },
-      {
-        Header: t('Modified by'),
-        key: 'changed_by',
-        id: 'changed_by',
-        input: 'select',
-        operator: FilterOperator.RelationOneMany,
-        unfilteredLabel: t('All'),
-        fetchSelects: createFetchRelated(
-          'database',
-          'changed_by',
-          createErrorHandler(errMsg =>
-            t(
-              'An error occurred while fetching dataset datasource values: %s',
-              errMsg,
-            ),
+      });
+    }
+
+    if (!showSemanticLayers) {
+      baseFilters.push(
+        {
+          Header: t('Expose in SQL Lab'),
+          key: 'expose_in_sql_lab',
+          id: 'expose_in_sqllab',
+          input: 'select',
+          operator: FilterOperator.Equals,
+          unfilteredLabel: t('All'),
+          selects: [
+            { label: t('Yes'), value: true },
+            { label: t('No'), value: false },
+          ],
+        },
+        {
+          Header: (
+            <Tooltip
+              id="allow-run-async-filter-header-tooltip"
+              title={t('Asynchronous query execution')}
+              placement="top"
+            >
+              <span>{t('AQE')}</span>
+            </Tooltip>
           ),
-          user,
-        ),
-        paginate: true,
-        dropdownStyle: { minWidth: WIDER_DROPDOWN_WIDTH },
-      },
-    ],
-    [],
-  );
+          key: 'allow_run_async',
+          id: 'allow_run_async',
+          input: 'select',
+          operator: FilterOperator.Equals,
+          unfilteredLabel: t('All'),
+          selects: [
+            { label: t('Yes'), value: true },
+            { label: t('No'), value: false },
+          ],
+        },
+        {
+          Header: t('Modified by'),
+          key: 'changed_by',
+          id: 'changed_by',
+          input: 'select',
+          operator: FilterOperator.RelationOneMany,
+          unfilteredLabel: t('All'),
+          fetchSelects: createFetchRelated(
+            'database',
+            'changed_by',
+            createErrorHandler(errMsg =>
+              t(
+                'An error occurred while fetching dataset datasource values: %s',
+                errMsg,
+              ),
+            ),
+            user,
+          ),
+          paginate: true,
+          dropdownStyle: { minWidth: WIDER_DROPDOWN_WIDTH },
+        },
+      );
+    }
+
+    return baseFilters;
+  }, [showSemanticLayers]);
 
   return (
     <>
@@ -736,10 +921,46 @@ function DatabaseList({
       />
       <SemanticLayerModal
         show={semanticLayerModalOpen}
-        onHide={() => setSemanticLayerModalOpen(false)}
+        onHide={() => {
+          setSemanticLayerModalOpen(false);
+          refreshData();
+        }}
         addDangerToast={addDangerToast}
         addSuccessToast={addSuccessToast}
       />
+      <SemanticLayerModal
+        show={!!slCurrentlyEditing}
+        onHide={() => {
+          setSlCurrentlyEditing(null);
+          refreshData();
+        }}
+        addDangerToast={addDangerToast}
+        addSuccessToast={addSuccessToast}
+        semanticLayerUuid={slCurrentlyEditing ?? undefined}
+      />
+      {slCurrentlyDeleting && (
+        <DeleteModal
+          description={
+            <p>
+              {t('Are you sure you want to delete')}{' '}
+              <b>{slCurrentlyDeleting.database_name}</b>?
+            </p>
+          }
+          onConfirm={() => {
+            if (slCurrentlyDeleting) {
+              handleSemanticLayerDelete(slCurrentlyDeleting);
+            }
+          }}
+          onHide={() => setSlCurrentlyDeleting(null)}
+          open
+          title={
+            <ModalTitleWithIcon
+              icon={<Icons.DeleteOutlined />}
+              title={t('Delete Semantic Layer?')}
+            />
+          }
+        />
+      )}
       {databaseCurrentlyDeleting && (
         <DeleteModal
           description={

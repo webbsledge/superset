@@ -16,6 +16,7 @@
 # under the License.
 from __future__ import annotations
 
+import json
 import logging
 from functools import partial
 from typing import Any
@@ -48,6 +49,10 @@ class CreateSemanticLayerCommand(BaseCommand):
     )
     def run(self) -> Model:
         self.validate()
+        if isinstance(self._properties.get("configuration"), dict):
+            self._properties["configuration"] = json.dumps(
+                self._properties["configuration"]
+            )
         return SemanticLayerDAO.create(attributes=self._properties)
 
     def validate(self) -> None:
