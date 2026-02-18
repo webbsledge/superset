@@ -24,6 +24,15 @@ import { getExtensionsRegistry } from '@superset-ui/core';
 import { Menu } from './Menu';
 import * as getBootstrapData from 'src/utils/getBootstrapData';
 
+// Mock useBreakpoint to return desktop breakpoints (prevents mobile menu rendering)
+jest.mock('@superset-ui/core/components', () => ({
+  ...jest.requireActual('@superset-ui/core/components'),
+  Grid: {
+    ...jest.requireActual('@superset-ui/core/components').Grid,
+    useBreakpoint: () => ({ xs: true, sm: true, md: true, lg: true, xl: true }),
+  },
+}));
+
 const dropdownItems = [
   {
     label: 'Data',
