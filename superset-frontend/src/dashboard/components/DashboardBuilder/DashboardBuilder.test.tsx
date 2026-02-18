@@ -49,6 +49,15 @@ fetchMock.put('glob:*/api/v1/dashboard/*', {});
 // Add mock for logging endpoint
 fetchMock.post('glob:*/superset/log/?*', {});
 
+// Mock useBreakpoint to return desktop breakpoints (prevents mobile rendering)
+jest.mock('antd', () => ({
+  ...jest.requireActual('antd'),
+  Grid: {
+    ...jest.requireActual('antd').Grid,
+    useBreakpoint: () => ({ xs: true, sm: true, md: true, lg: true, xl: true }),
+  },
+}));
+
 jest.mock('src/dashboard/actions/dashboardState', () => ({
   ...jest.requireActual('src/dashboard/actions/dashboardState'),
   fetchFaveStar: jest.fn(),
