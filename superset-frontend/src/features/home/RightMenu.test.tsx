@@ -49,6 +49,15 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
+// Mock useBreakpoint to return desktop breakpoints (prevents mobile menu rendering)
+jest.mock('@superset-ui/core/components', () => ({
+  ...jest.requireActual('@superset-ui/core/components'),
+  Grid: {
+    ...jest.requireActual('@superset-ui/core/components').Grid,
+    useBreakpoint: () => ({ xs: true, sm: true, md: true, lg: true, xl: true }),
+  },
+}));
+
 jest.mock('src/features/databases/DatabaseModal', () => {
   const DatabaseModal = () => <span />;
   DatabaseModal.displayName = 'DatabaseModal';
