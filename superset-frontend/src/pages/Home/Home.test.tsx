@@ -147,9 +147,12 @@ jest.mock('@superset-ui/core', () => ({
 }));
 
 // Mock useBreakpoint to return desktop breakpoints (prevents mobile rendering)
-jest.mock('@superset-ui/core/components/Grid', () => ({
-  ...jest.requireActual('@superset-ui/core/components/Grid'),
-  useBreakpoint: () => ({ xs: true, sm: true, md: true, lg: true, xl: true }),
+jest.mock('antd', () => ({
+  ...jest.requireActual('antd'),
+  Grid: {
+    ...jest.requireActual('antd').Grid,
+    useBreakpoint: () => ({ xs: true, sm: true, md: true, lg: true, xl: true }),
+  },
 }));
 
 const mockedIsFeatureEnabled = isFeatureEnabled as jest.Mock;
