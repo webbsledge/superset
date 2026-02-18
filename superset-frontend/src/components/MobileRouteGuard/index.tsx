@@ -71,12 +71,22 @@ interface MobileRouteGuardProps {
 function MobileRouteGuard({ children }: MobileRouteGuardProps) {
   const screens = useBreakpoint();
   const location = useLocation();
-  const [bypassEnabled, setBypassEnabled] = useState(false);
+  const [bypassEnabled, setBypassEnabled] = useState(() => {
+    try {
+      return sessionStorage.getItem('mobile-bypass') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
-  // Check for bypass flag on mount and when location changes
+  // Check for bypass flag when location changes
   useEffect(() => {
-    const bypass = sessionStorage.getItem('mobile-bypass') === 'true';
-    setBypassEnabled(bypass);
+    try {
+      const bypass = sessionStorage.getItem('mobile-bypass') === 'true';
+      setBypassEnabled(bypass);
+    } catch {
+      // Storage access denied, keep current state
+    }
   }, [location.pathname]);
 
   // Determine if we're on mobile (< md breakpoint = < 768px)
