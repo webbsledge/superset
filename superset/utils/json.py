@@ -302,3 +302,45 @@ def reveal_sensitive(
                 match.context.value[match.path.fields[0]] = old_value[0].value
 
     return revealed_payload
+
+
+def get_masked_fields(
+    payload: dict[str, Any],
+    sensitive_fields: set[str],
+) -> list[str]:
+    """
+    Returns masked fields in JSON config.
+
+    :param payload: The payload to check
+    :param sensitive_fields: The set of fields to check, as JSONPath expressions
+    :returns: List of JSONPath expressions for fields that are masked
+    """
+    masked = []
+    for json_path in sensitive_fields:
+        jsonpath_expr = parse(json_path)
+        for match in jsonpath_expr.find(payload):
+            if match.value == PASSWORD_MASK:
+                masked.append(json_path)
+                break
+    return masked
+
+
+def set_masked_fields(
+    payload: dict[str, Any],
+    path_values: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Sets values at JSONPath locations in a payload.
+
+    :param payload: The payload to modify
+    :param path_values: A dict mapping JSONPath expressions to values
+    :returns: The modified payload (copy)
+    """
+    result = copy.deepcopy(payload)
+
+    for json_path, value in path_values.items():
+        jsonpath_expr = parse(json_path)
+        for match in jsonpath_expr.find(result):
+            match.context.value[match.path.fields[0]] = value
+
+    return result
