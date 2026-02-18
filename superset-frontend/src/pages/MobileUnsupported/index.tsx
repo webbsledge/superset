@@ -56,12 +56,15 @@ function MobileUnsupported({ originalPath }: MobileUnsupportedProps) {
 
   const handleContinueAnyway = useCallback(() => {
     // Store preference in sessionStorage so we don't keep redirecting
-    sessionStorage.setItem('mobile-bypass', 'true');
+    try {
+      sessionStorage.setItem('mobile-bypass', 'true');
+    } catch {
+      // Storage access denied, continue anyway without persisting
+    }
     history.push(fromPath);
   }, [history, fromPath]);
 
-  // If we're not on mobile anymore (user rotated/resized), redirect back
-  // This is optional - could remove if we want to keep them on this page
+  // Determine if we're at or above the 'md' breakpoint (i.e. not on mobile)
   const isNotMobile = screens.md;
 
   return (

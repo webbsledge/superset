@@ -752,6 +752,7 @@ function DashboardList(props: DashboardListProps) {
             <Button
               buttonStyle="link"
               onClick={() => setMobileFiltersOpen(true)}
+              aria-label={t('Search')}
               css={css`
                 padding: 0;
                 margin-right: ${theme.sizeUnit * 2}px;

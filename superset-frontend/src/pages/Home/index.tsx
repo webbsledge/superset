@@ -147,7 +147,7 @@ export const LoadingCards = ({ cover }: LoadingProps) => (
 );
 
 function Welcome({ user, addDangerToast }: WelcomeProps) {
-  const { md: isNotMobile } = Grid.useBreakpoint();
+  const { md: isNotMobile = true } = Grid.useBreakpoint();
   const canReadSavedQueries = userHasPermission(user, 'SavedQuery', 'can_read');
   const userid = user.userId;
   const id = userid!.toString(); // confident that user is not a guest user
