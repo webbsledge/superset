@@ -354,15 +354,18 @@ describe('ListView', () => {
 // Mobile support tests
 test('respects forceViewMode prop and hides view toggle', () => {
   // Omit cardSortSelectOptions to avoid CardSortSelect needing initialSort
-  const { cardSortSelectOptions, ...propsWithoutSort } = mockedPropsComprehensive;
+  const { cardSortSelectOptions, ...propsWithoutSort } =
+    mockedPropsComprehensive;
   render(
-    <QueryParamProvider location={makeMockLocation()}>
-      <ListView
-        {...propsWithoutSort}
-        renderCard={() => <div>Card</div>}
-        forceViewMode="card"
-      />
-    </QueryParamProvider>,
+    <MemoryRouter>
+      <QueryParamProvider adapter={ReactRouter5Adapter}>
+        <ListView
+          {...propsWithoutSort}
+          renderCard={() => <div>Card</div>}
+          forceViewMode="card"
+        />
+      </QueryParamProvider>
+    </MemoryRouter>,
     { store: mockStore() },
   );
 
@@ -373,15 +376,18 @@ test('respects forceViewMode prop and hides view toggle', () => {
 
 test('shows card view when forceViewMode is card', () => {
   // Omit cardSortSelectOptions to avoid CardSortSelect needing initialSort
-  const { cardSortSelectOptions, ...propsWithoutSort } = mockedPropsComprehensive;
+  const { cardSortSelectOptions, ...propsWithoutSort } =
+    mockedPropsComprehensive;
   render(
-    <QueryParamProvider location={makeMockLocation()}>
-      <ListView
-        {...propsWithoutSort}
-        renderCard={() => <div data-test="test-card">Card Content</div>}
-        forceViewMode="card"
-      />
-    </QueryParamProvider>,
+    <MemoryRouter>
+      <QueryParamProvider adapter={ReactRouter5Adapter}>
+        <ListView
+          {...propsWithoutSort}
+          renderCard={() => <div data-test="test-card">Card Content</div>}
+          forceViewMode="card"
+        />
+      </QueryParamProvider>
+    </MemoryRouter>,
     { store: mockStore() },
   );
 
@@ -392,16 +398,19 @@ test('shows card view when forceViewMode is card', () => {
 test('renders mobile filter drawer when mobileFiltersOpen is true', () => {
   const setMobileFiltersOpen = jest.fn();
   // Omit cardSortSelectOptions to avoid CardSortSelect needing initialSort
-  const { cardSortSelectOptions, ...propsWithoutSort } = mockedPropsComprehensive;
+  const { cardSortSelectOptions, ...propsWithoutSort } =
+    mockedPropsComprehensive;
   render(
-    <QueryParamProvider location={makeMockLocation()}>
-      <ListView
-        {...propsWithoutSort}
-        mobileFiltersOpen
-        setMobileFiltersOpen={setMobileFiltersOpen}
-        mobileFiltersDrawerTitle="Search Dashboards"
-      />
-    </QueryParamProvider>,
+    <MemoryRouter>
+      <QueryParamProvider adapter={ReactRouter5Adapter}>
+        <ListView
+          {...propsWithoutSort}
+          mobileFiltersOpen
+          setMobileFiltersOpen={setMobileFiltersOpen}
+          mobileFiltersDrawerTitle="Search Dashboards"
+        />
+      </QueryParamProvider>
+    </MemoryRouter>,
     { store: mockStore() },
   );
 
@@ -412,16 +421,19 @@ test('renders mobile filter drawer when mobileFiltersOpen is true', () => {
 test('calls setMobileFiltersOpen(false) when drawer is closed', async () => {
   const setMobileFiltersOpen = jest.fn();
   // Omit cardSortSelectOptions to avoid CardSortSelect needing initialSort
-  const { cardSortSelectOptions, ...propsWithoutSort } = mockedPropsComprehensive;
+  const { cardSortSelectOptions, ...propsWithoutSort } =
+    mockedPropsComprehensive;
   render(
-    <QueryParamProvider location={makeMockLocation()}>
-      <ListView
-        {...propsWithoutSort}
-        mobileFiltersOpen
-        setMobileFiltersOpen={setMobileFiltersOpen}
-        mobileFiltersDrawerTitle="Search"
-      />
-    </QueryParamProvider>,
+    <MemoryRouter>
+      <QueryParamProvider adapter={ReactRouter5Adapter}>
+        <ListView
+          {...propsWithoutSort}
+          mobileFiltersOpen
+          setMobileFiltersOpen={setMobileFiltersOpen}
+          mobileFiltersDrawerTitle="Search"
+        />
+      </QueryParamProvider>
+    </MemoryRouter>,
     { store: mockStore() },
   );
 

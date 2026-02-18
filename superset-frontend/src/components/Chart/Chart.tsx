@@ -340,8 +340,6 @@ class Chart extends PureComponent<ChartProps, {}> {
         {this.shouldRenderChart() ? (
           <ChartRenderer
             {...this.props}
-            // On mobile, pass '100%' to let charts fill container width
-            width={window.innerWidth > 767 ? this.props.width : '100%'}
             source={
               this.props.dashboardId
                 ? ChartSource.Dashboard

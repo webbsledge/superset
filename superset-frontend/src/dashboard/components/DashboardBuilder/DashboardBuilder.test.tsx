@@ -312,6 +312,7 @@ describe('DashboardBuilder', () => {
         dashboardFiltersOpen: true,
         toggleDashboardFiltersOpen: jest.fn(),
         nativeFiltersEnabled: true,
+        hasFilters: true,
       });
 
     const { getByTestId } = setup();
@@ -338,6 +339,7 @@ describe('DashboardBuilder', () => {
         dashboardFiltersOpen: false,
         toggleDashboardFiltersOpen: jest.fn(),
         nativeFiltersEnabled: true,
+        hasFilters: true,
       });
 
     const { getByTestId } = setup();
@@ -364,6 +366,7 @@ describe('DashboardBuilder', () => {
         dashboardFiltersOpen: true,
         toggleDashboardFiltersOpen: jest.fn(),
         nativeFiltersEnabled: false,
+        hasFilters: false,
       });
 
     const { getByTestId } = setup();
@@ -423,6 +426,7 @@ describe('DashboardBuilder', () => {
       dashboardFiltersOpen: true,
       toggleDashboardFiltersOpen: jest.fn(),
       nativeFiltersEnabled: false,
+      hasFilters: false,
     });
     const { queryByTestId } = setup();
 
@@ -436,6 +440,7 @@ describe('DashboardBuilder', () => {
       dashboardFiltersOpen: true,
       toggleDashboardFiltersOpen: jest.fn(),
       nativeFiltersEnabled: true,
+      hasFilters: true,
     });
     const { queryByTestId } = setup();
 
@@ -449,6 +454,7 @@ describe('DashboardBuilder', () => {
       dashboardFiltersOpen: true,
       toggleDashboardFiltersOpen: jest.fn(),
       nativeFiltersEnabled: true,
+      hasFilters: true,
     });
     const { queryByTestId } = setup({
       dashboardState: { ...mockState.dashboardState, editMode: true },

@@ -24,7 +24,6 @@ import { addAlpha, JsonObject, useElementOnScreen } from '@superset-ui/core';
 import { css, styled, useTheme } from '@apache-superset/core/ui';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Button,
   Drawer,
   EmptyState,
   Grid,

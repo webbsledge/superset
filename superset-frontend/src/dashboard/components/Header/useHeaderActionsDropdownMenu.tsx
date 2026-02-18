@@ -117,7 +117,7 @@ export const useHeaderActionsMenu = ({
           manageEmbedded();
           break;
         case 'toggle-favorite':
-          if (saveFaveStar) {
+          if (saveFaveStar && isStarred !== undefined) {
             saveFaveStar(dashboardId, isStarred);
           }
           break;

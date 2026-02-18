@@ -131,14 +131,22 @@ test('should render the buttons', async () => {
 // Mobile support tests
 test('should render leftIcon when provided', async () => {
   setup({
-    leftIcon: <button data-test="left-icon-button">Search</button>,
+    leftIcon: (
+      <button type="button" data-test="left-icon-button">
+        Search
+      </button>
+    ),
   });
   expect(await screen.findByTestId('left-icon-button')).toBeInTheDocument();
 });
 
 test('should render rightIcon when provided', async () => {
   setup({
-    rightIcon: <button data-test="right-icon-button">Menu</button>,
+    rightIcon: (
+      <button type="button" data-test="right-icon-button">
+        Menu
+      </button>
+    ),
   });
   expect(await screen.findByTestId('right-icon-button')).toBeInTheDocument();
 });
