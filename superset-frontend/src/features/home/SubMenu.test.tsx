@@ -132,7 +132,7 @@ test('should render the buttons', async () => {
 test('should render leftIcon when provided', async () => {
   setup({
     leftIcon: (
-      <button type="button" data-testid="left-icon-button">
+      <button type="button" data-test="left-icon-button">
         Search
       </button>
     ),
@@ -143,7 +143,7 @@ test('should render leftIcon when provided', async () => {
 test('should render rightIcon when provided', async () => {
   setup({
     rightIcon: (
-      <button type="button" data-testid="right-icon-button">
+      <button type="button" data-test="right-icon-button">
         Menu
       </button>
     ),
@@ -153,8 +153,8 @@ test('should render rightIcon when provided', async () => {
 
 test('should render both leftIcon and rightIcon together', async () => {
   setup({
-    leftIcon: <span data-testid="mobile-left">Left</span>,
-    rightIcon: <span data-testid="mobile-right">Right</span>,
+    leftIcon: <span data-test="mobile-left">Left</span>,
+    rightIcon: <span data-test="mobile-right">Right</span>,
   });
   expect(await screen.findByTestId('mobile-left')).toBeInTheDocument();
   expect(await screen.findByTestId('mobile-right')).toBeInTheDocument();
