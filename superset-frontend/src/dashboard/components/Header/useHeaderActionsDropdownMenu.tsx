@@ -230,16 +230,20 @@ export const useHeaderActionsMenu = ({
           : t('None');
       menuItems.push({
         key: 'owner-info',
-        label: `${t('Owner')}: ${ownerNames}`,
+        label: t('Owner: %(names)s', { names: ownerNames }),
         disabled: true,
       });
 
       // Last modified
       const modifiedBy =
         getOwnerName(dashboardInfo?.changed_by) || t('Not available');
+      const modifiedDate = dashboardInfo?.changed_on_delta_humanized || '';
       menuItems.push({
         key: 'modified-info',
-        label: `${t('Modified')} ${dashboardInfo?.changed_on_delta_humanized || ''} ${t('by')} ${modifiedBy}`,
+        label: t('Modified %(date)s by %(user)s', {
+          date: modifiedDate,
+          user: modifiedBy,
+        }),
         disabled: true,
       });
 
