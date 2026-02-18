@@ -154,6 +154,10 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         "$.auth_params.privatekey_body",
         "$.auth_params.privatekey_pass",
     }
+    encrypted_extra_sensitive_field_labels = {
+        "$.auth_params.privatekey_body": "Private Key Body",
+        "$.auth_params.privatekey_pass": "Private Key Password",
+    }
 
     _time_grain_expressions = {
         None: "{col}",

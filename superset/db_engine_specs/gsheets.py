@@ -133,6 +133,10 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
         "$.service_account_info.private_key",
         "$.oauth2_client_info.secret",
     }
+    encrypted_extra_sensitive_field_labels = {
+        "$.service_account_info.private_key": "Service Account Private Key",
+        "$.oauth2_client_info.secret": "OAuth2 Client Secret",
+    }
 
     custom_errors: dict[Pattern[str], tuple[str, SupersetErrorType, dict[str, Any]]] = {
         SYNTAX_ERROR_REGEX: (

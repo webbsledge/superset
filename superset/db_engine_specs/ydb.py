@@ -44,6 +44,10 @@ class YDBEngineSpec(BaseEngineSpec):
 
     # pylint: disable=invalid-name
     encrypted_extra_sensitive_fields = {"$.connect_args.credentials", "$.credentials"}
+    encrypted_extra_sensitive_field_labels = {
+        "$.connect_args.credentials": "Connection Credentials",
+        "$.credentials": "Credentials",
+    }
 
     disable_ssh_tunneling = False
 

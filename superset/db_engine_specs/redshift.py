@@ -209,6 +209,10 @@ class RedshiftEngineSpec(BasicParametersMixin, PostgresBaseEngineSpec):
         "$.aws_iam.external_id",
         "$.aws_iam.role_arn",
     }
+    encrypted_extra_sensitive_field_labels = {
+        "$.aws_iam.external_id": "AWS IAM External ID",
+        "$.aws_iam.role_arn": "AWS IAM Role ARN",
+    }
 
     @staticmethod
     def update_params_from_encrypted_extra(

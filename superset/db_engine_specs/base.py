@@ -537,6 +537,11 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
     # pylint: disable=invalid-name
     encrypted_extra_sensitive_fields: set[str] = {"$.*"}
 
+    # Labels for sensitive fields in `encrypted_extra`, mapping
+    # JSONPath → display label. Used in import validation error messages
+    # so the UI can show a human-readable name instead of a raw JSONPath.
+    encrypted_extra_sensitive_field_labels: dict[str, str] = {}
+
     # Whether the engine supports file uploads
     # if True, database will be listed as option in the upload file form
     supports_file_upload = True
