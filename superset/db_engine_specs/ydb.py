@@ -43,8 +43,7 @@ class YDBEngineSpec(BaseEngineSpec):
     sqlalchemy_uri_placeholder = "ydb://{host}:{port}/{database_name}"
 
     # pylint: disable=invalid-name
-    encrypted_extra_sensitive_fields = {"$.connect_args.credentials", "$.credentials"}
-    encrypted_extra_sensitive_field_labels = {
+    encrypted_extra_sensitive_fields = {
         "$.connect_args.credentials": "Connection Credentials",
         "$.credentials": "Credentials",
     }
