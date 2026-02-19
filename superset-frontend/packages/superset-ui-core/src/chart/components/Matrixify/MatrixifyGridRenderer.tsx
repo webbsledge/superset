@@ -117,7 +117,7 @@ interface MatrixifyGridRendererProps {
 
 function MatrixifyGridRenderer({
   formData,
-  datasource,
+  datasource: _datasource,
   width: _width,
   height,
   hooks,
@@ -252,8 +252,6 @@ function MatrixifyGridRenderer({
                           <MatrixifyGridCell
                             key={cell.id}
                             cell={cell}
-                            rowHeight={rowHeight}
-                            datasource={datasource}
                             hooks={hooks}
                           />
                         ) : null,

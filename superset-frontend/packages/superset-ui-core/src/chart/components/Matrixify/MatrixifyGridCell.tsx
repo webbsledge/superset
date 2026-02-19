@@ -76,8 +76,6 @@ const NoDataMessage = styled.div<{ theme: any }>`
 
 interface MatrixifyGridCellProps {
   cell: GridCellData;
-  rowHeight: number;
-  datasource?: any;
   hooks?: any;
 }
 
@@ -91,12 +89,7 @@ const MatrixNoDataComponent = () => {
  * Individual grid cell component - memoized to prevent unnecessary re-renders
  */
 const MatrixifyGridCell = memo(
-  ({
-    cell,
-    rowHeight: _rowHeight,
-    datasource: _datasource,
-    hooks,
-  }: MatrixifyGridCellProps) => {
+  ({ cell, hooks }: MatrixifyGridCellProps) => {
     // Use computed title from template (will be empty string if no template)
     const cellLabel = cell.title || '';
 
@@ -175,11 +168,6 @@ const MatrixifyGridCell = memo(
       JSON.stringify(prevProps.cell.formData) !==
       JSON.stringify(nextProps.cell.formData)
     ) {
-      return false;
-    }
-
-    // Re-render if rowHeight changes
-    if (prevProps.rowHeight !== nextProps.rowHeight) {
       return false;
     }
 

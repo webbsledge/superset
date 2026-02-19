@@ -2596,7 +2596,6 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
                       <TimezoneSelector
                         onTimezoneChange={onTimezoneChange}
                         timezone={currentAlert?.timezone}
-                        minWidth="100%"
                       />
                     ) : (
                       <Loading size="s" muted position="normal" />

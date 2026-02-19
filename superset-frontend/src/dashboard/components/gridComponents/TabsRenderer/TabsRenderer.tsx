@@ -108,7 +108,6 @@ export interface TabsRendererProps {
   tabBarPaddingLeft?: number;
   onTabsReorder?: (oldIndex: number, newIndex: number) => void;
   isEditingTabTitle?: boolean;
-  onTabTitleEditingChange?: (isEditing: boolean) => void;
 }
 
 interface DraggableTabNodeProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -170,7 +169,6 @@ const TabsRenderer = memo<TabsRendererProps>(
     tabBarPaddingLeft = 0,
     onTabsReorder,
     isEditingTabTitle = false,
-    onTabTitleEditingChange: _onTabTitleEditingChange,
   }) => {
     const [activeId, setActiveId] = useState<string | null>(null);
 
