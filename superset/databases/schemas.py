@@ -1013,11 +1013,16 @@ class ImportV1DatabaseSchema(Schema):
         # Check if any sensitive field is still masked
         masked_fields = get_masked_fields(
             masked_encrypted_extra,
-            db_engine_spec.encrypted_extra_sensitive_fields,
+            db_engine_spec.encrypted_extra_sensitive_field_paths(),
         )
 
         if masked_fields:
-            labels = db_engine_spec.encrypted_extra_sensitive_field_labels
+            encrypted_extra_fields = db_engine_spec.encrypted_extra_sensitive_fields
+            labels = (
+                encrypted_extra_fields
+                if isinstance(encrypted_extra_fields, dict)
+                else {}
+            )
             raise ValidationError(
                 {
                     "_schema": [

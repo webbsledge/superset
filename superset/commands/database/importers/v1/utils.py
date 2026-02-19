@@ -84,7 +84,9 @@ def import_database(  # noqa: C901
         if existing and existing.encrypted_extra:
             old_config = json.loads(existing.encrypted_extra)
             new_config = json.loads(masked_encrypted_extra)
-            sensitive_fields = existing.db_engine_spec.encrypted_extra_sensitive_fields
+            sensitive_fields = (
+                existing.db_engine_spec.encrypted_extra_sensitive_field_paths()
+            )
             revealed = json.reveal_sensitive(
                 old_config,
                 new_config,

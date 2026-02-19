@@ -1595,9 +1595,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
                       description: >-
                         JSON map of sensitive values for masked_encrypted_extra fields.
                         Keys are file paths (e.g., "databases/db.yaml") and values
-                        are JSON objects with the restricted fields
+                        are JSON objects mapping JSONPath expressions to secrets.
                         (e.g., `{"databases/MyDatabase.yaml":
-                        {"credentials_info": {"private_key": "actual_key"}}}`).
+                        {"$.credentials_info.private_key": "actual_key"}}`).
                       type: string
           responses:
             200:

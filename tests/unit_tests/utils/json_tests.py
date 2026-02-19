@@ -365,6 +365,30 @@ def test_set_masked_fields(
                 "$.oauth2_client_info.secret",
             ],
         ),
+        (
+            {
+                "foo": PASSWORD_MASK,
+                "service_account_info": PASSWORD_MASK,
+            },
+            {"$.*"},
+            ["$.foo", "$.service_account_info"],
+        ),
+        (
+            {
+                "foo": PASSWORD_MASK,
+                "bar": "actual_value",
+            },
+            {"$.*"},
+            ["$.foo"],
+        ),
+        (
+            {
+                "foo": "actual_value",
+                "bar": "other_value",
+            },
+            {"$.*"},
+            [],
+        ),
     ],
 )
 def test_get_masked_fields(
@@ -376,7 +400,7 @@ def test_get_masked_fields(
     Test that get_masked_fields returns paths where value equals PASSWORD_MASK.
     """
     masked = json.get_masked_fields(payload, sensitive_fields)
-    assert masked == sorted(expected_result)
+    assert sorted(masked) == sorted(expected_result)
 
 
 def test_format_timedelta():

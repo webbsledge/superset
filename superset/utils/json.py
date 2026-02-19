@@ -320,8 +320,9 @@ def get_masked_fields(
         jsonpath_expr = parse(json_path)
         for match in jsonpath_expr.find(payload):
             if match.value == PASSWORD_MASK:
-                masked.append(json_path)
-                break
+                # Using `match.full_path` instead of json_path to account
+                # for wildcards
+                masked.append(f"$.{match.full_path}")
     return masked
 
 
