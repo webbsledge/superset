@@ -53,7 +53,6 @@ type UseColDefsProps = {
   defaultAlignPN: boolean;
   showCellBars: boolean;
   colorPositiveNegative: boolean;
-  totals: DataRecord | undefined;
   columnColorFormatters: ColorFormatters;
   allowRearrangeColumns?: boolean;
   basicColorFormatters?: { [Key: string]: BasicColorFormatterType }[];
@@ -216,7 +215,6 @@ export const useColDefs = ({
   defaultAlignPN,
   showCellBars,
   colorPositiveNegative,
-  totals: _totals,
   columnColorFormatters,
   allowRearrangeColumns,
   basicColorFormatters,
