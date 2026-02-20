@@ -21,7 +21,6 @@ import type { Config } from '@docusaurus/types';
 import type { Options, ThemeConfig } from '@docusaurus/preset-classic';
 import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
 import { themes } from 'prism-react-renderer';
-import remarkImportPartial from 'remark-import-partial';
 import remarkLocalizeBadges from './plugins/remark-localize-badges.mjs';
 import remarkTechArticleSchema from './plugins/remark-tech-article-schema.mjs';
 import * as fs from 'fs';
@@ -45,9 +44,8 @@ if (!versionsConfig.components.disabled) {
       path: 'components',
       routeBasePath: 'components',
       sidebarPath: require.resolve('./sidebarComponents.js'),
-      editUrl:
-        'https://github.com/apache/superset/edit/master/docs/components',
-      remarkPlugins: [remarkImportPartial, remarkLocalizeBadges, remarkTechArticleSchema],
+      editUrl: 'https://github.com/apache/superset/edit/master/docs/components',
+      remarkPlugins: [remarkLocalizeBadges, remarkTechArticleSchema],
       admonitions: {
         keywords: ['note', 'tip', 'info', 'warning', 'danger', 'resources'],
         extendDefaults: true,
@@ -75,13 +73,14 @@ if (!versionsConfig.developer_portal.disabled) {
       sidebarPath: require.resolve('./sidebarTutorials.js'),
       editUrl:
         'https://github.com/apache/superset/edit/master/docs/developer_portal',
-      remarkPlugins: [remarkImportPartial, remarkLocalizeBadges, remarkTechArticleSchema],
+      remarkPlugins: [remarkLocalizeBadges, remarkTechArticleSchema],
       admonitions: {
         keywords: ['note', 'tip', 'info', 'warning', 'danger', 'resources'],
         extendDefaults: true,
       },
       docItemComponent: '@theme/DocItem',
-      includeCurrentVersion: versionsConfig.developer_portal.includeCurrentVersion,
+      includeCurrentVersion:
+        versionsConfig.developer_portal.includeCurrentVersion,
       lastVersion: versionsConfig.developer_portal.lastVersion,
       onlyIncludeVersions: versionsConfig.developer_portal.onlyIncludeVersions,
       versions: versionsConfig.developer_portal.versions,
@@ -93,7 +92,32 @@ if (!versionsConfig.developer_portal.disabled) {
 }
 
 // Build navbar items dynamically based on disabled flags
-const dynamicNavbarItems = [];
+const dynamicNavbarItems = [] as (
+  | {
+      label: string;
+      to: string;
+      items: {
+        label: string;
+        to: string;
+      }[];
+    }
+  | {
+      label: string;
+      position: 'left' | 'right' | undefined;
+      items: (
+        | {
+            type: string;
+            docsPluginId: string;
+            docId: string;
+            label: string;
+          }
+        | {
+            label: string;
+            href: string;
+          }
+      )[];
+    }
+)[];
 
 // Add Component Playground navbar item if not disabled
 if (!versionsConfig.components.disabled) {
@@ -122,7 +146,10 @@ if (!versionsConfig.components.disabled) {
 }
 
 // Add Developer Portal navbar item if not hidden from nav
-if (!versionsConfig.developer_portal.disabled && !versionsConfig.developer_portal.hideFromNav) {
+if (
+  !versionsConfig.developer_portal.disabled &&
+  !versionsConfig.developer_portal.hideFromNav
+) {
   dynamicNavbarItems.push({
     label: 'Developer Portal',
     position: 'left',
@@ -196,7 +223,8 @@ const config: Config = {
         name: 'Apache Superset',
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Cross-platform',
-        description: 'Apache Superset is a modern, enterprise-ready business intelligence web application for data exploration and visualization.',
+        description:
+          'Apache Superset is a modern, enterprise-ready business intelligence web application for data exploration and visualization.',
         url: 'https://superset.apache.org',
         license: 'https://www.apache.org/licenses/LICENSE-2.0',
         author: {
@@ -235,7 +263,8 @@ const config: Config = {
           '@type': 'SearchAction',
           target: {
             '@type': 'EntryPoint',
-            urlTemplate: 'https://superset.apache.org/search?q={search_term_string}',
+            urlTemplate:
+              'https://superset.apache.org/search?q={search_term_string}',
           },
           'query-input': 'required name=search_term_string',
         },
@@ -464,13 +493,13 @@ const config: Config = {
             }
             return `https://github.com/apache/superset/edit/master/docs/${versionDocsDirPath}/${docPath}`;
           },
-          remarkPlugins: [remarkImportPartial, remarkLocalizeBadges, remarkTechArticleSchema],
+          remarkPlugins: [remarkLocalizeBadges, remarkTechArticleSchema],
           admonitions: {
             keywords: ['note', 'tip', 'info', 'warning', 'danger', 'resources'],
             extendDefaults: true,
           },
           includeCurrentVersion: versionsConfig.docs.includeCurrentVersion,
-          lastVersion: versionsConfig.docs.lastVersion,  // Make 'next' the default
+          lastVersion: versionsConfig.docs.lastVersion, // Make 'next' the default
           onlyIncludeVersions: versionsConfig.docs.onlyIncludeVersions,
           versions: versionsConfig.docs.versions,
           disableVersioning: false,
@@ -494,10 +523,10 @@ const config: Config = {
           priority: 0.5,
           ignorePatterns: ['/tags/**'],
           filename: 'sitemap.xml',
-          createSitemapItems: async (params) => {
+          createSitemapItems: async params => {
             const { defaultCreateSitemapItems, ...rest } = params;
             const items = await defaultCreateSitemapItems(rest);
-            return items.map((item) => {
+            return items.map(item => {
               // Boost priority for key pages
               if (item.url.includes('/docs/intro')) {
                 return { ...item, priority: 1.0, changefreq: 'daily' };
@@ -528,14 +557,24 @@ const config: Config = {
   themeConfig: {
     // SEO: OpenGraph and Twitter meta tags
     metadata: [
-      { name: 'keywords', content: 'data visualization, business intelligence, BI, dashboards, SQL, analytics, open source, Apache, charts, reporting' },
+      {
+        name: 'keywords',
+        content:
+          'data visualization, business intelligence, BI, dashboards, SQL, analytics, open source, Apache, charts, reporting',
+      },
       { property: 'og:type', content: 'website' },
       { property: 'og:site_name', content: 'Apache Superset' },
-      { property: 'og:image', content: 'https://superset.apache.org/img/superset-og-image.png' },
+      {
+        property: 'og:image',
+        content: 'https://superset.apache.org/img/superset-og-image.png',
+      },
       { property: 'og:image:width', content: '1200' },
       { property: 'og:image:height', content: '630' },
       { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:image', content: 'https://superset.apache.org/img/superset-og-image.png' },
+      {
+        name: 'twitter:image',
+        content: 'https://superset.apache.org/img/superset-og-image.png',
+      },
       { name: 'twitter:site', content: '@ApacheSuperset' },
     ],
     colorMode: {

@@ -123,7 +123,7 @@ export default function webpackExtendPlugin(): Plugin<void> {
             path.resolve(__dirname, '../../superset-frontend/node_modules'),
           ],
           alias: {
-            ...config.resolve.alias,
+            ...(config.resolve?.alias || {} ),
             // Ensure single React instance across all modules (critical for hooks to work)
             react: path.resolve(__dirname, '../node_modules/react'),
             'react-dom': path.resolve(__dirname, '../node_modules/react-dom'),
