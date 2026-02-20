@@ -76,21 +76,35 @@ export const getSmartDateFormatter = (timeGrain?: string) => {
         const month = normalizedDate.getUTCMonth();
         const cleanDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
         return baseFormatter(cleanDate);
-      } else if (timeGrain === TimeGranularity.WEEK) {
+      } else if (
+        timeGrain === TimeGranularity.WEEK ||
+        timeGrain === TimeGranularity.WEEK_STARTING_SUNDAY ||
+        timeGrain === TimeGranularity.WEEK_STARTING_MONDAY ||
+        timeGrain === TimeGranularity.WEEK_ENDING_SATURDAY ||
+        timeGrain === TimeGranularity.WEEK_ENDING_SUNDAY
+      ) {
         // Set to midnight UTC, keep the day
         const year = normalizedDate.getUTCFullYear();
         const month = normalizedDate.getUTCMonth();
         const day = normalizedDate.getUTCDate();
         const cleanDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
         return baseFormatter(cleanDate);
-      } else if (timeGrain === TimeGranularity.DAY) {
+      } else if (timeGrain === TimeGranularity.DAY || timeGrain === TimeGranularity.DATE) {
         // Set to midnight UTC
         const year = normalizedDate.getUTCFullYear();
         const month = normalizedDate.getUTCMonth();
         const day = normalizedDate.getUTCDate();
         const cleanDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
         return baseFormatter(cleanDate);
-      } else if (timeGrain === TimeGranularity.HOUR) {
+      } else if (
+        timeGrain === TimeGranularity.HOUR ||
+        timeGrain === TimeGranularity.THIRTY_MINUTES ||
+        timeGrain === TimeGranularity.FIFTEEN_MINUTES ||
+        timeGrain === TimeGranularity.TEN_MINUTES ||
+        timeGrain === TimeGranularity.FIVE_MINUTES ||
+        timeGrain === TimeGranularity.MINUTE ||
+        timeGrain === TimeGranularity.SECOND
+      ) {
         // Set to top of hour UTC
         const year = normalizedDate.getUTCFullYear();
         const month = normalizedDate.getUTCMonth();
