@@ -854,6 +854,12 @@ const restoreAnchorMocks = () => {
     { result: generateMockPayload(true) },
     { name: FETCH_DASHBOARD_ENDPOINT },
   );
+  fetchMock.removeRoute(FETCH_CHART_ENDPOINT);
+  fetchMock.get(
+    FETCH_CHART_ENDPOINT,
+    { result: generateMockPayload(false) },
+    { name: FETCH_CHART_ENDPOINT },
+  );
   fetchMock.removeRoute(tabsEndpoint);
   fetchMock.get(
     tabsEndpoint,
@@ -987,14 +993,11 @@ test('stale JSON array anchor is cleared without crash or toast', async () => {
       ),
     ).toBe(false);
 
-    // Verify anchor was cleared: TreeSelect shows placeholder (only visible
-    // when value is undefined, i.e. updateAnchorState(undefined) was called)
+    // Verify anchor was cleared: the stale anchor value should not appear
+    // as a selected item anywhere (antd TreeSelect sets title={value} on
+    // selection items; absent title means updateAnchorState(undefined) ran)
     await waitFor(() => {
-      const treeSelect = document.querySelector('.ant-tree-select');
-      expect(treeSelect).toBeInTheDocument();
-      expect(
-        within(treeSelect as HTMLElement).getByText('Select a tab'),
-      ).toBeInTheDocument();
+      expect(screen.queryByTitle(staleAnchor)).not.toBeInTheDocument();
     });
   } finally {
     restoreAnchorMocks();
@@ -1197,9 +1200,8 @@ test('anchor tab with scoped filters loads filter options correctly', async () =
     });
     userEvent.click(filterDropdown);
 
-    const filterOption = await waitFor(() => {
-      const virtualList = document.querySelector('.rc-virtual-list');
-      return within(virtualList as HTMLElement).getByText('Tab Scoped Filter');
+    const filterOption = await screen.findByRole('option', {
+      name: /Tab Scoped Filter/,
     });
     expect(filterOption).toBeInTheDocument();
 
