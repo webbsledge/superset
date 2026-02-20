@@ -30,7 +30,7 @@ if (SERVICE_ACCOUNT_KEY.client_email) {
     credentials: SERVICE_ACCOUNT_KEY,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
-  sheets = googleSheets({ version: 'v4', auth });
+  sheets = googleSheets.sheets({ version: 'v4', auth });
 }
 
 const DATETIME = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
