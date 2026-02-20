@@ -2516,12 +2516,6 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
                                       handleAddFilterField();
                                       add();
                                     }}
-                                    onKeyDown={(e: any) => {
-                                      if (e.key === 'Enter' || e.key === ' ') {
-                                        handleAddFilterField();
-                                        add();
-                                      }
-                                    }}
                                   >
                                     + {t('Apply another dashboard filter')}
                                   </Button>
