@@ -56,12 +56,12 @@ export const getSmartDateFormatter = (timeGrain?: string) => {
       normalizedDate.setMilliseconds(0);
 
       // For all time grains, normalize using UTC methods to avoid timezone issues
-      if (timeGrain === TimeGranularity.YEAR || timeGrain === 'P1Y') {
+      if (timeGrain === TimeGranularity.YEAR) {
         // Set to January 1st at midnight UTC - smart formatter will show year
         const year = normalizedDate.getUTCFullYear();
         const cleanDate = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
         return baseFormatter(cleanDate);
-      } else if (timeGrain === TimeGranularity.QUARTER || timeGrain === 'P3M') {
+      } else if (timeGrain === TimeGranularity.QUARTER) {
         // Set to first month of quarter, first day, midnight UTC
         const year = normalizedDate.getUTCFullYear();
         const month = normalizedDate.getUTCMonth();
@@ -70,27 +70,27 @@ export const getSmartDateFormatter = (timeGrain?: string) => {
           Date.UTC(year, quarterStartMonth, 1, 0, 0, 0, 0),
         );
         return baseFormatter(cleanDate);
-      } else if (timeGrain === TimeGranularity.MONTH || timeGrain === 'P1M') {
+      } else if (timeGrain === TimeGranularity.MONTH) {
         // Set to first of month at midnight UTC - smart formatter will show month name or year
         const year = normalizedDate.getUTCFullYear();
         const month = normalizedDate.getUTCMonth();
         const cleanDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
         return baseFormatter(cleanDate);
-      } else if (timeGrain === TimeGranularity.WEEK || timeGrain === 'P1W') {
+      } else if (timeGrain === TimeGranularity.WEEK) {
         // Set to midnight UTC, keep the day
         const year = normalizedDate.getUTCFullYear();
         const month = normalizedDate.getUTCMonth();
         const day = normalizedDate.getUTCDate();
         const cleanDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
         return baseFormatter(cleanDate);
-      } else if (timeGrain === TimeGranularity.DAY || timeGrain === 'P1D') {
+      } else if (timeGrain === TimeGranularity.DAY) {
         // Set to midnight UTC
         const year = normalizedDate.getUTCFullYear();
         const month = normalizedDate.getUTCMonth();
         const day = normalizedDate.getUTCDate();
         const cleanDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
         return baseFormatter(cleanDate);
-      } else if (timeGrain === TimeGranularity.HOUR || timeGrain === 'PT1H') {
+      } else if (timeGrain === TimeGranularity.HOUR) {
         // Set to top of hour UTC
         const year = normalizedDate.getUTCFullYear();
         const month = normalizedDate.getUTCMonth();
