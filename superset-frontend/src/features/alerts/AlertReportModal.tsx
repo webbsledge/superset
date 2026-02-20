@@ -34,6 +34,7 @@ import {
   VizType,
   getExtensionsRegistry,
 } from '@superset-ui/core';
+import { Button } from '@superset-ui/core/components';
 import { css, styled, SupersetTheme, useTheme } from '@apache-superset/core/ui';
 import rison from 'rison';
 import { useSingleViewResource } from 'src/views/CRUD/hooks';
@@ -380,11 +381,6 @@ export const StyledInputContainer = styled.div`
       .filters-add-container {
         flex: '.25';
         padding: '${theme.sizeUnit * 3} 0';
-
-        .filters-add-btn {
-          padding: ${theme.sizeUnit * 2}px;
-          color: ${theme.colorWhite};
-        }
       }
     }
   `}
@@ -2512,15 +2508,15 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
                               <div className="filters-add-container">
                                 {filterNativeFilterOptions().length > 0 && (
                                   // eslint-disable-next-line jsx-a11y/anchor-is-valid
-                                  <a
+                                  <Button
                                     className="filters-add-btn"
-                                    role="button"
+                                    buttonStyle="link"
                                     tabIndex={0}
                                     onClick={() => {
                                       handleAddFilterField();
                                       add();
                                     }}
-                                    onKeyDown={e => {
+                                    onKeyDown={(e: any) => {
                                       if (e.key === 'Enter' || e.key === ' ') {
                                         handleAddFilterField();
                                         add();
@@ -2528,7 +2524,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
                                     }}
                                   >
                                     + {t('Apply another dashboard filter')}
-                                  </a>
+                                  </Button>
                                 )}
                               </div>
                             </div>
