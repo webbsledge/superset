@@ -1147,7 +1147,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
         getPopupContainer={triggerNode =>
           triggerNode.parentElement || document.body
         }
-        styles={{ popup: { root: { maxHeight: 400, overflow: 'auto' } } }}
+        dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
       />
       <Alert
         showIcon
