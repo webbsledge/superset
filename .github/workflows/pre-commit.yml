@@ -63,14 +63,14 @@ jobs:
 
       - name: Get changed files
         id: changed_files
-        uses: ./.github/actions/files-change-action
+        uses: ./.github/actions/file-changes-action
         with:
           output: ' '
 
       - name: pre-commit
         run: |
           set +e  # Don't exit immediately on failure
-          export SKIP=eslint-frontend,type-checking-frontend
+          export SKIP=type-checking-frontend
           pre-commit run --files ${{ steps.changed_files.outputs.files }}
           PRE_COMMIT_EXIT_CODE=$?
           git diff --quiet --exit-code
