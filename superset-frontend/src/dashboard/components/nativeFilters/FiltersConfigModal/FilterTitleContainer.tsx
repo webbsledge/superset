@@ -119,6 +119,7 @@ const FilterTitleContainer = forwardRef<HTMLDivElement, Props>(
           key={`filter-title-tab-${id}`}
           onClick={() => onChange(id)}
           className={classNames.join(' ')}
+          aria-selected={isActive}
         >
           <div css={{ display: 'flex', width: '100%', alignItems: 'center' }}>
             <div
