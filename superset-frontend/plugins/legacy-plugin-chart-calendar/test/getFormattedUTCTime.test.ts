@@ -20,20 +20,20 @@
 import { getFormattedUTCTime } from '../src/utils';
 
 describe('getFormattedUTCTime', () => {
-  it('formatted date string should equal to UTC date', () => {
+  test('formatted date string should equal to UTC date', () => {
     const ts = 1420070400000; // 2015.01.01 00:00:00 UTC
     const formattedTime = getFormattedUTCTime(ts, '%Y-%m-%d %H:%M:%S');
     expect(formattedTime).toEqual('2015-01-01 00:00:00');
   });
 
-  it('should not have day offset for dates near midnight', () => {
+  test('should not have day offset for dates near midnight', () => {
     // Test case from issue #28931 - 2024-05-31 should remain 2024-05-31
     const ts = new Date('2024-05-31T00:00:00Z').getTime();
     const formattedTime = getFormattedUTCTime(ts, '%Y-%m-%d');
     expect(formattedTime).toEqual('2024-05-31');
   });
 
-  it('should handle different timezones without offset', () => {
+  test('should handle different timezones without offset', () => {
     // Test various timestamps to ensure no day shifting occurs
     const testCases = [
       {
