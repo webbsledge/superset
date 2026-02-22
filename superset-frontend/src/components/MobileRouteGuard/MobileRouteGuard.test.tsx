@@ -16,8 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render, screen } from 'spec/helpers/testing-library';
-import { MemoryRouter, Route } from 'react-router-dom';
 import MobileRouteGuard, {
   isMobileSupportedRoute,
   MOBILE_SUPPORTED_ROUTES,
@@ -25,37 +23,6 @@ import MobileRouteGuard, {
 
 // Store the original sessionStorage
 const originalSessionStorage = window.sessionStorage;
-
-// Helper to render with router at a specific path
-const renderAtPath = (
-  path: string,
-  mockBreakpoint: { md: boolean } = { md: true },
-) => {
-  // Mock useBreakpoint for this render
-  jest.doMock('antd', () => ({
-    ...jest.requireActual('antd'),
-    Grid: {
-      ...jest.requireActual('antd').Grid,
-      useBreakpoint: () => ({
-        xs: true,
-        sm: true,
-        md: mockBreakpoint.md,
-        lg: mockBreakpoint.md,
-        xl: mockBreakpoint.md,
-      }),
-    },
-  }));
-
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Route path="*">
-        <MobileRouteGuard>
-          <div data-test="protected-content">Protected Content</div>
-        </MobileRouteGuard>
-      </Route>
-    </MemoryRouter>,
-  );
-};
 
 // Clean up sessionStorage before each test
 beforeEach(() => {
@@ -124,9 +91,7 @@ test('MOBILE_SUPPORTED_ROUTES includes expected patterns', () => {
   expect(MOBILE_SUPPORTED_ROUTES.length).toBeGreaterThan(0);
 
   // Check some patterns exist
-  const hasLoginPattern = MOBILE_SUPPORTED_ROUTES.some(p =>
-    p.test('/login/'),
-  );
+  const hasLoginPattern = MOBILE_SUPPORTED_ROUTES.some(p => p.test('/login/'));
   const hasDashboardListPattern = MOBILE_SUPPORTED_ROUTES.some(p =>
     p.test('/dashboard/list/'),
   );

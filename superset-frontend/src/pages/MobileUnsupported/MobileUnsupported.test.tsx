@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render, screen, waitFor } from 'spec/helpers/testing-library';
+import { render, screen } from 'spec/helpers/testing-library';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import MobileUnsupported from './index';
@@ -26,7 +26,13 @@ jest.mock('antd', () => ({
   ...jest.requireActual('antd'),
   Grid: {
     ...jest.requireActual('antd').Grid,
-    useBreakpoint: () => ({ xs: true, sm: true, md: false, lg: false, xl: false }),
+    useBreakpoint: () => ({
+      xs: true,
+      sm: true,
+      md: false,
+      lg: false,
+      xl: false,
+    }),
   },
 }));
 
@@ -166,7 +172,8 @@ test('handles sessionStorage errors gracefully', async () => {
 test('renders desktop icon', () => {
   renderComponent();
   // The icon should be present (DesktopOutlined)
-  const iconContainer = document.querySelector('[aria-label="desktop"]');
-  // Icon might not have aria-label, so we check for the container structure
-  expect(screen.getByText("This view isn't available on mobile")).toBeInTheDocument();
+  // Icon might not have aria-label, so we verify the page renders with the title
+  expect(
+    screen.getByText("This view isn't available on mobile"),
+  ).toBeInTheDocument();
 });

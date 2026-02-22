@@ -61,8 +61,12 @@ test.describe('Mobile Navigation', () => {
     ).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
 
     // Primary action buttons should be visible
-    await expect(page.getByRole('button', { name: 'View Dashboards' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Go to Welcome Page' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'View Dashboards' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Go to Welcome Page' }),
+    ).toBeVisible();
   });
 
   test('mobile viewport allows access to dashboard list', async ({ page }) => {
@@ -75,9 +79,12 @@ test.describe('Mobile Navigation', () => {
     ).not.toBeVisible({ timeout: TIMEOUT.FORM_LOAD });
 
     // Should show dashboard list content (look for dashboard list elements)
-    await expect(page.locator('[data-test="listview-table"]').or(
-      page.locator('[data-test="styled-card"]')
-    ).first()).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
+    await expect(
+      page
+        .locator('[data-test="listview-table"]')
+        .or(page.locator('[data-test="styled-card"]'))
+        .first(),
+    ).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
   });
 
   test('mobile viewport allows access to welcome page', async ({ page }) => {
@@ -90,12 +97,16 @@ test.describe('Mobile Navigation', () => {
     ).not.toBeVisible({ timeout: TIMEOUT.FORM_LOAD });
 
     // Should show welcome page content
-    await expect(page.getByText('Recents').or(page.getByText('Dashboards'))).toBeVisible({
+    await expect(
+      page.getByText('Recents').or(page.getByText('Dashboards')),
+    ).toBeVisible({
       timeout: TIMEOUT.PAGE_LOAD,
     });
   });
 
-  test('View Dashboards button navigates to dashboard list', async ({ page }) => {
+  test('View Dashboards button navigates to dashboard list', async ({
+    page,
+  }) => {
     // Navigate to unsupported route
     await page.goto(URL.CHART_LIST);
 
@@ -113,9 +124,12 @@ test.describe('Mobile Navigation', () => {
     });
 
     // Dashboard list should be accessible
-    await expect(page.locator('[data-test="listview-table"]').or(
-      page.locator('[data-test="styled-card"]')
-    ).first()).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
+    await expect(
+      page
+        .locator('[data-test="listview-table"]')
+        .or(page.locator('[data-test="styled-card"]'))
+        .first(),
+    ).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
   });
 
   test('Go to Welcome Page button navigates to welcome', async ({ page }) => {
@@ -193,8 +207,11 @@ test.describe('Desktop Navigation (control group)', () => {
     ).not.toBeVisible({ timeout: TIMEOUT.FORM_LOAD });
 
     // Should show chart list content
-    await expect(page.locator('[data-test="listview-table"]').or(
-      page.locator('[data-test="styled-card"]')
-    ).first()).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
+    await expect(
+      page
+        .locator('[data-test="listview-table"]')
+        .or(page.locator('[data-test="styled-card"]'))
+        .first(),
+    ).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
   });
 });

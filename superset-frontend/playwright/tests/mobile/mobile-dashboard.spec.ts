@@ -57,19 +57,23 @@ test.describe('Mobile Dashboard Viewing', () => {
     } else {
       // No dashboards - that's OK for the test environment
       await expect(
-        page.getByText('No dashboards yet').or(page.locator('[data-test="listview-table"]')),
+        page
+          .getByText('No dashboards yet')
+          .or(page.locator('[data-test="listview-table"]')),
       ).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
     }
   });
 
   test('mobile search button appears in dashboard list', async ({ page }) => {
     // On mobile, the search/filter button should appear in the header
-    const searchButton = page.locator('[aria-label="Search"]').or(
-      page.locator('[data-test="mobile-search-button"]')
-    );
+    const searchButton = page
+      .locator('[aria-label="Search"]')
+      .or(page.locator('[data-test="mobile-search-button"]'));
 
     // Search button should be visible on mobile
-    await expect(searchButton.first()).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
+    await expect(searchButton.first()).toBeVisible({
+      timeout: TIMEOUT.PAGE_LOAD,
+    });
   });
 
   test('tapping dashboard card opens the dashboard', async ({ page }) => {
@@ -82,15 +86,18 @@ test.describe('Mobile Dashboard Viewing', () => {
       await cards.first().click();
 
       // Should navigate to dashboard view
-      await page.waitForURL(url => url.pathname.includes('superset/dashboard'), {
-        timeout: TIMEOUT.PAGE_LOAD,
-      });
+      await page.waitForURL(
+        url => url.pathname.includes('superset/dashboard'),
+        {
+          timeout: TIMEOUT.PAGE_LOAD,
+        },
+      );
 
       // Dashboard should load (look for dashboard content)
       await expect(
-        page.locator('[data-test="dashboard-content-wrapper"]').or(
-          page.locator('.dashboard')
-        ),
+        page
+          .locator('[data-test="dashboard-content-wrapper"]')
+          .or(page.locator('.dashboard')),
       ).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
     } else {
       test.skip();
@@ -137,21 +144,24 @@ test.describe('Mobile Dashboard Interaction', () => {
       await cards.first().click();
 
       // Wait for dashboard to load
-      await page.waitForURL(url => url.pathname.includes('superset/dashboard'), {
-        timeout: TIMEOUT.PAGE_LOAD,
-      });
+      await page.waitForURL(
+        url => url.pathname.includes('superset/dashboard'),
+        {
+          timeout: TIMEOUT.PAGE_LOAD,
+        },
+      );
 
       // Dashboard content should be visible
       await expect(
-        page.locator('[data-test="dashboard-content-wrapper"]').or(
-          page.locator('.dashboard')
-        ),
+        page
+          .locator('[data-test="dashboard-content-wrapper"]')
+          .or(page.locator('.dashboard')),
       ).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
 
       // Charts should start loading (look for chart containers)
-      const chartContainers = page.locator('[data-test="chart-container"]').or(
-        page.locator('.dashboard-chart')
-      );
+      const chartContainers = page
+        .locator('[data-test="chart-container"]')
+        .or(page.locator('.dashboard-chart'));
 
       // Wait for at least one chart to be visible (with timeout)
       await expect(chartContainers.first()).toBeVisible({
@@ -173,18 +183,25 @@ test.describe('Mobile Dashboard Interaction', () => {
       await cards.first().click();
 
       // Wait for dashboard
-      await page.waitForURL(url => url.pathname.includes('superset/dashboard'), {
-        timeout: TIMEOUT.PAGE_LOAD,
-      });
-
-      // Look for the hamburger menu / more actions button
-      const menuButton = page.locator('[data-test="more-horiz"]').or(
-        page.locator('[aria-label="More actions"]').or(
-          page.locator('.header-actions-trigger')
-        )
+      await page.waitForURL(
+        url => url.pathname.includes('superset/dashboard'),
+        {
+          timeout: TIMEOUT.PAGE_LOAD,
+        },
       );
 
-      await expect(menuButton.first()).toBeVisible({ timeout: TIMEOUT.PAGE_LOAD });
+      // Look for the hamburger menu / more actions button
+      const menuButton = page
+        .locator('[data-test="more-horiz"]')
+        .or(
+          page
+            .locator('[aria-label="More actions"]')
+            .or(page.locator('.header-actions-trigger')),
+        );
+
+      await expect(menuButton.first()).toBeVisible({
+        timeout: TIMEOUT.PAGE_LOAD,
+      });
     }
   });
 
@@ -201,14 +218,17 @@ test.describe('Mobile Dashboard Interaction', () => {
       await cards.first().click();
 
       // Wait for dashboard
-      await page.waitForURL(url => url.pathname.includes('superset/dashboard'), {
-        timeout: TIMEOUT.PAGE_LOAD,
-      });
+      await page.waitForURL(
+        url => url.pathname.includes('superset/dashboard'),
+        {
+          timeout: TIMEOUT.PAGE_LOAD,
+        },
+      );
 
       // Open the actions menu
-      const menuButton = page.locator('[data-test="more-horiz"]').or(
-        page.locator('[aria-label="More actions"]')
-      );
+      const menuButton = page
+        .locator('[data-test="more-horiz"]')
+        .or(page.locator('[aria-label="More actions"]'));
 
       if ((await menuButton.count()) > 0) {
         await menuButton.first().click();
@@ -249,19 +269,24 @@ test.describe('Mobile Filter Drawer', () => {
       await cards.first().click();
 
       // Wait for dashboard
-      await page.waitForURL(url => url.pathname.includes('superset/dashboard'), {
-        timeout: TIMEOUT.PAGE_LOAD,
-      });
+      await page.waitForURL(
+        url => url.pathname.includes('superset/dashboard'),
+        {
+          timeout: TIMEOUT.PAGE_LOAD,
+        },
+      );
 
       // Give filters time to load
       await page.waitForTimeout(2000);
 
       // Check for filter button (only visible if dashboard has filters)
-      const filterButton = page.locator('[data-test="filter-icon"]').or(
-        page.locator('[aria-label="Filters"]').or(
-          page.locator('.mobile-filter-button')
-        )
-      );
+      const filterButton = page
+        .locator('[data-test="filter-icon"]')
+        .or(
+          page
+            .locator('[aria-label="Filters"]')
+            .or(page.locator('.mobile-filter-button')),
+        );
 
       const filterCount = await filterButton.count();
 
@@ -287,27 +312,32 @@ test.describe('Mobile Filter Drawer', () => {
       await cards.first().click();
 
       // Wait for dashboard
-      await page.waitForURL(url => url.pathname.includes('superset/dashboard'), {
-        timeout: TIMEOUT.PAGE_LOAD,
-      });
+      await page.waitForURL(
+        url => url.pathname.includes('superset/dashboard'),
+        {
+          timeout: TIMEOUT.PAGE_LOAD,
+        },
+      );
 
       // Give filters time to load
       await page.waitForTimeout(2000);
 
       // Check for filter button
-      const filterButton = page.locator('[data-test="filter-icon"]').or(
-        page.locator('[aria-label="Filters"]')
-      );
+      const filterButton = page
+        .locator('[data-test="filter-icon"]')
+        .or(page.locator('[aria-label="Filters"]'));
 
       if ((await filterButton.count()) > 0) {
         await filterButton.first().click();
 
         // Filter drawer should open
-        const drawer = page.locator('.ant-drawer-open').or(
-          page.locator('[data-test="filter-bar"]')
-        );
+        const drawer = page
+          .locator('.ant-drawer-open')
+          .or(page.locator('[data-test="filter-bar"]'));
 
-        await expect(drawer.first()).toBeVisible({ timeout: TIMEOUT.FORM_LOAD });
+        await expect(drawer.first()).toBeVisible({
+          timeout: TIMEOUT.FORM_LOAD,
+        });
       }
     }
   });
