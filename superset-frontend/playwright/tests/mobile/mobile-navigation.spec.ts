@@ -98,7 +98,7 @@ test.describe('Mobile Navigation', () => {
 
     // Should show welcome page content
     await expect(
-      page.getByText('Recents').or(page.getByText('Dashboards')),
+      page.getByText('Recents').or(page.getByText('Dashboards')).first(),
     ).toBeVisible({
       timeout: TIMEOUT.PAGE_LOAD,
     });

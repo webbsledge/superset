@@ -192,12 +192,8 @@ test.describe('Mobile Dashboard Interaction', () => {
 
       // Look for the hamburger menu / more actions button
       const menuButton = page
-        .locator('[data-test="more-horiz"]')
-        .or(
-          page
-            .locator('[aria-label="More actions"]')
-            .or(page.locator('.header-actions-trigger')),
-        );
+        .locator('[data-test="actions-trigger"]')
+        .or(page.locator('[aria-label="Menu actions trigger"]'));
 
       await expect(menuButton.first()).toBeVisible({
         timeout: TIMEOUT.PAGE_LOAD,
@@ -227,8 +223,8 @@ test.describe('Mobile Dashboard Interaction', () => {
 
       // Open the actions menu
       const menuButton = page
-        .locator('[data-test="more-horiz"]')
-        .or(page.locator('[aria-label="More actions"]'));
+        .locator('[data-test="actions-trigger"]')
+        .or(page.locator('[aria-label="Menu actions trigger"]'));
 
       if ((await menuButton.count()) > 0) {
         await menuButton.first().click();
