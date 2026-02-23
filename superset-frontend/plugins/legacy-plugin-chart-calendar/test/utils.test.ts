@@ -61,8 +61,7 @@ test('convertUTCTimestampToLocal handles year boundaries', () => {
 test('convertUTCTimestampToLocal adds timezone offset to timestamp', () => {
   const utcTimestamp = 1704067200000;
   const adjustedTimestamp = convertUTCTimestampToLocal(utcTimestamp);
-  const expectedOffset =
-    new Date(utcTimestamp).getTimezoneOffset() * 60 * 1000;
+  const expectedOffset = new Date(utcTimestamp).getTimezoneOffset() * 60 * 1000;
 
   expect(adjustedTimestamp - utcTimestamp).toEqual(expectedOffset);
 });
