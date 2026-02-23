@@ -90,19 +90,19 @@ interface VisibilityEventData {
   ts: number;
 }
 
+function unload(event: BeforeUnloadEvent): string {
+  const message = t('You have unsaved changes.');
+  // Set returnValue on the actual event object to trigger the browser prompt
+  event.returnValue = message;
+  return message; // Gecko + Webkit, Safari, Chrome etc.
+}
+
 function onBeforeUnload(hasChanged: boolean): void {
   if (hasChanged) {
     window.addEventListener('beforeunload', unload);
   } else {
     window.removeEventListener('beforeunload', unload);
   }
-}
-
-function unload(event: BeforeUnloadEvent): string {
-  const message = t('You have unsaved changes.');
-  // Set returnValue on the actual event object to trigger the browser prompt
-  event.returnValue = message;
-  return message; // Gecko + Webkit, Safari, Chrome etc.
 }
 
 function Dashboard({
