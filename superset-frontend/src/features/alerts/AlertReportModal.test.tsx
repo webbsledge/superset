@@ -18,6 +18,7 @@
  */
 import fetchMock from 'fetch-mock';
 import {
+  act,
   render,
   screen,
   userEvent,
@@ -106,9 +107,82 @@ const generateMockPayload = (dashboard = true) => {
 // mocking resource endpoints
 const FETCH_DASHBOARD_ENDPOINT = 'glob:*/api/v1/report/1';
 const FETCH_CHART_ENDPOINT = 'glob:*/api/v1/report/2';
+const FETCH_REPORT_WITH_FILTERS_ENDPOINT = 'glob:*/api/v1/report/3';
+const FETCH_REPORT_NO_FILTER_NAME_ENDPOINT = 'glob:*/api/v1/report/4';
+const FETCH_REPORT_OVERWRITE_ENDPOINT = 'glob:*/api/v1/report/5';
 
-fetchMock.get(FETCH_DASHBOARD_ENDPOINT, { result: generateMockPayload(true) }, { name: FETCH_DASHBOARD_ENDPOINT });
-fetchMock.get(FETCH_CHART_ENDPOINT, { result: generateMockPayload(false) }, { name: FETCH_CHART_ENDPOINT });
+fetchMock.get(
+  FETCH_DASHBOARD_ENDPOINT,
+  { result: generateMockPayload(true) },
+  { name: FETCH_DASHBOARD_ENDPOINT },
+);
+fetchMock.get(
+  FETCH_CHART_ENDPOINT,
+  { result: generateMockPayload(false) },
+  { name: FETCH_CHART_ENDPOINT },
+);
+fetchMock.get(FETCH_REPORT_WITH_FILTERS_ENDPOINT, {
+  result: {
+    ...generateMockPayload(true),
+    id: 3,
+    type: 'Report',
+    extra: {
+      dashboard: {
+        nativeFilters: [
+          {
+            nativeFilterId: 'NATIVE_FILTER-abc123',
+            filterName: 'Country',
+            filterType: 'filter_select',
+            columnName: 'country',
+            columnLabel: 'Country',
+            filterValues: ['USA'],
+          },
+        ],
+      },
+    },
+  },
+});
+fetchMock.get(FETCH_REPORT_NO_FILTER_NAME_ENDPOINT, {
+  result: {
+    ...generateMockPayload(true),
+    id: 4,
+    type: 'Report',
+    extra: {
+      dashboard: {
+        nativeFilters: [
+          {
+            nativeFilterId: 'NATIVE_FILTER-xyz789',
+            filterType: 'filter_select',
+            columnName: 'region',
+            columnLabel: 'Region',
+            filterValues: ['West'],
+          },
+        ],
+      },
+    },
+  },
+});
+fetchMock.get(FETCH_REPORT_OVERWRITE_ENDPOINT, {
+  result: {
+    ...generateMockPayload(true),
+    id: 5,
+    type: 'Report',
+    extra: {
+      dashboard: {
+        nativeFilters: [
+          {
+            nativeFilterId: 'NATIVE_FILTER-abc123',
+            filterName: 'Country',
+            filterType: 'filter_select',
+            columnName: 'country',
+            columnLabel: 'Country',
+            filterValues: ['USA'],
+          },
+        ],
+      },
+    },
+  },
+});
 
 // Related mocks
 const ownersEndpoint = 'glob:*/api/v1/alert/related/owners?*';
@@ -131,6 +205,38 @@ fetchMock.get(
   },
   { name: tabsEndpoint },
 );
+
+// Restore the default tabs route and remove any test-specific overrides.
+// Called in afterEach so cleanup runs even when a test fails mid-way.
+const restoreDefaultTabsRoute = () => {
+  for (const name of [
+    'clear-icon-tabs',
+    'clear-icon-chart-data',
+    'deferred-tabs',
+    'overwrite-chart-data',
+  ]) {
+    try {
+      fetchMock.removeRoute(name);
+    } catch {
+      // route may not exist if the test that adds it didn't run
+    }
+  }
+  // Re-add the default empty tabs route if it was replaced
+  try {
+    fetchMock.removeRoute(tabsEndpoint);
+  } catch {
+    // already removed
+  }
+  fetchMock.get(
+    tabsEndpoint,
+    { result: { all_tabs: {}, tab_tree: [] } },
+    { name: tabsEndpoint },
+  );
+};
+
+afterEach(() => {
+  restoreDefaultTabsRoute();
+});
 
 // Create a valid alert with all required fields entered for validation check
 
@@ -743,10 +849,16 @@ test('filter reappears in dropdown after clearing with X icon', async () => {
         },
       },
     },
-    { name: tabsEndpoint },
+    { name: 'clear-icon-tabs' },
   );
 
-  fetchMock.post(chartDataEndpoint, { result: [{ data: [] }] });
+  fetchMock.post(
+    chartDataEndpoint,
+    { result: [{ data: [] }] },
+    {
+      name: 'clear-icon-chart-data',
+    },
+  );
 
   render(<AlertReportModal {...generateMockedProps(true, true)} />, {
     useRedux: true,
@@ -893,13 +1005,14 @@ test('no error toast when anchor tab has no scoped native filters', async () => 
 
     await waitFor(() => {
       expect(
-        fetchMock.callHistory.calls().some(c =>
-          c.url.includes('/dashboard/1/tabs'),
-        ),
+        fetchMock.callHistory
+          .calls()
+          .some(c => c.url.includes('/dashboard/1/tabs')),
       ).toBe(true);
     });
 
-    const toasts = (store.getState() as Record<string, unknown>).messageToasts as { text: string }[];
+    const toasts = (store.getState() as Record<string, unknown>)
+      .messageToasts as { text: string }[];
     expect(
       toasts.some(
         (toast: { text: string }) =>
@@ -926,13 +1039,14 @@ test('no error toast when anchor tab set and dashboard has zero native filters',
 
     await waitFor(() => {
       expect(
-        fetchMock.callHistory.calls().some(c =>
-          c.url.includes('/dashboard/1/tabs'),
-        ),
+        fetchMock.callHistory
+          .calls()
+          .some(c => c.url.includes('/dashboard/1/tabs')),
       ).toBe(true);
     });
 
-    const toasts = (store.getState() as Record<string, unknown>).messageToasts as { text: string }[];
+    const toasts = (store.getState() as Record<string, unknown>)
+      .messageToasts as { text: string }[];
     expect(
       toasts.some(
         (toast: { text: string }) =>
@@ -978,14 +1092,15 @@ test('stale JSON array anchor is cleared without crash or toast', async () => {
     // Wait for the tabs useEffect to process the stale anchor
     await waitFor(() => {
       expect(
-        fetchMock.callHistory.calls().some(c =>
-          c.url.includes('/dashboard/1/tabs'),
-        ),
+        fetchMock.callHistory
+          .calls()
+          .some(c => c.url.includes('/dashboard/1/tabs')),
       ).toBe(true);
     });
 
     // No error toast dispatched (the .then() handler ran without crashing)
-    const toasts = (store.getState() as Record<string, unknown>).messageToasts as { text: string }[];
+    const toasts = (store.getState() as Record<string, unknown>)
+      .messageToasts as { text: string }[];
     expect(
       toasts.some(
         (toast: { text: string }) =>
@@ -996,7 +1111,11 @@ test('stale JSON array anchor is cleared without crash or toast', async () => {
     // Verify anchor was cleared at the payload level: trigger save and
     // inspect the PUT body to confirm extra.dashboard.anchor is undefined
     const updateEndpoint = 'glob:*/api/v1/report/1';
-    fetchMock.put(updateEndpoint, { id: 1, result: {} }, { name: 'put-report-1' });
+    fetchMock.put(
+      updateEndpoint,
+      { id: 1, result: {} },
+      { name: 'put-report-1' },
+    );
 
     const saveButton = screen.getByRole('button', { name: /save/i });
     expect(saveButton).not.toBeDisabled();
@@ -1005,13 +1124,17 @@ test('stale JSON array anchor is cleared without crash or toast', async () => {
     await waitFor(() => {
       const putCalls = fetchMock.callHistory
         .calls()
-        .filter(c => c.url.includes('/api/v1/report/') && c.options?.method === 'put');
+        .filter(
+          c => c.url.includes('/api/v1/report/') && c.options?.method === 'put',
+        );
       expect(putCalls).toHaveLength(1);
     });
 
     const putCall = fetchMock.callHistory
       .calls()
-      .find(c => c.url.includes('/api/v1/report/') && c.options?.method === 'put');
+      .find(
+        c => c.url.includes('/api/v1/report/') && c.options?.method === 'put',
+      );
     const body = JSON.parse(putCall!.options?.body as string);
     expect(body.extra.dashboard.anchor).toBeUndefined();
 
@@ -1035,7 +1158,8 @@ test('tabs API failure shows danger toast via Redux store', async () => {
     userEvent.click(screen.getByTestId('contents-panel'));
 
     await waitFor(() => {
-      const toasts = (store.getState() as Record<string, unknown>).messageToasts as { text: string }[];
+      const toasts = (store.getState() as Record<string, unknown>)
+        .messageToasts as { text: string }[];
       expect(
         toasts.some(
           (toast: { text: string }) =>
@@ -1103,14 +1227,15 @@ test('null all_tabs does not crash or show error toast', async () => {
     // Wait for tabs useEffect to complete
     await waitFor(() => {
       expect(
-        fetchMock.callHistory.calls().some(c =>
-          c.url.includes('/dashboard/1/tabs'),
-        ),
+        fetchMock.callHistory
+          .calls()
+          .some(c => c.url.includes('/dashboard/1/tabs')),
       ).toBe(true);
     });
 
     // No error toast dispatched
-    const toasts = (store.getState() as Record<string, unknown>).messageToasts as { text: string }[];
+    const toasts = (store.getState() as Record<string, unknown>)
+      .messageToasts as { text: string }[];
     expect(
       toasts.some(
         (toast: { text: string }) =>
@@ -1156,14 +1281,15 @@ test('missing native_filters in tabs response does not crash or show error toast
     // Wait for tabs useEffect to complete
     await waitFor(() => {
       expect(
-        fetchMock.callHistory.calls().some(c =>
-          c.url.includes('/dashboard/1/tabs'),
-        ),
+        fetchMock.callHistory
+          .calls()
+          .some(c => c.url.includes('/dashboard/1/tabs')),
       ).toBe(true);
     });
 
     // No error toast dispatched
-    const toasts = (store.getState() as Record<string, unknown>).messageToasts as { text: string }[];
+    const toasts = (store.getState() as Record<string, unknown>)
+      .messageToasts as { text: string }[];
     expect(
       toasts.some(
         (toast: { text: string }) =>
@@ -1222,7 +1348,8 @@ test('anchor tab with scoped filters loads filter options correctly', async () =
     });
     expect(filterOption).toBeInTheDocument();
 
-    const toasts = (store.getState() as Record<string, unknown>).messageToasts as { text: string }[];
+    const toasts = (store.getState() as Record<string, unknown>)
+      .messageToasts as { text: string }[];
     expect(
       toasts.some(
         (toast: { text: string }) =>
@@ -1232,4 +1359,130 @@ test('anchor tab with scoped filters loads filter options correctly', async () =
   } finally {
     restoreAnchorMocks();
   }
+});
+
+test('edit mode shows friendly filter names instead of raw IDs', async () => {
+  const props = generateMockedProps(true, true);
+  const editProps = {
+    ...props,
+    alert: { ...validAlert, id: 3 },
+  };
+
+  render(<AlertReportModal {...editProps} />, {
+    useRedux: true,
+  });
+
+  userEvent.click(screen.getByTestId('contents-panel'));
+
+  await waitFor(() => {
+    const selectionItem = document.querySelector(
+      '.ant-select-selection-item[title="Country"]',
+    );
+    expect(selectionItem).toBeInTheDocument();
+  });
+
+  expect(
+    document.querySelector(
+      '.ant-select-selection-item[title="NATIVE_FILTER-abc123"]',
+    ),
+  ).not.toBeInTheDocument();
+});
+
+test('edit mode falls back to raw ID when filterName is missing', async () => {
+  const props = generateMockedProps(true, true);
+  const editProps = {
+    ...props,
+    alert: { ...validAlert, id: 4 },
+  };
+
+  render(<AlertReportModal {...editProps} />, {
+    useRedux: true,
+  });
+
+  userEvent.click(screen.getByTestId('contents-panel'));
+
+  await waitFor(() => {
+    const selectionItem = document.querySelector(
+      '.ant-select-selection-item[title="NATIVE_FILTER-xyz789"]',
+    );
+    expect(selectionItem).toBeInTheDocument();
+  });
+});
+
+test('tabs metadata overwrites seeded filter options', async () => {
+  const chartDataEndpoint = 'glob:*/api/v1/chart/data*';
+
+  // Deferred promise to control when the tabs response resolves
+  let resolveTabsResponse!: (value: unknown) => void;
+  const deferredTabs = new Promise(resolve => {
+    resolveTabsResponse = resolve;
+  });
+
+  const tabsResult = {
+    result: {
+      all_tabs: { tab1: 'Tab 1' },
+      tab_tree: [{ title: 'Tab 1', value: 'tab1' }],
+      native_filters: {
+        all: [
+          {
+            id: 'NATIVE_FILTER-abc123',
+            name: 'Country (All Filters)',
+            filterType: 'filter_select',
+            targets: [{ column: { name: 'country' }, datasetId: 1 }],
+            adhoc_filters: [],
+          },
+        ],
+        tab1: [],
+      },
+    },
+  };
+
+  // Replace only the tabs route with a deferred version
+  fetchMock.removeRoute(tabsEndpoint);
+  fetchMock.get(tabsEndpoint, () => deferredTabs.then(() => tabsResult), {
+    name: 'deferred-tabs',
+  });
+  fetchMock.post(
+    chartDataEndpoint,
+    { result: [{ data: [] }] },
+    {
+      name: 'overwrite-chart-data',
+    },
+  );
+
+  const props = generateMockedProps(true, true);
+  const editProps = {
+    ...props,
+    alert: { ...validAlert, id: 5 },
+  };
+
+  render(<AlertReportModal {...editProps} />, {
+    useRedux: true,
+  });
+
+  userEvent.click(screen.getByTestId('contents-panel'));
+
+  // Seeded label from saved data appears before tabs respond
+  const filterSelect = screen.getByRole('combobox', {
+    name: /select filter/i,
+  });
+  const selectContainer = filterSelect.closest('.ant-select') as HTMLElement;
+  await waitFor(() => {
+    expect(within(selectContainer).getByTitle('Country')).toBeInTheDocument();
+  });
+
+  // Resolve the deferred tabs response
+  await act(async () => {
+    resolveTabsResponse(undefined);
+  });
+
+  // Tabs metadata overwrites the seeded label
+  await waitFor(() => {
+    expect(
+      within(selectContainer).getByTitle('Country (All Filters)'),
+    ).toBeInTheDocument();
+  });
+  expect(
+    within(selectContainer).queryByTitle('Country'),
+  ).not.toBeInTheDocument();
 });
