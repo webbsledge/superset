@@ -931,6 +931,9 @@ const setupAnchorMocks = (
   };
   const tabs = tabsOverride ?? defaultTabs;
 
+  // Clear call history so waitFor assertions don't match calls from prior tests.
+  fetchMock.callHistory.clear();
+
   // Only replace the named routes that need anchor-specific overrides;
   // unnamed related-endpoint routes (owners, database, etc.) stay intact.
   fetchMock.removeRoute(FETCH_DASHBOARD_ENDPOINT);
