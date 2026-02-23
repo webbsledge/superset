@@ -89,7 +89,10 @@ export const getSmartDateFormatter = (timeGrain?: string) => {
         const day = normalizedDate.getUTCDate();
         const cleanDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
         return baseFormatter(cleanDate);
-      } else if (timeGrain === TimeGranularity.DAY || timeGrain === TimeGranularity.DATE) {
+      } else if (
+        timeGrain === TimeGranularity.DAY ||
+        timeGrain === TimeGranularity.DATE
+      ) {
         // Set to midnight UTC
         const year = normalizedDate.getUTCFullYear();
         const month = normalizedDate.getUTCMonth();
