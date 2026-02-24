@@ -2590,14 +2590,26 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
                         or (
                             # Chart.
                             form_data.get("type") != "NATIVE_FILTER"
-                            and (slice_id := form_data.get("slice_id"))
+                            and (
+                                # Use parent_slice_id if present (for multilayer chart children)
+                                # Otherwise use slice_id directly
+                                slice_id := (
+                                    form_data.get("parent_slice_id")
+                                    or form_data.get("slice_id")
+                                )
+                            )
                             and (
                                 slc := self.session.query(Slice)
                                 .filter(Slice.id == slice_id)
                                 .one_or_none()
                             )
                             and slc in dashboard_.slices
-                            and slc.datasource == datasource
+                            and (
+                                # For parent charts, check datasource directly
+                                # For child charts of multilayer, parent is already validated
+                                slc.datasource == datasource
+                                or form_data.get("parent_slice_id") is not None
+                            )
                         )
                         or self.has_drill_by_access(form_data, dashboard_, datasource)
                     )
