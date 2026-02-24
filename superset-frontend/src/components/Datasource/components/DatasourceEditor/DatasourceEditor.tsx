@@ -2260,7 +2260,7 @@ function DatasourceEditor({
         />
       </div>
     );
-  }, [datasource, sortMetrics, onDatasourcePropChange]);
+  }, [datasource, sortMetrics, onDatasourcePropChange, metricSearchTerm]);
 
   const sortedMetrics = useMemo(
     () => (datasource.metrics?.length ? sortMetrics(datasource.metrics) : []),
