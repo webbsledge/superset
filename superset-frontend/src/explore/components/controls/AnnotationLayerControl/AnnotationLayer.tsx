@@ -872,7 +872,7 @@ function AnnotationLayer({
     if (
       color &&
       color !== AUTOMATIC_COLOR &&
-      !schemeColors.find(x => x.toLowerCase() === color.toLowerCase())
+      !schemeColors.some(x => x.toLowerCase() === color.toLowerCase())
     ) {
       schemeColors.push(color);
     }

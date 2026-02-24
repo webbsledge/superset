@@ -2189,7 +2189,9 @@ function DatasourceEditor({
           }
           collection={sortedMetrics}
           allowAddItem
-          onChange={(value: unknown) => onDatasourcePropChange('metrics', value)}
+          onChange={(value: unknown) =>
+            onDatasourcePropChange('metrics', value)
+          }
           itemGenerator={() => ({
             metric_name: t('<new metric>'),
             verbose_name: '',
