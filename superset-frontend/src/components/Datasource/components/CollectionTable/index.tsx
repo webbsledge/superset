@@ -89,6 +89,9 @@ export default function CRUDCollection({
   tableColumns,
   sortColumns = [],
   stickyHeader = false,
+  pagination = false,
+  filterTerm,
+  filterFields,
 }: CRUDCollectionProps) {
   const [expandedColumns, setExpandedColumns] = useState<
     Record<PropertyKey, boolean>
@@ -442,6 +445,26 @@ export default function CRUDCollection({
     deleteItem,
   ]);
 
+  const displayData = useMemo(() => {
+    if (filterTerm && filterFields?.length) {
+      return collectionArray.filter(item =>
+        filterFields.some(field =>
+          String(item[field] ?? '')
+            .toLowerCase()
+            .includes(filterTerm.toLowerCase()),
+        ),
+      );
+    }
+    return collectionArray;
+  }, [collectionArray, filterTerm, filterFields]);
+
+  const paginationConfig = useMemo((): false | TablePaginationConfig => {
+    if (pagination === false || pagination === undefined) {
+      return false;
+    }
+    return typeof pagination === 'object' ? pagination : {};
+  }, [pagination]);
+
   const expandedRowKeys = useMemo(
     () => Object.keys(expandedColumns).filter(id => expandedColumns[id]),
     [expandedColumns],
@@ -486,10 +509,10 @@ export default function CRUDCollection({
       <Table<CollectionItem>
         data-test="crud-table"
         columns={antdColumns}
-        data={collectionArray}
+        data={displayData}
         rowKey={(record: CollectionItem) => String(record.id)}
         sticky={stickyHeader}
-        pagination={false}
+        pagination={paginationConfig}
         onChange={handleTableChange}
         locale={{ emptyText: emptyMessage }}
         css={

@@ -846,6 +846,9 @@ function DatasourceEditor({
 }: DatasourceEditorProps) {
   const theme = useTheme();
   const isComponentMounted = useRef(false);
+  const isInitialMount = useRef(true);
+  const prevPropsDatasourceRef = useRef(propsDatasource);
+  const isSyncingColumnsFromProps = useRef(false);
   const abortControllers = useRef<AbortControllers>({
     formatQuery: null,
     formatSql: null,
@@ -1032,17 +1035,9 @@ function DatasourceEditor({
     validate(onChangeInternal);
   }, [validate, onChangeInternal]);
 
-  const onDatasourceChange = useCallback(
-    (
-      newDatasource: DatasourceObject,
-      callback: () => void = validateAndChange,
-    ) => {
-      setDatasource(newDatasource);
-      // Need to call callback after state update
-      setTimeout(callback, 0);
-    },
-    [validateAndChange],
-  );
+  const onDatasourceChange = useCallback((newDatasource: DatasourceObject) => {
+    setDatasource(newDatasource);
+  }, []);
 
   const onDatasourcePropChange = useCallback((attr: string, value: unknown) => {
     if (value === undefined) return;
@@ -1052,11 +1047,15 @@ function DatasourceEditor({
     });
   }, []);
 
-  // Effect to trigger validation after datasource changes
+  // Effect to trigger validation after datasource changes (skip initial mount)
   useEffect(() => {
+    if (isInitialMount.current) {
+      return;
+    }
     if (isComponentMounted.current) {
       validateAndChange();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource]);
 
   const onChangeEditMode = useCallback(() => {
@@ -1068,11 +1067,15 @@ function DatasourceEditor({
     setDatasourceType(newDatasourceType);
   }, []);
 
-  // Effect to call onChange after datasourceType changes
+  // Effect to call onChange after datasourceType changes (skip initial mount)
   useEffect(() => {
+    if (isInitialMount.current) {
+      return;
+    }
     if (isComponentMounted.current) {
       onChangeInternal();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasourceType]);
 
   const handleFoldersChange = useCallback((newFolders: DatasourceFolder[]) => {
@@ -1101,11 +1104,17 @@ function DatasourceEditor({
     [],
   );
 
-  // Effect to trigger validation after column changes
+  // Effect to trigger validation after user-initiated column changes
+  // Skips initial mount and prop-sync updates (which don't need validation)
   useEffect(() => {
+    if (isInitialMount.current || isSyncingColumnsFromProps.current) {
+      isSyncingColumnsFromProps.current = false;
+      return;
+    }
     if (isComponentMounted.current) {
       validateAndChange();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [databaseColumns, calculatedColumns]);
 
   const getSQLLabUrl = useCallback(() => {
@@ -1353,6 +1362,9 @@ function DatasourceEditor({
   // componentDidMount
   useEffect(() => {
     isComponentMounted.current = true;
+    // Mark initial mount as complete after first render cycle
+    // This prevents useEffect hooks from firing on mount
+    isInitialMount.current = false;
     Mousetrap.bind('ctrl+shift+f', e => {
       e.preventDefault();
       if (isEditMode) {
@@ -1391,8 +1403,11 @@ function DatasourceEditor({
   }, [isEditMode, onQueryFormat]);
 
   // componentDidUpdate for props.datasource changes
+  // Only run when the props.datasource reference actually changes from parent
   useEffect(() => {
     if (!isComponentMounted.current) return;
+    if (prevPropsDatasourceRef.current === propsDatasource) return;
+    prevPropsDatasourceRef.current = propsDatasource;
 
     const newCalculatedColumns = propsDatasource.columns.filter(
       col => !!col.expression,
@@ -1420,11 +1435,14 @@ function DatasourceEditor({
         }
       });
 
+      // Mark that this column update is from prop sync, not user action
+      isSyncingColumnsFromProps.current = true;
       setCalculatedColumns(orderedCalculatedColumns);
       setDatabaseColumns(
         propsDatasource.columns.filter(col => !col.expression),
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propsDatasource]);
 
   const renderSqlEditorOverlay = useCallback(
