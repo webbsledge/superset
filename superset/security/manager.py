@@ -2591,7 +2591,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
                             # Chart.
                             form_data.get("type") != "NATIVE_FILTER"
                             and (
-                                # Use parent_slice_id if present (for multilayer chart children)
+                                # Use parent_slice_id if present
+                                # (for multilayer chart children)
                                 # Otherwise use slice_id directly
                                 slice_id := (
                                     form_data.get("parent_slice_id")
@@ -2606,7 +2607,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
                             and slc in dashboard_.slices
                             and (
                                 # For parent charts, check datasource directly
-                                # For child charts of multilayer, parent is already validated
+                                # For child charts of multilayer
+                                # parent is already validated
                                 slc.datasource == datasource
                                 or form_data.get("parent_slice_id") is not None
                             )
