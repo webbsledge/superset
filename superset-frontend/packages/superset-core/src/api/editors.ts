@@ -457,6 +457,14 @@ export interface EditorHandle {
    * @returns A Disposable that removes the provider when disposed
    */
   registerCompletionProvider(provider: CompletionProvider): Disposable;
+
+  /**
+   * Force the editor to recalculate its dimensions.
+   * Optional - not all editors need this (some auto-resize via CSS).
+   * Useful when the editor container size changes or when the editor
+   * becomes visible after being hidden (e.g., in a tab).
+   */
+  resize?(): void;
 }
 
 /**
