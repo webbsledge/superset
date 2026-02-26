@@ -16,6 +16,7 @@
 # under the License.
 """A collection of ORM sqlalchemy models for Superset"""
 
+import logging
 from typing import Any, Optional
 
 import prison
@@ -46,6 +47,8 @@ from superset.models.slice import Slice
 from superset.reports.types import ReportScheduleExtra
 from superset.utils.backports import StrEnum
 from superset.utils.core import MediumText
+
+logger = logging.getLogger(__name__)
 
 metadata = Model.metadata  # pylint: disable=no-member
 
@@ -191,14 +194,25 @@ class ReportSchedule(AuditMixinNullable, ExtraJSONMixin, Model):
         params: dict[str, Any] = {}
         dashboard = self.extra.get("dashboard")
         if dashboard and dashboard.get("nativeFilters"):
-            for filter in dashboard.get("nativeFilters") or []:  # type: ignore
+            native_filters = dashboard.get("nativeFilters") or []
+            for native_filter in native_filters:  # type: ignore
+                native_filter_id = native_filter.get("nativeFilterId")
+                filter_type = native_filter.get("filterType")
+
+                if native_filter_id is None or filter_type is None:
+                    logger.warning(
+                        "Skipping malformed native filter missing required fields: %s",
+                        native_filter,
+                    )
+                    continue
+
                 params = {
                     **params,
                     **self._generate_native_filter(
-                        filter["nativeFilterId"],
-                        filter["filterType"],
-                        filter["columnName"],
-                        filter["filterValues"],
+                        native_filter_id,
+                        filter_type,
+                        native_filter.get("columnName", ""),
+                        native_filter.get("filterValues", []),
                     ),
                 }
         # hack(hughhh): workaround for escaping prison not handling quotes right

@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-import pytest
 
 from superset.reports.models import ReportSchedule
 
@@ -99,9 +98,10 @@ def test_report_generate_native_filter_no_values():
     }
 
 
-def test_get_native_filters_params_invalid_structure():
+def test_get_native_filters_params_missing_filter_values():
     """
-    Test the ``get_native_filters_params`` method with invalid structure.
+    Test the ``get_native_filters_params`` method with missing filterValues.
+    Should handle gracefully by using empty list as default.
     """
     report_schedule = ReportSchedule()
     report_schedule.extra = {
@@ -111,29 +111,56 @@ def test_get_native_filters_params_invalid_structure():
                     "nativeFilterId": "filter_id",
                     "columnName": "column_name",
                     "filterType": "filter_select",
-                    # Missing "filterValues" key
+                    # Missing "filterValues" key - should default to []
                 }
             ]
         }
     }
 
-    with pytest.raises(KeyError, match="'filterValues'"):
-        report_schedule.get_native_filters_params()
+    # Should not raise, should handle gracefully with empty filterValues
+    result = report_schedule.get_native_filters_params()
+    assert "filter_id" in result
+    assert "column_name" in result
 
 
-# todo(hugh): how do we want to handle this case?
-# def test_report_generate_native_filter_invalid_filter_id():
-#     """
-#     Test the ``_generate_native_filter`` method with invalid filter id.
-#     """
-#     report_schedule = ReportSchedule()
-#     native_filter_id = None
-#     column_name = "column_name"
-#     values = ["value1", "value2"]
+def test_get_native_filters_params_missing_required_fields():
+    """
+    Test the ``get_native_filters_params`` method with missing required fields.
+    Filters missing nativeFilterId or filterType should be skipped.
+    """
+    report_schedule = ReportSchedule()
+    report_schedule.extra = {
+        "dashboard": {
+            "nativeFilters": [
+                {
+                    # Missing nativeFilterId - should be skipped
+                    "filterType": "filter_select",
+                    "columnName": "column_name",
+                    "filterValues": ["value1"],
+                },
+                {
+                    # Missing filterType - should be skipped
+                    "nativeFilterId": "filter_2",
+                    "columnName": "column_name",
+                    "filterValues": ["value2"],
+                },
+                {
+                    # Valid filter - should be processed
+                    "nativeFilterId": "filter_3",
+                    "filterType": "filter_select",
+                    "columnName": "column_name",
+                    "filterValues": ["value3"],
+                },
+            ]
+        }
+    }
 
-#     assert report_schedule._generate_native_filter(
-#         native_filter_id, column_name, values
-#     ) == {}
+    result = report_schedule.get_native_filters_params()
+    # Only the valid filter should be in the result
+    assert "filter_3" in result
+    assert "filter_2" not in result
+    assert "value1" not in result
+    assert "value3" in result
 
 
 def test_report_generate_native_filter():
