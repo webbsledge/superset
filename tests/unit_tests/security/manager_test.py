@@ -1442,15 +1442,13 @@ def test_validate_child_in_parent_multilayer_valid(
     sm = SupersetSecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
-    parent_slice.params = json.dumps({
-        "viz_type": "deck_multi",
-        "deck_slices": [1, 2, 3]
-    })
+    parent_slice.params = json.dumps(
+        {"viz_type": "deck_multi", "deck_slices": [1, 2, 3]}
+    )
 
     # Child 2 is in parent's deck_slices
     assert sm._validate_child_in_parent_multilayer(
-        child_slice_id=2,
-        parent_slice=parent_slice
+        child_slice_id=2, parent_slice=parent_slice
     )
 
 
@@ -1461,15 +1459,13 @@ def test_validate_child_in_parent_multilayer_invalid_child(
     sm = SupersetSecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
-    parent_slice.params = json.dumps({
-        "viz_type": "deck_multi",
-        "deck_slices": [1, 2, 3]
-    })
+    parent_slice.params = json.dumps(
+        {"viz_type": "deck_multi", "deck_slices": [1, 2, 3]}
+    )
 
     # Child 5 is NOT in parent's deck_slices
     assert not sm._validate_child_in_parent_multilayer(
-        child_slice_id=5,
-        parent_slice=parent_slice
+        child_slice_id=5, parent_slice=parent_slice
     )
 
 
@@ -1480,14 +1476,15 @@ def test_validate_child_in_parent_multilayer_wrong_viz_type(
     sm = SupersetSecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
-    parent_slice.params = json.dumps({
-        "viz_type": "line",  # Not deck_multi
-        "deck_slices": [1, 2, 3]
-    })
+    parent_slice.params = json.dumps(
+        {
+            "viz_type": "line",  # Not deck_multi
+            "deck_slices": [1, 2, 3],
+        }
+    )
 
     assert not sm._validate_child_in_parent_multilayer(
-        child_slice_id=2,
-        parent_slice=parent_slice
+        child_slice_id=2, parent_slice=parent_slice
     )
 
 
@@ -1498,14 +1495,10 @@ def test_validate_child_in_parent_multilayer_empty_deck_slices(
     sm = SupersetSecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
-    parent_slice.params = json.dumps({
-        "viz_type": "deck_multi",
-        "deck_slices": []
-    })
+    parent_slice.params = json.dumps({"viz_type": "deck_multi", "deck_slices": []})
 
     assert not sm._validate_child_in_parent_multilayer(
-        child_slice_id=1,
-        parent_slice=parent_slice
+        child_slice_id=1, parent_slice=parent_slice
     )
 
 
@@ -1516,14 +1509,15 @@ def test_validate_child_in_parent_multilayer_no_deck_slices(
     sm = SupersetSecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
-    parent_slice.params = json.dumps({
-        "viz_type": "deck_multi"
-        # No deck_slices key
-    })
+    parent_slice.params = json.dumps(
+        {
+            "viz_type": "deck_multi"
+            # No deck_slices key
+        }
+    )
 
     assert not sm._validate_child_in_parent_multilayer(
-        child_slice_id=1,
-        parent_slice=parent_slice
+        child_slice_id=1, parent_slice=parent_slice
     )
 
 
@@ -1537,8 +1531,7 @@ def test_validate_child_in_parent_multilayer_malformed_json(
     parent_slice.params = "not valid json {{"
 
     assert not sm._validate_child_in_parent_multilayer(
-        child_slice_id=1,
-        parent_slice=parent_slice
+        child_slice_id=1, parent_slice=parent_slice
     )
 
 
@@ -1552,6 +1545,5 @@ def test_validate_child_in_parent_multilayer_null_params(
     parent_slice.params = None
 
     assert not sm._validate_child_in_parent_multilayer(
-        child_slice_id=1,
-        parent_slice=parent_slice
+        child_slice_id=1, parent_slice=parent_slice
     )
