@@ -22,6 +22,7 @@ import {
   screen,
   selectOption,
   userEvent,
+  waitFor,
 } from 'spec/helpers/testing-library';
 import AdhocFilter from '../AdhocFilter';
 import { Clauses, ExpressionTypes } from '../types';
@@ -123,8 +124,9 @@ test('calls editor resize when adhocFilter changes', async () => {
   );
 
   // Initial render should call resize
-  await new Promise(resolve => setTimeout(resolve, 0));
-  expect(mockResize).toHaveBeenCalled();
+  await waitFor(() => {
+    expect(mockResize).toHaveBeenCalled();
+  });
   mockResize.mockClear();
 
   // Create a new filter to trigger the useEffect
@@ -143,6 +145,7 @@ test('calls editor resize when adhocFilter changes', async () => {
     />,
   );
 
-  await new Promise(resolve => setTimeout(resolve, 0));
-  expect(mockResize).toHaveBeenCalled();
+  await waitFor(() => {
+    expect(mockResize).toHaveBeenCalled();
+  });
 });
