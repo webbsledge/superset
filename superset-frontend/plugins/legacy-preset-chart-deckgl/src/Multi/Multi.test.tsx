@@ -641,9 +641,9 @@ test('includes parent_slice_id in child slice requests when parent has slice_id'
   });
 
   // Check that the child slice requests include parent_slice_id
-  const calls = mockGet.mock.calls;
+  const {calls} = mockGet.mock;
   calls.forEach(call => {
-    const endpoint = call[0].endpoint;
+    const {endpoint} = call[0];
     if (endpoint.includes('api/v1/explore/form_data')) {
       const body = JSON.parse(call[0].body);
       expect(body.form_data).toMatchObject({
@@ -690,9 +690,9 @@ test('includes parent_slice_id in embedded mode', async () => {
   });
 
   // Verify parent_slice_id is included in embedded mode
-  const calls = mockGet.mock.calls;
+  const {calls} = mockGet.mock;
   calls.forEach(call => {
-    const endpoint = call[0].endpoint;
+    const {endpoint} = call[0];
     if (endpoint.includes('api/v1/explore/form_data')) {
       const body = JSON.parse(call[0].body);
       expect(body.form_data.parent_slice_id).toBe(parentSliceId);
@@ -733,9 +733,9 @@ test('does not include parent_slice_id when parent has no slice_id', async () =>
   });
 
   // Verify parent_slice_id is not included when parent has no slice_id
-  const calls = mockGet.mock.calls;
+  const {calls} = mockGet.mock;
   calls.forEach(call => {
-    const endpoint = call[0].endpoint;
+    const {endpoint} = call[0];
     if (endpoint.includes('api/v1/explore/form_data')) {
       const body = JSON.parse(call[0].body);
       expect(body.form_data.parent_slice_id).toBeUndefined();
