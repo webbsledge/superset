@@ -460,11 +460,15 @@ export interface EditorHandle {
 
   /**
    * Force the editor to recalculate its dimensions.
-   * Optional - not all editors need this (some auto-resize via CSS).
-   * Useful when the editor container size changes or when the editor
-   * becomes visible after being hidden (e.g., in a tab).
+   * Called when the container size changes or when the editor becomes
+   * visible after being hidden (e.g., in a tab).
+   *
+   * Each editor implementation maps this to their equivalent:
+   * - Ace: editor.resize()
+   * - Monaco: editor.layout()
+   * - CodeMirror: editor.requestMeasure()
    */
-  resize?(): void;
+  resize(): void;
 }
 
 /**

@@ -54,7 +54,7 @@ export default function AdhocFilterEditPopoverSqlTabContent({
   const theme = useTheme();
 
   useEffect(() => {
-    editorRef.current?.resize?.();
+    editorRef.current?.resize();
   }, [adhocFilter]);
 
   const onSqlExpressionClauseChange = (clause: string) => {
