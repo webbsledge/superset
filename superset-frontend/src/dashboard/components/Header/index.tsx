@@ -65,7 +65,6 @@ import {
   deleteActiveReport,
   DeletableReport,
 } from 'src/features/reports/ReportModal/actions';
-import type { ReportObject } from 'src/features/reports/types';
 import { PageHeaderWithActions } from '@superset-ui/core/components/PageHeaderWithActions';
 import { useUnsavedChangesPrompt } from 'src/hooks/useUnsavedChangesPrompt';
 import DashboardEmbedModal from '../EmbeddedModal';
