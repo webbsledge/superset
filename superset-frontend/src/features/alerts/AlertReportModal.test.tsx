@@ -1140,9 +1140,8 @@ test('stale JSON array anchor is cleared without crash or toast', async () => {
       );
     const body = JSON.parse(putCall!.options?.body as string);
     expect(body.extra.dashboard.anchor).toBeUndefined();
-
-    fetchMock.removeRoute('put-report-1');
   } finally {
+    fetchMock.removeRoute('put-report-1');
     restoreAnchorMocks();
   }
 });
