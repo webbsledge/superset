@@ -62,6 +62,7 @@ function TTestTable({
         sumControl += controlValues[i].y;
       });
 
+      if (sumControl === 0) return 'NaN';
       return (((sumValues - sumControl) / sumControl) * 100).toFixed(
         liftValPrec,
       );
