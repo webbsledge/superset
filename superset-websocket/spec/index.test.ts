@@ -26,7 +26,7 @@ import {
   beforeEach,
   afterEach,
   vi,
-  Mock,
+  type Mock,
 } from 'vitest';
 import * as http from 'http';
 import * as net from 'net';
