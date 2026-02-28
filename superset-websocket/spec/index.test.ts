@@ -35,16 +35,16 @@ import * as server from '../src/index';
 import { statsd } from '../src/index';
 
 const { mockRedisXrange } = vi.hoisted(() => {
-  return { mockRedisXrange: vi.fn() }
-})
+  return { mockRedisXrange: vi.fn() };
+});
 
-vi.mock('ws')
+vi.mock('ws');
 vi.mock('ioredis', () => {
   return {
     Redis: vi.fn().mockImplementation(function () {
-      return { xrange: mockRedisXrange }
-    })
-  }
+      return { xrange: mockRedisXrange };
+    }),
+  };
 });
 
 const wsMock = WebSocket as unknown as Mock<typeof WebSocket>;
@@ -259,7 +259,7 @@ describe('server', () => {
       );
 
       expect(sendMock).toHaveBeenCalled();
-      expect(Object.keys(server.channels)).toHaveLength(0)
+      expect(Object.keys(server.channels)).toHaveLength(0);
     });
   });
 
@@ -371,14 +371,14 @@ describe('server', () => {
 
       server.wsConnection(ws, request);
 
-      const channelSockets = server.channels[channelId]
+      const channelSockets = server.channels[channelId];
       expect(channelSockets).toEqual({
-        sockets: expect.any(Array<string>)
-      })
-      expect(channelSockets.sockets).toHaveLength(1)
-      const socketId = channelSockets.sockets[0]
-      expect(server.sockets[socketId]).toEqual(socketInstanceExpected)
-      expect(mockRedisXrange).not.toHaveBeenCalledOnce()
+        sockets: expect.any(Array<string>),
+      });
+      expect(channelSockets.sockets).toHaveLength(1);
+      const socketId = channelSockets.sockets[0];
+      expect(server.sockets[socketId]).toEqual(socketInstanceExpected);
+      expect(mockRedisXrange).not.toHaveBeenCalledOnce();
       expect(wsEventMock).toHaveBeenCalledWith('pong', expect.any(Function));
     });
 
@@ -392,18 +392,18 @@ describe('server', () => {
 
       server.wsConnection(ws, request);
 
-      const channelSockets = server.channels[channelId]
+      const channelSockets = server.channels[channelId];
       expect(channelSockets).toEqual({
-        sockets: expect.any(Array<string>)
-      })
-      expect(channelSockets.sockets).toHaveLength(1)
-      const socketId = channelSockets.sockets[0]
-      expect(server.sockets[socketId]).toEqual(socketInstanceExpected)
+        sockets: expect.any(Array<string>),
+      });
+      expect(channelSockets.sockets).toHaveLength(1);
+      const socketId = channelSockets.sockets[0];
+      expect(server.sockets[socketId]).toEqual(socketInstanceExpected);
       expect(mockRedisXrange).toHaveBeenCalledWith(
         expect.stringContaining(channelId),
         '1615426152415-1',
         '+',
-      )
+      );
       expect(wsEventMock).toHaveBeenCalledWith('pong', expect.any(Function));
     });
 
@@ -419,18 +419,18 @@ describe('server', () => {
       server.setLastFirehoseId(lastFirehoseId);
       server.wsConnection(ws, request);
 
-      const channelSockets = server.channels[channelId]
+      const channelSockets = server.channels[channelId];
       expect(channelSockets).toEqual({
-        sockets: expect.any(Array<string>)
-      })
-      expect(channelSockets.sockets).toHaveLength(1)
-      const socketId = channelSockets.sockets[0]
-      expect(server.sockets[socketId]).toEqual(socketInstanceExpected)
+        sockets: expect.any(Array<string>),
+      });
+      expect(channelSockets.sockets).toHaveLength(1);
+      const socketId = channelSockets.sockets[0];
+      expect(server.sockets[socketId]).toEqual(socketInstanceExpected);
       expect(mockRedisXrange).toHaveBeenCalledWith(
         expect.stringContaining(channelId),
         '1615426152415-1',
         lastFirehoseId,
-      )
+      );
       expect(wsEventMock).toHaveBeenCalledWith('pong', expect.any(Function));
     });
   });
