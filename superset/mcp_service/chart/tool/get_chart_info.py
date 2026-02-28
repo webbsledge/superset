@@ -22,11 +22,13 @@ MCP tool: get_chart_info
 import logging
 
 from fastmcp import Context
+from sqlalchemy.orm import subqueryload
 from superset_core.mcp import tool
 
 from superset.commands.exceptions import CommandException
 from superset.commands.explore.form_data.parameters import CommandParameters
 from superset.extensions import event_logger
+from superset.mcp_service.chart.chart_utils import validate_chart_dataset
 from superset.mcp_service.chart.schemas import (
     ChartError,
     ChartInfo,
@@ -93,12 +95,19 @@ async def get_chart_info(
     Returns chart details including name, type, and URL.
     """
     from superset.daos.chart import ChartDAO
+    from superset.models.slice import Slice
     from superset.utils import json as utils_json
 
     await ctx.info(
         "Retrieving chart information: identifier=%s, form_data_key=%s"
         % (request.identifier, request.form_data_key)
     )
+
+    # Eager load owners and tags to avoid N+1 queries during serialization
+    eager_options = [
+        subqueryload(Slice.owners),
+        subqueryload(Slice.tags),
+    ]
 
     with event_logger.log_context(action="mcp.get_chart_info.lookup"):
         tool = ModelGetInfoCore(
@@ -108,6 +117,7 @@ async def get_chart_info(
             serializer=serialize_chart_object,
             supports_slug=False,  # Charts don't have slugs
             logger=logger,
+            query_options=eager_options,
         )
 
         result = tool.run_tool(request.identifier)
@@ -149,6 +159,25 @@ async def get_chart_info(
             "Chart information retrieved successfully: chart_name=%s, "
             "is_unsaved_state=%s" % (result.slice_name, result.is_unsaved_state)
         )
+
+        # Validate the chart's dataset is accessible
+        if result.id:
+            chart = ChartDAO.find_by_id(result.id)
+            if chart:
+                validation_result = validate_chart_dataset(chart, check_access=True)
+                if not validation_result.is_valid:
+                    await ctx.warning(
+                        "Chart found but dataset is not accessible: %s"
+                        % (validation_result.error,)
+                    )
+                    return ChartError(
+                        error=validation_result.error
+                        or "Chart's dataset is not accessible",
+                        error_type="DatasetNotAccessible",
+                    )
+                # Log any warnings (e.g., virtual dataset warnings)
+                for warning in validation_result.warnings:
+                    await ctx.warning("Dataset warning: %s" % (warning,))
     else:
         await ctx.warning("Chart retrieval failed: error=%s" % (str(result),))
 
