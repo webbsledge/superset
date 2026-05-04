@@ -16,8 +16,8 @@
 # under the License.
 
 import logging
+import secrets
 import time
-import uuid
 from collections import defaultdict
 from typing import Any, Awaitable, Callable, Dict, Protocol, Sequence
 
@@ -240,7 +240,7 @@ class LoggingMiddleware(Middleware):
         )
         tool_name = getattr(context.message, "name", None)
 
-        mcp_call_id = uuid.uuid4().hex[:12]
+        mcp_call_id = secrets.token_hex(16)
         context.mcp_call_id = mcp_call_id
         start_time = time.time()
         success = False
