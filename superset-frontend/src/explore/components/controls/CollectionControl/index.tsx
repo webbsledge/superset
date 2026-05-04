@@ -27,14 +27,17 @@ import {
   useSensor,
   useSensors,
   PointerSensor,
+  KeyboardSensor,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
   useSortable,
+  sortableKeyboardCoordinates,
   arrayMove,
 } from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import { Icons } from '@superset-ui/core/components/Icons';
 import {
@@ -68,8 +71,7 @@ interface CollectionControlProps {
 function DragHandle() {
   return (
     <Icons.MenuOutlined
-      role="img"
-      aria-label={t('Drag to reorder')}
+      aria-hidden
       className="text-primary"
       style={{ cursor: 'ns-resize' }}
     />
@@ -93,8 +95,14 @@ function SortableItem({
   onChangeItem,
   onRemoveItem,
 }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: transition ?? undefined,
@@ -116,9 +124,29 @@ function SortableItem({
         paddingInline: theme.sizeUnit * 6,
       })}
     >
-      <span {...attributes} {...listeners}>
+      <button
+        type="button"
+        ref={setActivatorNodeRef}
+        aria-label={t('Drag to reorder')}
+        css={(theme: SupersetTheme) => ({
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          margin: 0,
+          color: 'inherit',
+          cursor: 'ns-resize',
+          display: 'inline-flex',
+          alignItems: 'center',
+          '&:focus-visible': {
+            outline: `2px solid ${theme.colorPrimary}`,
+            outlineOffset: 2,
+          },
+        })}
+        {...attributes}
+        {...listeners}
+      >
         <DragHandle />
-      </span>
+      </button>
       <div
         css={(theme: SupersetTheme) => ({
           flex: 1,
@@ -182,6 +210,9 @@ function CollectionControl({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
 
@@ -260,6 +291,7 @@ function CollectionControl({
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        modifiers={[restrictToVerticalAxis]}
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
