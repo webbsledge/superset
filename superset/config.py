@@ -52,7 +52,6 @@ from superset.advanced_data_type.plugins.internet_address import internet_addres
 from superset.advanced_data_type.plugins.internet_port import internet_port
 from superset.advanced_data_type.types import AdvancedDataType
 from superset.constants import CHANGE_ME_SECRET_KEY
-from superset.engines.manager import EngineModes
 from superset.jinja_context import BaseTemplateProcessor
 from superset.key_value.types import JsonKeyValueCodec
 from superset.stats_logger import DummyStatsLogger
@@ -264,22 +263,6 @@ SQLALCHEMY_ENGINE_OPTIONS = {}
 #     return 'secret'
 # SQLALCHEMY_CUSTOM_PASSWORD_STORE = lookup_password
 SQLALCHEMY_CUSTOM_PASSWORD_STORE = None
-
-# ---------------------------------------------------------
-# Engine Manager Configuration
-# ---------------------------------------------------------
-
-# Engine manager mode: "NEW" creates a new engine for every connection (default),
-# "SINGLETON" reuses engines with connection pooling
-ENGINE_MANAGER_MODE = EngineModes.NEW
-
-# Cleanup interval for abandoned locks (default: 5 minutes)
-ENGINE_MANAGER_CLEANUP_INTERVAL = timedelta(minutes=5)
-
-# Automatically start cleanup thread for SINGLETON mode (default: True)
-ENGINE_MANAGER_AUTO_START_CLEANUP = True
-
-# ---------------------------------------------------------
 
 #
 # The EncryptedFieldTypeAdapter is used whenever we're building SqlAlchemy models

@@ -689,13 +689,15 @@ def test_raw_connection_oauth_engine(mocker: MockerFixture) -> None:
         encrypted_extra=json.dumps(oauth2_client_info),
     )
     database.db_engine_spec.oauth2_exception = OAuth2Error
-    _get_sqla_engine = mocker.patch.object(database, "_get_sqla_engine")
-    _get_sqla_engine.side_effect = OAuth2Error("OAuth2 required")
+    create_engine = mocker.patch("superset.engines.manager.create_engine")
+    create_engine.side_effect = OAuth2Error("OAuth2 required")
 
     with pytest.raises(OAuth2RedirectError) as excinfo:
         with database.get_raw_connection() as conn:
             conn.cursor()
     assert str(excinfo.value) == "You don't have permission to access the data."
+
+
 def test_raw_connection_oauth_connection(mocker: MockerFixture) -> None:
     """
     Test that we can start OAuth2 from `raw_connection()` errors.

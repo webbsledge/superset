@@ -15,13 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import atexit
 import logging
 from datetime import timedelta
 
 from flask import Flask
 
-from superset.engines.manager import EngineManager, EngineModes
+from superset.engines.manager import EngineManager
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +28,6 @@ logger = logging.getLogger(__name__)
 class EngineManagerExtension:
     """
     Flask extension for managing SQLAlchemy engines in Superset.
-
-    This extension creates and configures an EngineManager instance based on
-    Flask configuration, handling startup and shutdown of background cleanup
-    threads as needed.
     """
 
     def __init__(self) -> None:
@@ -44,47 +39,23 @@ class EngineManagerExtension:
         """
         engine_context_manager = app.config["ENGINE_CONTEXT_MANAGER"]
         db_connection_mutator = app.config["DB_CONNECTION_MUTATOR"]
-        mode = app.config["ENGINE_MANAGER_MODE"]
-        cleanup_interval = app.config["ENGINE_MANAGER_CLEANUP_INTERVAL"]
         local_bind_address = app.config["SSH_TUNNEL_LOCAL_BIND_ADDRESS"]
         tunnel_timeout = timedelta(seconds=app.config["SSH_TUNNEL_TIMEOUT_SEC"])
         ssh_timeout = timedelta(seconds=app.config["SSH_TUNNEL_PACKET_TIMEOUT_SEC"])
-        auto_start_cleanup = app.config["ENGINE_MANAGER_AUTO_START_CLEANUP"]
-
-        # Stop any existing manager's cleanup thread before creating a new one
-        if self.engine_manager:
-            self.engine_manager.stop_cleanup_thread()
 
         # Create the engine manager
         self.engine_manager = EngineManager(
             engine_context_manager,
             db_connection_mutator,
-            mode,
-            cleanup_interval,
             local_bind_address,
             tunnel_timeout,
             ssh_timeout,
         )
 
-        # Start cleanup thread if requested and in SINGLETON mode
-        if auto_start_cleanup and mode == EngineModes.SINGLETON:
-            self.engine_manager.start_cleanup_thread()
-            logger.info("Started EngineManager cleanup thread")
-
-        # Register shutdown handler
-        def shutdown_engine_manager(exc: BaseException | None = None) -> None:
-            if self.engine_manager:
-                self.engine_manager.stop_cleanup_thread()
-
-        app.teardown_appcontext(shutdown_engine_manager)
-
-        # Register with atexit for clean shutdown
-        atexit.register(shutdown_engine_manager)
-
         logger.info(
-            "Initialized EngineManager with mode=%s, cleanup_interval=%ds",
-            mode,
-            cleanup_interval.total_seconds(),
+            "Initialized EngineManager with tunnel_timeout=%s, ssh_timeout=%s",
+            tunnel_timeout.total_seconds(),
+            ssh_timeout.total_seconds(),
         )
 
     @property

@@ -429,8 +429,8 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         Context manager for a SQLAlchemy engine.
 
         This method will return a context manager for a SQLAlchemy engine. The engine
-        manager handles connection pooling, SSH tunnels, and other connection details
-        based on the configured mode (NEW or SINGLETON).
+        manager handles engine creation, SSH tunnels, and connection details in a
+        centralized place.
         """
         # Import here to avoid circular imports
         from superset.extensions import engine_manager_extension
