@@ -82,6 +82,8 @@ class DatasetMetricData(TypedDict, total=False):
     warning_markdown: str | None
     warning_text: str | None
     verbose_name: str | None
+
+
 # Type alias for database connection mutator function
 DBConnectionMutator: TypeAlias = Callable[
     [URL, dict[str, Any], str | None, Any, "QuerySource | None"],
