@@ -1734,7 +1734,7 @@ def test_markdown_with_markup_wrap() -> None:
     assert "<strong>bold</strong>" in str(result)
 
 
-def test_extract_dataframe_dtypes_with_duplicate_columns():
+def test_extract_dataframe_dtypes_with_duplicate_columns() -> None:
     """extract_dataframe_dtypes should not crash on duplicate column names."""
     df = pd.DataFrame([[1, 2, 3]], columns=["a", "b", "a"])
     result = extract_dataframe_dtypes(df)
