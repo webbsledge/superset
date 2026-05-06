@@ -819,9 +819,13 @@ export function useDatabaseValidation() {
   );
   const [isValidating, setIsValidating] = useState(false);
   const [hasValidated, setHasValidated] = useState(false);
+  const latestRequestIdRef = useRef(0);
 
   const getValidation = useCallback(
     async (database: Partial<DatabaseObject> | null, onCreate = false) => {
+      const requestId = latestRequestIdRef.current + 1;
+      latestRequestIdRef.current = requestId;
+      const isLatest = () => latestRequestIdRef.current === requestId;
       setIsValidating(true);
 
       try {
@@ -830,6 +834,7 @@ export function useDatabaseValidation() {
           body: JSON.stringify(transformDB(database)),
           headers: { 'Content-Type': 'application/json' },
         });
+        if (!isLatest()) return [];
         setValidationErrors(null);
         setIsValidating(false);
         setHasValidated(true);
@@ -891,6 +896,7 @@ export function useDatabaseValidation() {
                 return acc;
               }, {});
 
+            if (!isLatest()) return parsedErrors;
             setValidationErrors(parsedErrors);
             setIsValidating(false);
             setHasValidated(true);
@@ -899,8 +905,10 @@ export function useDatabaseValidation() {
         }
 
         console.error('Unexpected error during validation:', error);
-        setIsValidating(false);
-        setHasValidated(true);
+        if (isLatest()) {
+          setIsValidating(false);
+          setHasValidated(true);
+        }
         return {};
       }
     },
