@@ -16,7 +16,6 @@
 # under the License.
 """Unit tests for Rison filter parser."""
 
-
 from superset.utils.rison_filters import RisonFilterParser
 
 

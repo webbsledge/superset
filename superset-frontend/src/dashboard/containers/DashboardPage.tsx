@@ -211,9 +211,9 @@ export const DashboardPage: FC<PageProps> = ({ idOrSlug }: PageProps) => {
         if (risonFilters.length > 0) {
           // Convert native filter config array to keyed object for lookup
           const filterConfigArray =
-            (dashboard?.metadata
-              ?.native_filter_configuration as Array<Record<string, unknown> & { id: string }>) ||
-            [];
+            (dashboard?.metadata?.native_filter_configuration as Array<
+              Record<string, unknown> & { id: string }
+            >) || [];
           const nativeFilters: PartialFilters = {};
           filterConfigArray.forEach(filter => {
             nativeFilters[filter.id] = filter as PartialFilters[string];

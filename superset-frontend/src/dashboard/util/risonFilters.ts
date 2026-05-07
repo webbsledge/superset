@@ -36,63 +36,6 @@ export interface IntelligentRisonInjectionResult {
 }
 
 /**
- * Parse Rison filter syntax from URL parameter.
- * Supports formats like: (country:USA,year:2024)
- */
-export function parseRisonFilters(risonString: string): RisonFilter[] {
-  try {
-    const parsed = rison.decode(risonString);
-    const filters: RisonFilter[] = [];
-
-    if (!parsed || typeof parsed !== 'object') {
-      return filters;
-    }
-
-    const parsedObj = parsed as Record<string, unknown>;
-
-    // Handle OR operator: OR:!(condition1,condition2)
-    if (parsedObj.OR && Array.isArray(parsedObj.OR)) {
-      (parsedObj.OR as Record<string, unknown>[]).forEach(condition => {
-        if (typeof condition === 'object') {
-          Object.entries(condition).forEach(([key, value]) => {
-            filters.push(parseFilterCondition(key, value));
-          });
-        }
-      });
-      return filters;
-    }
-
-    // Handle NOT operator: NOT:(condition)
-    if (parsedObj.NOT && typeof parsedObj.NOT === 'object') {
-      Object.entries(parsedObj.NOT as Record<string, unknown>).forEach(
-        ([key, value]) => {
-          const filter = parseFilterCondition(key, value);
-          if (filter.operator === '==') {
-            filter.operator = '!=';
-          } else if (filter.operator === 'IN') {
-            filter.operator = 'NOT IN';
-          }
-          filters.push(filter);
-        },
-      );
-      return filters;
-    }
-
-    // Handle regular filters
-    Object.entries(parsedObj).forEach(([key, value]) => {
-      if (key !== 'OR' && key !== 'NOT') {
-        filters.push(parseFilterCondition(key, value));
-      }
-    });
-
-    return filters;
-  } catch (error) {
-    console.warn('Failed to parse Rison filters:', error);
-    return [];
-  }
-}
-
-/**
  * Parse individual filter condition
  */
 function parseFilterCondition(key: string, value: unknown): RisonFilter {
@@ -163,6 +106,63 @@ function parseFilterCondition(key: string, value: unknown): RisonFilter {
     operator: '==',
     comparator: value as string | number | boolean,
   };
+}
+
+/**
+ * Parse Rison filter syntax from URL parameter.
+ * Supports formats like: (country:USA,year:2024)
+ */
+export function parseRisonFilters(risonString: string): RisonFilter[] {
+  try {
+    const parsed = rison.decode(risonString);
+    const filters: RisonFilter[] = [];
+
+    if (!parsed || typeof parsed !== 'object') {
+      return filters;
+    }
+
+    const parsedObj = parsed as Record<string, unknown>;
+
+    // Handle OR operator: OR:!(condition1,condition2)
+    if (parsedObj.OR && Array.isArray(parsedObj.OR)) {
+      (parsedObj.OR as Record<string, unknown>[]).forEach(condition => {
+        if (typeof condition === 'object') {
+          Object.entries(condition).forEach(([key, value]) => {
+            filters.push(parseFilterCondition(key, value));
+          });
+        }
+      });
+      return filters;
+    }
+
+    // Handle NOT operator: NOT:(condition)
+    if (parsedObj.NOT && typeof parsedObj.NOT === 'object') {
+      Object.entries(parsedObj.NOT as Record<string, unknown>).forEach(
+        ([key, value]) => {
+          const filter = parseFilterCondition(key, value);
+          if (filter.operator === '==') {
+            filter.operator = '!=';
+          } else if (filter.operator === 'IN') {
+            filter.operator = 'NOT IN';
+          }
+          filters.push(filter);
+        },
+      );
+      return filters;
+    }
+
+    // Handle regular filters
+    Object.entries(parsedObj).forEach(([key, value]) => {
+      if (key !== 'OR' && key !== 'NOT') {
+        filters.push(parseFilterCondition(key, value));
+      }
+    });
+
+    return filters;
+  } catch (error) {
+    console.warn('Failed to parse Rison filters:', error);
+    return [];
+  }
 }
 
 /**
@@ -330,9 +330,7 @@ function findMatchingNativeFilter(
 
     const hasMatchingTarget = nativeFilter.targets.some(target => {
       if (typeof target === 'object' && target && 'column' in target) {
-        return (
-          target.column?.name?.trim().toLowerCase() === normalizedSubject
-        );
+        return target.column?.name?.trim().toLowerCase() === normalizedSubject;
       }
       return false;
     });
@@ -425,7 +423,11 @@ function convertRisonToNativeValue(
  */
 function buildDataMaskForFilter(
   risonFilter: RisonFilter,
-  nativeFilter: { id: string; filterType?: string; targets?: { column?: { name?: string } }[] },
+  nativeFilter: {
+    id: string;
+    filterType?: string;
+    targets?: { column?: { name?: string } }[];
+  },
   columnName: string,
 ) {
   const convertedValue = convertRisonToNativeValue(risonFilter, nativeFilter);
@@ -468,7 +470,11 @@ export function injectRisonFiltersIntelligently(
 
         const dataMaskEntry = buildDataMaskForFilter(
           risonFilter,
-          matchedFilter as { id: string; filterType?: string; targets?: { column?: { name?: string } }[] },
+          matchedFilter as {
+            id: string;
+            filterType?: string;
+            targets?: { column?: { name?: string } }[];
+          },
           columnName,
         );
 
