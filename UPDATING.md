@@ -24,7 +24,7 @@ assists people when migrating to a new version.
 
 ## Next
 
-- [39914](https://github.com/apache/superset/pull/39914) `ALERT_REPORT_SLACK_V2` now defaults to `True` and the legacy Slack v1 integration (`Slack` recipient type, `files.upload` API) is deprecated for removal in the next major. Slack retired `files.upload` in 2025, so v1 file-bearing sends already fail at the API level — only text-only `chat_postMessage` still works via the legacy path. Grant your Slack bot the `channels:read` scope (and `groups:read` for private channels) so existing `Slack` recipients can be auto-upgraded to `SlackV2` on next send. Operators who explicitly override the flag to `False` will see a one-shot `DeprecationWarning` plus a `logger.warning`; remove the override or grant the scope to clear it.
+- [39914](https://github.com/apache/superset/pull/39914) `ALERT_REPORT_SLACK_V2` now defaults to `True` and the legacy Slack v1 integration (`Slack` recipient type, `files.upload` API) is deprecated for removal in the next major. Slack retired `files.upload` in 2025, so v1 file-bearing sends already fail at the API level — only text-only `chat_postMessage` still works via the legacy path. Grant your Slack bot the `channels:read` scope (and `groups:read` if you use private channels) so existing `Slack` recipients can be auto-upgraded to `SlackV2` on next send. Operators who explicitly override the flag to `False` will see a one-shot `DeprecationWarning` plus a `logger.warning`; remove the override or grant the scopes to clear it.
 
 ### Granular Export Controls
 
