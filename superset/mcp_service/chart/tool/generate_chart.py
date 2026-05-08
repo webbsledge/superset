@@ -400,7 +400,7 @@ async def generate_chart(  # noqa: C901
                     )
 
                     execution_time = int((time.time() - start_time) * 1000)
-                    error = ChartGenerationError(
+                    error = compile_result.error_obj or ChartGenerationError(
                         error_type="compile_error",
                         message=(
                             "Chart query failed to execute. The chart was not saved."
@@ -530,7 +530,7 @@ async def generate_chart(  # noqa: C901
                     )
 
                     execution_time = int((time.time() - start_time) * 1000)
-                    error = ChartGenerationError(
+                    error = compile_result.error_obj or ChartGenerationError(
                         error_type="compile_error",
                         message=(
                             "Chart query failed to execute. "
