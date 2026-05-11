@@ -424,6 +424,7 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         catalog: str | None = None,
         schema: str | None = None,
         source: utils.QuerySource | None = None,
+        nullpool: bool | None = None,
     ) -> Iterator[Engine]:
         """
         Context manager for a SQLAlchemy engine.
@@ -431,7 +432,21 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         This method will return a context manager for a SQLAlchemy engine. The engine
         manager handles engine creation, SSH tunnels, and connection details in a
         centralized place.
+
+        The ``nullpool`` argument is deprecated and ignored — the engine manager
+        always uses ``NullPool``. It is kept temporarily for backwards compatibility
+        with external callers and will be removed in a future release.
         """
+        if nullpool is not None:
+            import warnings
+
+            warnings.warn(
+                "The `nullpool` argument to `Database.get_sqla_engine` is "
+                "deprecated and ignored; the engine manager always uses NullPool.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
         # Import here to avoid circular imports
         from superset.extensions import engine_manager_extension
 

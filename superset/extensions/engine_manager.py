@@ -21,6 +21,7 @@ from datetime import timedelta
 from flask import Flask
 
 from superset.engines.manager import EngineManager
+from superset.utils.class_utils import load_class_from_name
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +44,10 @@ class EngineManagerExtension:
         tunnel_timeout = timedelta(seconds=app.config["SSH_TUNNEL_TIMEOUT_SEC"])
         ssh_timeout = timedelta(seconds=app.config["SSH_TUNNEL_PACKET_TIMEOUT_SEC"])
 
-        # Create the engine manager
-        self.engine_manager = EngineManager(
+        engine_manager_class: type[EngineManager] = load_class_from_name(
+            app.config["ENGINE_MANAGER_CLASS"]
+        )
+        self.engine_manager = engine_manager_class(
             engine_context_manager,
             db_connection_mutator,
             local_bind_address,

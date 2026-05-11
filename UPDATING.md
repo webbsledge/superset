@@ -24,6 +24,24 @@ assists people when migrating to a new version.
 
 ## Next
 
+### `SSH_TUNNEL_MANAGER_CLASS` replaced by `ENGINE_MANAGER_CLASS`
+
+The `SSH_TUNNEL_MANAGER_CLASS` config setting, the `superset.extensions.ssh` module (containing `SSHManager` and `SSHManagerFactory`), and the `ssh_manager_factory` extension singleton have been removed. SQLAlchemy engine creation — including SSH tunnel construction and URL rewriting — is now centralized in `EngineManager` (`superset/engines/manager.py`), wired up via `EngineManagerExtension` (`superset/extensions/engine_manager.py`).
+
+A new config setting, `ENGINE_MANAGER_CLASS` (default: `"superset.engines.manager.EngineManager"`), replaces `SSH_TUNNEL_MANAGER_CLASS` as the customization hook. Deployments that previously subclassed `SSHManager` (e.g. for bastion routing, audit logging, host-key policy, or custom credential handling) should subclass `EngineManager` instead and set `ENGINE_MANAGER_CLASS` to the dotted path of the subclass. Override the relevant methods:
+
+| Old `SSHManager` method | New override point on `EngineManager` |
+|---|---|
+| `__init__(app)` reading `SSH_TUNNEL_*` configs | `__init__` — the same `SSH_TUNNEL_LOCAL_BIND_ADDRESS`, `SSH_TUNNEL_TIMEOUT_SEC`, and `SSH_TUNNEL_PACKET_TIMEOUT_SEC` configs are still loaded by `EngineManagerExtension.init_app` and passed in |
+| `create_tunnel(ssh_tunnel, uri)` | `_get_tunnel_kwargs(ssh_tunnel, uri)` for parameter construction and `_create_tunnel(ssh_tunnel, uri)` for the `sshtunnel.open_tunnel` + `start()` call |
+| `build_sqla_url(url, server)` | Inlined in `get_engine` as `uri.set(host=tunnel.local_bind_address[0], port=tunnel.local_bind_port)` |
+
+**Behavioral note:** the old `SSHManager.create_tunnel` passed `debug_level=logging.getLogger("flask_appbuilder").level` to `sshtunnel.open_tunnel`. The new `_get_tunnel_kwargs` does not. Subclasses relying on that should add it back in their override.
+
+### `Database.get_sqla_engine(nullpool=...)` deprecated
+
+The `nullpool` keyword argument to `Database.get_sqla_engine` is deprecated and ignored — the engine manager always uses `NullPool`. The kwarg is still accepted (with a `DeprecationWarning`) so external callers passing `nullpool=False` won't fail with `TypeError`, but the resulting engine will use `NullPool` regardless. Remove the argument from your callers; it will be deleted in a future release.
+
 ### Granular Export Controls
 
 A new feature flag `GRANULAR_EXPORT_CONTROLS` introduces three fine-grained permissions that replace the legacy `can_csv` permission:

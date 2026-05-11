@@ -1725,6 +1725,13 @@ def engine_context_manager(  # pylint: disable=unused-argument
 
 ENGINE_CONTEXT_MANAGER: EngineContextManager = engine_context_manager
 
+# The class used to manage SQLAlchemy engine creation, including SSH tunnels
+# and connection details. Deployments that need custom behavior (e.g. bastion
+# routing, audit logging, host-key policy, custom credential handling) can
+# subclass `superset.engines.manager.EngineManager` and point this setting at
+# the subclass.
+ENGINE_MANAGER_CLASS = "superset.engines.manager.EngineManager"
+
 # A callable that allows altering the database connection URL and params
 # on the fly, at runtime. This allows for things like impersonation or
 # arbitrary logic. For instance you can wire different users to

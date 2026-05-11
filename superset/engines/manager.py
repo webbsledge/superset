@@ -98,8 +98,8 @@ class EngineManager:
         user_id: int | None,
     ) -> tuple[URL, dict[str, Any]]:
         """Build SQLAlchemy URI and kwargs before engine creation."""
+        from superset import is_feature_enabled
         from superset.extensions import security_manager
-        from superset.utils.feature_flag_manager import FeatureFlagManager
 
         uri = make_url_safe(database.sqlalchemy_uri_decrypted)
         extra = database.get_extra(source)
@@ -115,10 +115,7 @@ class EngineManager:
         )
 
         username = database.get_effective_user(uri)
-        feature_flag_manager = FeatureFlagManager()
-        if username and feature_flag_manager.is_feature_enabled(
-            "IMPERSONATE_WITH_EMAIL_PREFIX"
-        ):
+        if username and is_feature_enabled("IMPERSONATE_WITH_EMAIL_PREFIX"):
             user = security_manager.find_user(username=username)
             if user and user.email and "@" in user.email:
                 username = user.email.split("@")[0]
