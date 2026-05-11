@@ -34,7 +34,6 @@ import { t } from '@apache-superset/core/translation';
 import {
   SupersetClient,
   JsonResponse,
-  JsonObject,
   QueryResponse,
   QueryFormData,
   VizType,
@@ -44,7 +43,8 @@ import {
 } from '@superset-ui/core';
 import { styled } from '@apache-superset/core/theme';
 import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { useAppDispatch } from 'src/views/store';
 import rison from 'rison';
 import { createDatasource } from 'src/SqlLab/actions/sqlLab';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
@@ -241,7 +241,7 @@ export const SaveDatasetModal = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   const user = useSelector<SqlLabRootState, User>(state => state.user);
-  const dispatch = useDispatch<(dispatch: any) => Promise<JsonObject>>();
+  const dispatch = useAppDispatch();
   const [includeTemplateParameters, setIncludeTemplateParameters] =
     useState(false);
 
