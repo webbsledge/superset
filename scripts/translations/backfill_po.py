@@ -42,7 +42,7 @@ Options:
   --model MODEL      Claude model ID (default: claude-sonnet-4-6)
   --index PATH       Path to translation_index.json (default: auto-detect)
   --dry-run          Print translations without writing to .po file
-  --fuzzy/--no-fuzzy Mark generated translations as fuzzy (default: fuzzy)
+  --no-fuzzy         Do not mark generated translations as fuzzy (default: mark fuzzy)
 """
 
 from __future__ import annotations
@@ -291,9 +291,13 @@ def translate_batch(
             "claude CLI not found. Install Claude Code or add it to PATH."
         )
     prompt = build_prompt(target_lang, batch, index)
+    # Pipe the prompt over stdin rather than passing it as argv: a single batch
+    # with many reference languages can grow into the tens of KB and approach
+    # ARG_MAX on some platforms.
     # claude_bin is resolved via shutil.which — not user-controlled input
     result = subprocess.run(  # noqa: S603
-        [claude_bin, "--model", model, "-p", prompt],
+        [claude_bin, "--model", model, "-p"],
+        input=prompt,
         capture_output=True,
         text=True,
         check=False,
@@ -376,8 +380,16 @@ def _process_batches(
     model: str,
     dry_run: bool,
     mark_fuzzy: bool,
+    cat: polib.POFile | None = None,
+    po_path: Path | None = None,
 ) -> tuple[int, int]:
-    """Translate missing entries in batches. Returns (translated, failed) counts."""
+    """Translate missing entries in batches. Returns (translated, failed) counts.
+
+    When ``cat`` and ``po_path`` are provided and ``dry_run`` is False, the
+    catalog is saved to disk after each batch that produced at least one
+    successful translation. This means a crash mid-run only loses the in-flight
+    batch rather than every batch translated so far.
+    """
     translated_count = 0
     failed_count = 0
     for batch_start in range(0, len(missing), batch_size):
@@ -394,6 +406,7 @@ def _process_batches(
             print(f"  ERROR in batch starting at {batch_start}: {exc}", file=sys.stderr)
             failed_count += len(batch_entries)
             continue
+        batch_applied = 0
         for i, entry in enumerate(batch_entries):
             translation = translations.get(i)
             if translation is None:
@@ -414,7 +427,19 @@ def _process_batches(
                 _apply_translation(
                     entry, translation, batch_items[i], model, mark_fuzzy
                 )
+                batch_applied += 1
             translated_count += 1
+        if (
+            not dry_run
+            and batch_applied > 0
+            and cat is not None
+            and po_path is not None
+        ):
+            cat.save()
+            print(
+                f"  Saved {po_path} ({batch_applied} entry(ies) in this batch).",
+                file=sys.stderr,
+            )
     return translated_count, failed_count
 
 
@@ -486,12 +511,16 @@ def backfill(
         return
 
     translated_count, failed_count = _process_batches(
-        missing, index, lang, batch_size, model, dry_run, mark_fuzzy
+        missing,
+        index,
+        lang,
+        batch_size,
+        model,
+        dry_run,
+        mark_fuzzy,
+        cat=cat,
+        po_path=po_path,
     )
-
-    if not dry_run and translated_count > 0:
-        print(f"\nSaving {po_path} …", file=sys.stderr)
-        cat.save()
 
     print(
         f"\nDone. Translated: {translated_count}, Failed/skipped: {failed_count}.",
