@@ -335,15 +335,50 @@ To be a strict superset of the notebook's capabilities, the new design needs the
 3. **`territory_assignments.yaml`** 🟠 (NEW) — for adding features from other Admin 0 records (China + SARs, Finland + Åland) — covers category 6
 4. **`regional_aggregations.yaml`** 🟠 (NEW) — for Admin 1 → administrative-region dissolves (Turkey NUTS-1, France/Italy/Philippines regions) — covers category 10
 5. **`composite_maps.yaml`** 🟠 (NEW) — for France-with-overseas-style multi-country composites — covers category 11
-6. **`external_overrides.yaml`** 🟠 (NEW, possibly obsolete) — for India/Latvia/Philippines third-party GeoJSON replacements — covers category 8 (verify per case)
-7. **Antimeridian handling** ✅ (mapshaper primitives)
+6. **`external_overrides.yaml`** 🟠 (very likely NOT needed) — see obsolescence check below; likely obviated by worldview selection + regional_aggregations
+7. **Antimeridian handling** ✅ (mapshaper primitives, possibly already obsolete)
 
 The four `🟠 NEW` items are the design surface this audit added beyond what we'd already discussed. None of them are large; each is a config-driven build-script transform.
+
+## Obsolescence check: which notebook fixes are still needed against current NE 5.x?
+
+Ran a per-fix check against `ne_10m_admin_1_states_provinces.shp` (current). Findings:
+
+| Notebook fix | Status in NE 5.x | Action |
+|---|---|---|
+| **France typos** (Seine, Haut-Rhin) | NE still ships "Seien-et-Marne" and "Haute-Rhin" | **KEEP** → `name_overrides.yaml` |
+| **France ISO 3166-2 codes** (FR-75→75C, FR-GP→971, etc.) | NE still uses old codes (6 features affected) | **KEEP** → `name_overrides.yaml` (or new `iso_overrides.yaml`) |
+| **Vietnam diacritics** (~12 manual rewrites) | NE's `.name` field still has unaccented values, BUT `.name_vi` field is correct ("Đồng Tháp", "Sơn La", etc.) | **OBSOLETE** → use `name_language=vi` instead of manual rewrites |
+| **Philippines admin renames** (Dinagat→Caraga, ARMM→BARMM) | NE still has the old names (5+6 affected features) | **KEEP** → `name_overrides.yaml` |
+| **Crimea/Sevastopol** (move from RUS to UKR) | Handled cleanly by NE `_ukr` worldview | **OBSOLETE** → falls out of worldview selection |
+| **India Kashmir/Ladakh geometry** (third-party replacement) | NE has both as Union Territories with correct ISO codes (IN-JK, IN-LA); notebook only replaces geometry. UA worldview already adjusts northern boundary | **LIKELY OBSOLETE** → verify geometry match against current Indian boundary claims; if NE Default/_ind/_ukr is acceptable, drop the override |
+| **Russia Chukchi antimeridian fix** | NE's Chukchi already has x range `[-180, 180]` — geometry has been split into multiple polygons that wrap correctly | **LIKELY OBSOLETE** → verify with actual D3 rendering; modern projections handle this |
+| **China + SARs** (add Taiwan/HK/Macau to CN admin1) | NE keeps Taiwan (TWN), Hong Kong (HKG), Macau (MAC) as separate Admin 0 records — not in CN admin1 | **KEEP** → `territory_assignments.yaml` |
+| **Finland + Åland** (add Åland to FIN admin1) | NE FIN admin1 has 18 features, missing Åland; ALA also absent from admin1 dataset | **KEEP** → `territory_assignments.yaml` (pull Åland from admin0) |
+| **Latvia third-party replacement** | NE has 119 admin1 features (110 Novads municipalities + 9 cities) — modern, fine-grained | **OBSOLETE** → use NE directly. Notebook's third-party file probably matches an older 5-region model; if that's wanted, expose it via `regional_aggregations.yaml` (5 historical regions dissolved from 119 municipalities) |
+| **Philippines third-party replacement** | NE has 118 admin1 features (80 provinces + 32 highly-urbanized cities + 6 others) | **OBSOLETE** → use NE directly. If users want the 17-region view, expose via `regional_aggregations.yaml` |
+| **France/Italy/Turkey/PHL regional dissolves** | Pure aggregation — NE admin1 data is fine | **KEEP** → `regional_aggregations.yaml` |
+| **France-with-Overseas composite** | No upstream support; NE has the territories spread across 6 separate Admin 0 records | **KEEP** → `composite_maps.yaml` |
+| **Flying-island repositions** (USA, Norway, Portugal, Spain, France DOM) | Cartographic editorial choices — NE doesn't and shouldn't make these | **KEEP** → `flying_islands.yaml` |
+| **Single-subdivision country auto-purge** | n/a, build-script default | **KEEP** → build script default |
+| **TypeScript countries.ts generator** | n/a, output | **KEEP** → simpler version generated from build-script manifest |
+
+### Headline wins from the obsolescence check
+
+- **`external_overrides.yaml` is probably NOT needed.** All three third-party-GeoJSON cases (India, Latvia, Philippines) are obviated either by worldview selection (India) or by NE having matured fine-grained admin1 data (Latvia, Philippines). The "older / coarser" subdivisions some users want become use cases for `regional_aggregations.yaml` instead.
+- **Vietnam manual rewrites disappear** when we expose NE's `NAME_<lang>` fields via the `name_language` selector. Twelve config entries collapse to zero.
+- **Crimea/Sevastopol** confirmed obsolete via `_ukr` worldview (already validated in main spike).
+- **Russia Chukchi antimeridian fix is likely obsolete.** NE has split Chukchi into properly-bounded polygons. We need to verify the new plugin's D3 projection handles them correctly at render time, but the data is in good shape.
+- **Net design surface shrinks:** the 6 NEW config files I sketched in the audit collapse to **4 NEW** (`territory_assignments`, `regional_aggregations`, `composite_maps`, plus the existing `name_overrides`/`flying_islands`/`iso_overrides`). One less config file, one less ongoing maintenance burden, no third-party data dependencies in-tree.
+
+### What still requires manual attention going forward
+
+The fixes that survive (France typos/ISO codes, Philippines admin renames, China+SARs, Finland+Åland, regional aggregations, composite maps, flying islands) are all relatively **stable** — they don't change year over year. Once ported to YAML, the maintenance cost is roughly: "watch for new disputed-region PRs (handle via worldview switch) + occasional admin-name updates (one-line YAML edit)". Way better than the notebook treadmill.
 
 ## Open questions
 
 1. **Default worldview confirmation.** Recommendation is `ukr`. Acceptable to ship that wholesale, or do we want a more granular `default_overrides` overlay model (NE Default + selectively swap Crimea geometry from `_ukr`)? The latter is more code but more editorially neutral on the non-Crimea pieces. — **resolved: ship `ukr` wholesale**
-2. **External GeoJSON overrides (notebook category 8).** India, Latvia, Philippines currently replace NE entirely with third-party GeoJSON. Per-country verification needed: are these still required against current NE 5.x, or has NE caught up? If even one needs to stay, we need to design `external_overrides.yaml` as a first-class config layer.
+2. **External GeoJSON overrides (notebook category 8).** India, Latvia, Philippines currently replace NE entirely with third-party GeoJSON. — **resolved: obsolescence check shows none of the three need to stay.** Latvia/Philippines have fine-grained NE admin1 data; India's J&K is handled by worldview selection (verify per region under `_ukr`). **`external_overrides.yaml` is dropped from the design.**
 3. **Composite maps (notebook category 11).** France-with-Overseas combines features from 6 different Admin 0 records. Three options: build first-class `composite_maps.yaml` support, ship hand-curated alternatives, or drop the feature entirely. **Lean: first-class config support.**
 4. **Regional aggregations (notebook category 10).** Turkey NUTS-1, France/Italy/Philippines regions need a `regional_aggregations.yaml` and a third "admin level" UX option (`Admin 0 / Admin 1 / Aggregated regions`). Confirm scope.
 5. **Admin 1 country coverage.** NE Admin 1 covers ~all countries but quality varies. Decide which countries are first-class supported (probably a curated list initially, opening up as we validate).
@@ -362,9 +397,11 @@ The four `🟠 NEW` items are the design surface this audit added beyond what we
 ### Phase 1: Data pipeline + spike validation
 - [x] Spike: UA vs Default worldview diff
 - [x] Audit existing notebook touchups; categorize → keep / drop / port to YAML config (see "Notebook audit" section)
-- [ ] Per-country obsolescence check: which notebook fixes are no longer needed against current NE 5.x?
-- [ ] Per-country external-GeoJSON check: do India / Latvia / Philippines still need third-party data?
-- [ ] Design + draft `name_overrides.yaml`, `flying_islands.yaml`, `territory_assignments.yaml`, `regional_aggregations.yaml`, `composite_maps.yaml` (and `external_overrides.yaml` if needed)
+- [x] Per-country obsolescence check against current NE 5.x (see "Obsolescence check" section)
+- [x] Per-country external-GeoJSON check: India/Latvia/Philippines — confirmed `external_overrides.yaml` likely NOT needed
+- [ ] Verify Russia Chukchi renders correctly with current NE data + D3 projection (to confirm antimeridian-fix obsolescence)
+- [ ] Verify India J&K geometry against current Indian boundary expectations under `_ukr` worldview
+- [ ] Design + draft `name_overrides.yaml`, `flying_islands.yaml`, `territory_assignments.yaml`, `regional_aggregations.yaml`, `composite_maps.yaml`
 - [ ] Write `scripts/country-maps/build.sh` (mapshaper-based) consuming the YAML configs
 - [ ] Generate first batch of GeoJSON outputs (UA + Default + a couple of others)
 - [ ] CI workflow for regeneration
