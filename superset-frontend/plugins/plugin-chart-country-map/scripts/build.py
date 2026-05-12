@@ -121,6 +121,26 @@ def shp_to_geojson(shp: Path, output: Path) -> None:
     )
 
 
+def simplify_geojson(src: Path, dst: Path, percentage: float = 5.0) -> None:
+    """Run mapshaper -simplify to reduce file size with topology preserved.
+
+    Default 5% keeps recognizable country shapes while shrinking typical
+    Admin 1 output ~10x. `keep-shapes` prevents tiny features (small
+    islands) from being dropped entirely.
+    """
+    log(f"  mapshaper -simplify {percentage}% keep-shapes: {src.name} → {dst.name}")
+    subprocess.run(
+        [
+            "npx", "--yes", "mapshaper",
+            str(src),
+            "-simplify", f"{percentage}%", "keep-shapes",
+            "-o", str(dst), "format=geojson",
+        ],
+        check=True,
+        stderr=subprocess.DEVNULL,
+    )
+
+
 # ----------------------------------------------------------------------
 # Match helpers
 # ----------------------------------------------------------------------
@@ -320,15 +340,26 @@ def build_one(
     geo = apply_name_overrides(geo, name_overrides)
     geo = apply_flying_islands(geo, flying_islands, country_a3=None)
     # TODO(future): territory_assignments, composite_maps,
-    # regional_aggregations, simplification, procedural/
+    # regional_aggregations, procedural/
 
+    # Write transformed GeoJSON to an intermediate path, then run
+    # mapshaper -simplify into the final output. Two-stage approach so
+    # the Python transforms work on full-resolution geometry.
     wv_label = worldview or "default"
+    transformed = OUTPUT_DIR / f"_transformed_{wv_label}_admin{admin_level}.geo.json"
+    transformed.write_text(json.dumps(geo))
+
     final = OUTPUT_DIR / f"{wv_label}_admin{admin_level}.geo.json"
-    final.write_text(json.dumps(geo))
-    log(f"  wrote {final.name} ({final.stat().st_size:,} bytes, "
-        f"{len(geo['features'])} features)")
+    simplify_geojson(transformed, final, percentage=5.0)
+
+    final_size = final.stat().st_size
+    pre_size = transformed.stat().st_size
+    reduction = 100 * (1 - final_size / pre_size) if pre_size else 0
+    log(f"  wrote {final.name} ({final_size:,} bytes, "
+        f"{len(geo['features'])} features, simplified -{reduction:.0f}%)")
 
     raw.unlink()
+    transformed.unlink()
     return final
 
 
