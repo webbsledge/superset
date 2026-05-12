@@ -42,15 +42,18 @@ against a separate base-branch worktree):
 Typical CI workflow
 -------------------
 1. Create a base-branch worktree alongside the PR worktree
-2. Run babel_update.sh in the base worktree (extract from BASE source)
+2. Run babel_update.sh in the base worktree (extract from BASE source +
+   BASE translations) — produces the baseline that already accounts for any
+   pre-existing drift on the base branch
 3. Record baseline:  python ... --count --translations-dir BASE_TREE > before.json
-4. Run babel_update.sh in the PR worktree (extract from PR source) starting
-   from the same pristine BASE translations
+4. Run babel_update.sh in the PR worktree (extract from PR source +
+   PR translations) — this lets a contributor fix a regression by committing
+   .po updates alongside source changes
 5. Compare:  python ... --compare before.json [--report report.md]
 
-Comparing two babel_update outputs that started from the same BASE .po files
-isolates regressions caused by the PR's source diff from any pre-existing
-drift on the base branch.
+The base run absorbs any pre-existing drift on master; the PR run is
+checked against that baseline, so the question CI answers is "did this PR
+net-decrease the translated count, given both sides' source + .po files?".
 """
 
 import argparse
@@ -79,10 +82,16 @@ def count_translated(po_file: Path) -> int:
         [msgfmt, "--statistics", "-o", "/dev/null", str(po_file)],
         capture_output=True,
         text=True,
+        check=True,
     )
     # stderr: "123 translated messages, 4 fuzzy translations, 56 untranslated messages."
     match = re.search(r"(\d+) translated message", result.stderr)
-    return int(match.group(1)) if match else 0
+    if not match:
+        raise RuntimeError(
+            f"Unable to parse msgfmt --statistics output for {po_file}: "
+            f"{result.stderr!r}"
+        )
+    return int(match.group(1))
 
 
 def get_counts(translations_dir: Path) -> dict[str, int]:

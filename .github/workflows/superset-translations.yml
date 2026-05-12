@@ -90,10 +90,10 @@ jobs:
           fi
           git worktree add /tmp/base-worktree FETCH_HEAD
 
-      # Run babel_update against BASE source + BASE translations. Any drift
-      # already present on the base branch (source strings that have changed
-      # without .po updates) shows up here as fuzzies — and will also show
-      # up in the PR run, so it cancels out in the comparison.
+      # Run babel_update against BASE source + BASE translations. This is the
+      # baseline — any pre-existing drift on master (strings whose msgids
+      # changed without .po updates) is already reflected in the count, so the
+      # PR is only judged on whether it makes things worse than master is now.
       - name: Baseline — run babel_update against BASE source
         if: steps.check.outputs.python == 'true' || steps.check.outputs.frontend == 'true'
         working-directory: /tmp/base-worktree
@@ -107,13 +107,12 @@ jobs:
             --translations-dir /tmp/base-worktree/superset/translations \
             > /tmp/before.json
 
-      # Reset the PR worktree's translations to the pristine BASE state so
-      # both babel_update runs start from the same .po files. The only
-      # difference between the runs is the source code.
-      - name: Reset PR worktree translations to pristine BASE
-        if: steps.check.outputs.python == 'true' || steps.check.outputs.frontend == 'true'
-        run: git checkout FETCH_HEAD -- superset/translations/
-
+      # Run babel_update against PR source + PR translations. We intentionally
+      # do *not* reset translations to the base state here so that a contributor
+      # can fix a regression by committing .po updates alongside source
+      # changes — the comparison is "did the PR's net translated count drop
+      # below the base's net translated count after both have been re-extracted
+      # against their own source?", which is the actual question CI should ask.
       - name: Run babel_update against PR source
         if: steps.check.outputs.python == 'true' || steps.check.outputs.frontend == 'true'
         run: ./scripts/translations/babel_update.sh
