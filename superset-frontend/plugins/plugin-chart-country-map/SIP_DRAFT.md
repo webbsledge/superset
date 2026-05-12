@@ -432,37 +432,81 @@ The fixes that survive (France typos/ISO codes, Philippines admin renames, China
 - [x] Spike: UA vs Default worldview diff
 - [x] Audit existing notebook touchups; categorize → keep / drop / port to YAML config (see "Notebook audit" section)
 - [x] Per-country obsolescence check against current NE 5.x (see "Obsolescence check" section)
-- [x] Per-country external-GeoJSON check: India/Latvia/Philippines — confirmed `external_overrides.yaml` likely NOT needed
+- [x] Per-country external-GeoJSON check: India/Latvia/Philippines — confirmed `external_overrides.yaml` NOT needed
+- [x] Design + draft all five config schemas: `name_overrides.yaml`, `flying_islands.yaml`, `territory_assignments.yaml`, `regional_aggregations.yaml`, `composite_maps.yaml` + `procedural/README.md` for the escape hatch
+- [x] Write `scripts/build.sh` + `scripts/build.py` (mapshaper-based) consuming the YAML configs
+- [x] Implement all 5 transforms: name_overrides, flying_islands, territory_assignments, regional_aggregations, composite_maps
+- [x] Per-country Admin 1 split (220 output files instead of one monolith)
+- [x] Pipeline produces correct counts on every transform vs. notebook expectations
 - [ ] Verify Russia Chukchi renders correctly with current NE data + D3 projection (to confirm antimeridian-fix obsolescence)
 - [ ] Verify India J&K geometry against current Indian boundary expectations under `_ukr` worldview
-- [ ] Design + draft `name_overrides.yaml`, `flying_islands.yaml`, `territory_assignments.yaml`, `regional_aggregations.yaml`, `composite_maps.yaml`
-- [ ] Write `scripts/country-maps/build.sh` (mapshaper-based) consuming the YAML configs
-- [ ] Generate first batch of GeoJSON outputs (UA + Default + a couple of others)
+- [ ] Generate Default worldview (currently only UA shipped — Default + a few others come once renderer is wired)
 - [ ] CI workflow for regeneration
 
 ### Phase 2: Plugin scaffolding
-- [ ] Scaffold `plugin-chart-country-map` directory matching modern plugin structure
-- [ ] Register against `chart/data` endpoint
-- [ ] Port rendering logic from legacy plugin (D3 paths, color scales, interactions)
-- [ ] Wire up GeoJSON loading from new build outputs
+- [x] Scaffold `plugin-chart-country-map` directory matching modern plugin structure
+- [x] Register against `chart/data` endpoint (buildQuery + ChartPlugin class)
+- [x] Skeleton transformProps that derives `geoJsonUrl` from form_data using the build script's output naming
+- [x] Placeholder renderer that fetches the GeoJSON and shows diagnostics (compiles end-to-end)
+- [ ] Port rendering logic from legacy plugin (D3 paths, color scales, projection, interactions)
+- [ ] Wire actual GeoJSON output hosting path (currently stubbed to `/static/assets/country-maps/`)
 
 ### Phase 3: Controls
-- [ ] Worldview selector
-- [ ] Admin level + country selector
-- [ ] Region include/exclude
-- [ ] Flying islands toggle
-- [ ] Name language selector
+- [ ] Worldview selector (options sourced from build manifest)
+- [ ] Admin level segmented control (0 / 1 / Aggregated)
+- [ ] Country selector (visible when admin_level !== 0)
+- [ ] Region set selector (when Aggregated chosen)
+- [ ] Composite selector (separate option in country picker)
+- [ ] Region include/exclude multi-selects
+- [ ] Flying islands toggle (default ON)
+- [ ] Name language selector (drives which NAME_<lang> field renders)
 - [ ] Fit-to-selection projection refit
 
 ### Phase 4: Deprecation wiring
-- [ ] Banner on legacy plugin
+- [ ] Banner on legacy plugin pointing at new chart type
 - [ ] "Switch to new Country Map" button + form_data migration logic
+- [ ] Auto-close superseded duplicate PRs (#32497, etc.) on merge
+- [ ] Add new viz_type to default chart-type registry
 
 ### Phase 5: Polish + docs
 - [ ] UPDATING.md entry
-- [ ] Plugin README
+- [ ] Build manifest output (NE SHA + worldviews + admin levels included)
+- [ ] CI workflow that regenerates outputs and PRs the diff
+- [ ] Real example images / thumbnails for the chart type picker
 - [ ] Update Superset docs site
-- [ ] Add to default `viz_type` registry
+- [ ] Tests: buildQuery, controlPanel, transformProps, build.py transforms
+
+## Current PR state (snapshot as of latest commit)
+
+**What's working end-to-end:**
+
+```
+$ ./scripts/build.sh
+Country Map build — pinned to NE v5.1.2 (f1890d9f)
+Loaded 10 name override entries
+Loaded flying_islands rules for 7 countries
+Loaded territory_assignments rules for 2 countries
+Loaded regional_aggregations: 4 region-sets across 4 countries
+Loaded composite_maps: 1 composites
+
+Building worldview=ukr admin_level=0
+  …  wrote ukr_admin0.geo.json (2,101,149 bytes, 249 features)
+Building worldview=ukr admin_level=1
+  …  name_overrides: applied 19 field updates across 10 entries
+  …  flying_islands: repositioned 12 features, dropped 5 (outside-bbox)
+  …  territory_assignments: added 4 features from sibling Admin 0 records
+  …  TUR/nuts_1: 81 subdivisions → 12 regions → regional_TUR_nuts_1_ukr.geo.json (23 KB)
+  …  FRA/regions: 101 subdivisions → 18 regions → regional_FRA_regions_ukr.geo.json (32 KB)
+  …  ITA/regions: 110 subdivisions → 20 regions → regional_ITA_regions_ukr.geo.json (32 KB)
+  …  PHL/regions: 118 subdivisions → 17 regions → regional_PHL_regions_ukr.geo.json (32 KB)
+  …  france_overseas: 108 features → composite_france_overseas_ukr.geo.json (322 KB)
+  …  wrote 214 per-country Admin 1 files (total 14.7 MB)
+Done.
+```
+
+**Plugin scaffold compiles** (placeholder renderer, modern ChartPlugin, buildQuery against chart/data, transformProps deriving the right GeoJSON URL from form_data).
+
+**Not yet wired:** real D3 rendering, full control panel, hosting path for the build outputs, legacy plugin deprecation. Each is a discrete next commit.
 
 ## References
 
