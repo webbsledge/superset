@@ -165,9 +165,171 @@ def apply_name_overrides(geo: dict, overrides: list[dict]) -> dict:
     return geo
 
 
+def _translate_and_scale(
+    geom: dict,
+    offset: list[float],
+    scale: float = 1.0,
+) -> dict:
+    """Translate then optionally scale a GeoJSON geometry in place.
+
+    Pure-Python implementation — no shapely dependency. Operates on
+    Polygon and MultiPolygon coordinates (the only types that appear
+    in NE Admin 0/1 country geometries).
+
+    Scale is applied around the geometry's centroid (well, its bbox
+    center, which is good enough at the scales we use for visual layout
+    of flying-island insets).
+    """
+    coords = geom["coordinates"]
+
+    # Compute bbox center for scaling pivot.
+    flat: list[list[float]] = []
+
+    def _walk(c: Any) -> None:
+        if isinstance(c[0], (int, float)):
+            flat.append(c)
+        else:
+            for sub in c:
+                _walk(sub)
+
+    _walk(coords)
+    xs = [p[0] for p in flat]
+    ys = [p[1] for p in flat]
+    cx = (min(xs) + max(xs)) / 2
+    cy = (min(ys) + max(ys)) / 2
+    dx, dy = offset
+
+    def _transform_point(p: list[float]) -> list[float]:
+        # Scale around centroid first, then translate.
+        x = (p[0] - cx) * scale + cx + dx
+        y = (p[1] - cy) * scale + cy + dy
+        return [x, y]
+
+    def _transform_recursive(c: Any) -> Any:
+        if isinstance(c[0], (int, float)):
+            return _transform_point(c)
+        return [_transform_recursive(sub) for sub in c]
+
+    geom["coordinates"] = _transform_recursive(coords)
+    return geom
+
+
+def _bbox_contains(geom: dict, nw: list[float], se: list[float]) -> bool:
+    """Whether the geometry's bbox is fully contained within the [nw, se] box."""
+    xs: list[float] = []
+    ys: list[float] = []
+
+    def _walk(c: Any) -> None:
+        if isinstance(c[0], (int, float)):
+            xs.append(c[0])
+            ys.append(c[1])
+        else:
+            for sub in c:
+                _walk(sub)
+
+    _walk(geom["coordinates"])
+    if not xs:
+        return False
+    x_min, x_max = min(xs), max(xs)
+    y_min, y_max = min(ys), max(ys)
+    # nw = (lon_west, lat_north); se = (lon_east, lat_south)
+    return (
+        x_min >= nw[0]
+        and x_max <= se[0]
+        and y_min >= se[1]
+        and y_max <= nw[1]
+    )
+
+
+def apply_flying_islands(geo: dict, config: dict, country_a3: str | None) -> dict:
+    """Apply flying_islands.yaml transforms.
+
+    For Admin 0 outputs, `country_a3` is None and we apply each country's
+    rules to features matching that adm0_a3.
+
+    For Admin 1 outputs (per-country), `country_a3` scopes the application
+    to just that country's rules.
+    """
+    countries = config.get("countries", {})
+
+    n_repos = 0
+    n_dropped = 0
+
+    for a3, rules in countries.items():
+        if country_a3 is not None and a3 != country_a3:
+            continue
+
+        # Repositions
+        for entry in rules.get("repositions", []):
+            match = entry["match"]
+            offset = entry["offset"]
+            scale = entry.get("scale", 1.0)
+            for f in geo["features"]:
+                props = f["properties"]
+                if props.get("adm0_a3") != a3:
+                    continue
+                if not _matches(props, match):
+                    continue
+                f["geometry"] = _translate_and_scale(
+                    f["geometry"], offset=offset, scale=scale
+                )
+                n_repos += 1
+
+        # Drop outside bbox
+        drop = rules.get("drop_outside_bbox")
+        if drop:
+            nw, se = drop["nw"], drop["se"]
+            kept: list[dict] = []
+            for f in geo["features"]:
+                if f["properties"].get("adm0_a3") != a3:
+                    kept.append(f)
+                    continue
+                if _bbox_contains(f["geometry"], nw, se):
+                    kept.append(f)
+                else:
+                    n_dropped += 1
+            geo["features"] = kept
+
+    log(
+        f"  flying_islands: repositioned {n_repos} features, "
+        f"dropped {n_dropped} (outside-bbox)"
+    )
+    return geo
+
+
 # ----------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------
+
+
+def build_one(
+    worldview: str,
+    admin_level: int,
+    name_overrides: list[dict],
+    flying_islands: dict,
+) -> Path:
+    """Build one (worldview, admin_level) GeoJSON. Returns the output path."""
+    log(f"\nBuilding worldview={worldview or 'default'} admin_level={admin_level}")
+    shp = fetch_ne_shapefile(admin_level, worldview)
+    raw = OUTPUT_DIR / f"_raw_{worldview or 'default'}_admin{admin_level}.geo.json"
+    shp_to_geojson(shp, raw)
+
+    geo = json.loads(raw.read_text())
+    log(f"  loaded {len(geo['features'])} features")
+
+    geo = apply_name_overrides(geo, name_overrides)
+    geo = apply_flying_islands(geo, flying_islands, country_a3=None)
+    # TODO(future): territory_assignments, composite_maps,
+    # regional_aggregations, simplification, procedural/
+
+    wv_label = worldview or "default"
+    final = OUTPUT_DIR / f"{wv_label}_admin{admin_level}.geo.json"
+    final.write_text(json.dumps(geo))
+    log(f"  wrote {final.name} ({final.stat().st_size:,} bytes, "
+        f"{len(geo['features'])} features)")
+
+    raw.unlink()
+    return final
 
 
 def main() -> int:
@@ -179,30 +341,21 @@ def main() -> int:
     name_overrides = yaml.safe_load(
         (CONFIG_DIR / "name_overrides.yaml").read_text()
     )["overrides"]
+    flying_islands = yaml.safe_load(
+        (CONFIG_DIR / "flying_islands.yaml").read_text()
+    )
     log(f"Loaded {len(name_overrides)} name override entries")
+    log(f"Loaded flying_islands rules for {len(flying_islands.get('countries', {}))} countries")
 
-    # POC scope: UA worldview, Admin 0 only. Future commits expand this.
-    worldview = "ukr"
-    admin_level = 0
+    # POC scope: UA worldview, both Admin 0 and Admin 1. Future commits
+    # add more worldviews (Default, and other major NE worldviews).
+    targets: list[tuple[str, int]] = [
+        ("ukr", 0),
+        ("ukr", 1),  # Admin 1 — exercises name_overrides + per-country fly-island rules
+    ]
 
-    log(f"\nBuilding worldview={worldview} admin_level={admin_level}")
-    shp = fetch_ne_shapefile(admin_level, worldview)
-    raw_geojson = OUTPUT_DIR / f"_raw_{worldview}_admin{admin_level}.geo.json"
-    shp_to_geojson(shp, raw_geojson)
-
-    geo = json.loads(raw_geojson.read_text())
-    log(f"  loaded {len(geo['features'])} features")
-
-    geo = apply_name_overrides(geo, name_overrides)
-    # TODO(next-commit): flying_islands, territory_assignments,
-    # composite_maps, regional_aggregations, simplification, procedural/
-
-    final = OUTPUT_DIR / f"{worldview}_admin{admin_level}.geo.json"
-    final.write_text(json.dumps(geo))
-    log(f"  wrote {final} ({final.stat().st_size:,} bytes)")
-
-    # Cleanup intermediate
-    raw_geojson.unlink()
+    for worldview, admin_level in targets:
+        build_one(worldview, admin_level, name_overrides, flying_islands)
 
     log("\nDone.")
     return 0
