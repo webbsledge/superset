@@ -1,0 +1,130 @@
+# Multi-country composite maps that pull features from several Admin 0
+# records into a single GeoJSON output, repositioning each into insets.
+#
+# The canonical example is "France with Overseas" — mainland France plus
+# 5 DROM departments (already part of FRA Admin 0) plus territories from
+# 5 separate Admin 0 records (PYF, ATF, WLF, NCL, SPM) all repositioned
+# around the mainland into one composite map.
+#
+# Build script reads each composite definition and:
+#   1. Loads the base country at the requested admin level
+#   2. Applies base_repositions to specified features
+#   3. For each addition: pulls the feature from another Admin 0 record,
+#      optionally drops sub-polygons by index, repositions, dissolves
+#   4. Outputs a single GeoJSON keyed by the composite's identifier
+#   5. Plugin exposes it in the country picker with `display_name`
+#
+# Schema:
+#   composites:
+#     <composite_id>:
+#       description: human-readable
+#       display_name: text shown in UI dropdown
+#       admin_level: 0 | 1                 # which level the composite represents
+#       base:
+#         adm0_a3: <ISO3>
+#       base_repositions:                  # optional; applied to base features
+#         - description: human-readable
+#           match: { name: <feature name>, ... }
+#           offset: [x, y]
+#           scale: <number>                # optional
+#           drop_parts: [<int>, ...]       # optional; drop specific sub-polygon indices
+#       additions:                         # features pulled from other Admin 0 records
+#         - description: human-readable
+#           from:
+#             adm0_a3: <ISO3 source>
+#             match: { ... }               # which feature(s) to pull
+#             dissolve: true               # optional; merge all matched features
+#           drop_parts: [<int>, ...]       # optional
+#           reposition:
+#             offset: [x, y]
+#             scale: <number>              # optional
+
+composites:
+
+  # -------------------------------------------------------------------
+  # France with Overseas — mainland France + DROMs + sister Admin 0
+  # territories under French sovereignty, all repositioned into a single
+  # frame. Most complex composite; templates the schema for others.
+  # -------------------------------------------------------------------
+  france_overseas:
+    description: |
+      Mainland France plus all overseas territories (DROMs + COMs +
+      Polynesia + Southern Lands + Wallis-Futuna + New Caledonia +
+      Saint-Pierre-et-Miquelon) shown in one composite map.
+    display_name: "France (with overseas)"
+    admin_level: 1
+    base:
+      adm0_a3: FRA
+    base_repositions:
+      # The 5 overseas DROMs (départements et régions d'outre-mer) — already
+      # part of FRA Admin 0 in NE. Repositioned aggressively for layout.
+      - description: Reposition Guadeloupe near mainland
+        match: { name: Guadeloupe }
+        offset: [53.2, 29.0]
+        scale: 1.5
+      - description: Reposition Martinique near mainland
+        match: { name: Martinique }
+        offset: [52.8, 27.5]
+        scale: 1.5
+      - description: Reposition French Guiana (shrunk — it's vast)
+        match: { name: "Guyane française" }
+        offset: [45.0, 35.5]
+        scale: 0.3
+      - description: Reposition La Réunion
+        match: { name: "La Réunion" }
+        offset: [-58.2, 60.5]
+        scale: 1.5
+      - description: Reposition Mayotte
+        match: { name: Mayotte }
+        offset: [-50.5, 52.2]
+        scale: 2.0
+    additions:
+      # French Polynesia — only the Windward Islands (Tahiti area), and
+      # we drop the second sub-polygon to avoid visual conflict with
+      # Corsica when laid out.
+      - description: Add Tahiti (Windward Islands) from French Polynesia, drop Rimatuu sub-polygon
+        from:
+          adm0_a3: PYF
+          match: { name: "Windward Islands" }
+        drop_parts: [1]
+        reposition:
+          offset: [158.2, 57.3]
+          scale: 2.0
+
+      # French Southern and Antarctic Lands — Kerguelen Islands only.
+      - description: Add Archipel des Kerguelen from French Southern Lands
+        from:
+          adm0_a3: ATF
+          match: { name: "Archipel des Kerguelen" }
+        reposition:
+          offset: [-63.5, 88.5]
+          scale: 0.9
+
+      # Wallis and Futuna — dissolve Alo + Uvea into one shape.
+      - description: Add Wallis and Futuna (dissolved)
+        from:
+          adm0_a3: WLF
+          dissolve: true
+        reposition:
+          offset: [170, 52.5]
+          scale: 4.0
+
+      # New Caledonia — dissolve all subdivisions.
+      - description: Add New Caledonia (dissolved)
+        from:
+          adm0_a3: NCL
+          dissolve: true
+        reposition:
+          offset: [-165.5, 60.4]
+          scale: 0.4
+
+      # Saint-Pierre and Miquelon — dissolved
+      # NOTE: notebook cell 63 was truncated in the audit; offsets TBD
+      # during build script implementation. Placeholder values below.
+      - description: Add Saint-Pierre and Miquelon (dissolved)
+        from:
+          adm0_a3: SPM
+          dissolve: true
+        reposition:
+          offset: [0, 0]      # TODO: extract from full notebook cell
+          scale: 1.0
