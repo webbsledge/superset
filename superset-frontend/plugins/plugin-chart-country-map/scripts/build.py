@@ -277,6 +277,119 @@ def _bbox_contains(geom: dict, nw: list[float], se: list[float]) -> bool:
     )
 
 
+def apply_regional_aggregations(
+    geo: dict,
+    config: dict,
+    worldview: str,
+    simplify_pct: float = 5.0,
+) -> list[Path]:
+    """Build one dissolved GeoJSON per (country, region_set).
+
+    For each region_set in the config:
+      1. Filter Admin 1 features to the destination country
+      2. Tag each with a derived `_region_code` (and `_region_name`)
+         based on either an explicit_mapping or grouping_field
+      3. Write to intermediate file; mapshaper -dissolve merges by
+         `_region_code` in one pass
+      4. Rename `_region_code` → `iso_3166_2`, `_region_name` → `name`
+         on the dissolved output
+
+    Returns list of output paths created.
+    """
+    countries = config.get("countries", {})
+    if not countries:
+        log("  regional_aggregations: nothing to apply (config empty)")
+        return []
+
+    outputs: list[Path] = []
+    wv_label = worldview or "default"
+
+    for country_a3, rules in countries.items():
+        for set_name, set_def in rules.get("region_sets", {}).items():
+            country_features = [
+                f for f in geo["features"]
+                if f["properties"].get("adm0_a3") == country_a3
+            ]
+
+            tagged: list[dict] = []
+            if "explicit_mapping" in set_def:
+                em = set_def["explicit_mapping"]
+                # iso_3166_2 → (region_code, region_name)
+                reverse: dict[str, tuple[str, str]] = {
+                    member: (rcode, rdef["name"])
+                    for rcode, rdef in em.items()
+                    for member in rdef["members"]
+                }
+                for f in country_features:
+                    iso = f["properties"].get("iso_3166_2")
+                    if iso in reverse:
+                        rcode, rname = reverse[iso]
+                        # deep copy so we don't mutate the upstream geo
+                        nf = json.loads(json.dumps(f))
+                        nf["properties"]["_region_code"] = rcode
+                        nf["properties"]["_region_name"] = rname
+                        tagged.append(nf)
+            elif "grouping_field" in set_def:
+                gf = set_def["grouping_field"]
+                for f in country_features:
+                    val = f["properties"].get(gf)
+                    if val:
+                        nf = json.loads(json.dumps(f))
+                        nf["properties"]["_region_code"] = str(val)
+                        # display name same as code unless we add a separate
+                        # display-name field later (e.g. region_cod_name on NE)
+                        nf["properties"]["_region_name"] = str(val)
+                        tagged.append(nf)
+            else:
+                log(f"    {country_a3}/{set_name}: no explicit_mapping or grouping_field — skipping")
+                continue
+
+            if not tagged:
+                log(f"    {country_a3}/{set_name}: no features matched mapping — skipping")
+                continue
+
+            n_groups = len({f["properties"]["_region_code"] for f in tagged})
+
+            inter = OUTPUT_DIR / f"_pre_dissolve_{country_a3}_{set_name}_{wv_label}.geo.json"
+            inter.write_text(
+                json.dumps({"type": "FeatureCollection", "features": tagged})
+            )
+
+            output = OUTPUT_DIR / f"regional_{country_a3}_{set_name}_{wv_label}.geo.json"
+            subprocess.run(
+                [
+                    "npx", "--yes", "mapshaper",
+                    str(inter),
+                    "-dissolve", "_region_code",
+                    "copy-fields=_region_name,adm0_a3",
+                    "-simplify", f"{simplify_pct}%", "keep-shapes",
+                    "-o", str(output), "format=geojson",
+                ],
+                check=True,
+                stderr=subprocess.DEVNULL,
+            )
+            inter.unlink()
+
+            # Rename derived fields → standard names on the dissolved output
+            dissolved = json.loads(output.read_text())
+            for f in dissolved["features"]:
+                p = f["properties"]
+                if "_region_code" in p:
+                    p["iso_3166_2"] = p.pop("_region_code")
+                if "_region_name" in p:
+                    p["name"] = p.pop("_region_name")
+            output.write_text(json.dumps(dissolved))
+
+            log(
+                f"    {country_a3}/{set_name}: {len(tagged)} subdivisions → "
+                f"{n_groups} regions → {output.name} "
+                f"({output.stat().st_size:,} bytes)"
+            )
+            outputs.append(output)
+
+    return outputs
+
+
 def apply_territory_assignments(
     geo: dict,
     config: dict,
@@ -398,6 +511,7 @@ def build_one(
     name_overrides: list[dict],
     flying_islands: dict,
     territory_assignments: dict,
+    regional_aggregations: dict,
 ) -> Path:
     """Build one (worldview, admin_level) GeoJSON. Returns the output path."""
     log(f"\nBuilding worldview={worldview or 'default'} admin_level={admin_level}")
@@ -423,7 +537,12 @@ def build_one(
         geo = apply_territory_assignments(geo, territory_assignments, admin0_geo)
         admin0_path.unlink(missing_ok=True)
 
-    # TODO(future): composite_maps, regional_aggregations, procedural/
+    # regional_aggregations runs at Admin 1; emits its own per-(country,set)
+    # output files separate from the main worldview output.
+    if admin_level == 1:
+        apply_regional_aggregations(geo, regional_aggregations, worldview)
+
+    # TODO(future): composite_maps, procedural/
 
     # Write transformed GeoJSON to an intermediate path, then run
     # mapshaper -simplify into the final output. Two-stage approach so
@@ -461,10 +580,19 @@ def main() -> int:
     territory_assignments = yaml.safe_load(
         (CONFIG_DIR / "territory_assignments.yaml").read_text()
     )
+    regional_aggregations = yaml.safe_load(
+        (CONFIG_DIR / "regional_aggregations.yaml").read_text()
+    )
     log(f"Loaded {len(name_overrides)} name override entries")
     log(f"Loaded flying_islands rules for {len(flying_islands.get('countries', {}))} countries")
     log(f"Loaded territory_assignments rules for "
         f"{len(territory_assignments.get('countries', {}))} countries")
+    n_region_sets = sum(
+        len(c.get("region_sets", {}))
+        for c in regional_aggregations.get("countries", {}).values()
+    )
+    log(f"Loaded regional_aggregations: {n_region_sets} region-sets across "
+        f"{len(regional_aggregations.get('countries', {}))} countries")
 
     # POC scope: UA worldview, both Admin 0 and Admin 1. Future commits
     # add more worldviews (Default, and other major NE worldviews).
@@ -480,6 +608,7 @@ def main() -> int:
             name_overrides,
             flying_islands,
             territory_assignments,
+            regional_aggregations,
         )
 
     log("\nDone.")
