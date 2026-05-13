@@ -23,7 +23,9 @@ under the License.
   </head>
   <body>
     <script>
-      window.opener.postMessage({ tabId: '{{ tab_id }}' });
+      const channel = new BroadcastChannel('oauth');
+      channel.postMessage({ tabId: '{{ tab_id }}' });
+      channel.close();
       window.close();
     </script>
     <p>You can close this window and re-run the query.</p>
