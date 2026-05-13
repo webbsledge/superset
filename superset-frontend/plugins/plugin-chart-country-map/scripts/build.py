@@ -1047,6 +1047,14 @@ def main() -> int:
 
     write_manifest(targets)
 
+    # Pre-commit's end-of-file-fixer requires every text file to end with
+    # a newline. mapshaper does not add one to its JSON output, so post-
+    # process all geo.json outputs to guarantee a trailing newline.
+    for p in OUTPUT_DIR.glob("*.geo.json"):
+        b = p.read_bytes()
+        if not b.endswith(b"\n"):
+            p.write_bytes(b + b"\n")
+
     log("\nDone.")
     return 0
 

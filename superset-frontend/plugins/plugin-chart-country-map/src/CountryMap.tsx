@@ -31,9 +31,9 @@ import { geoMercator, geoPath } from 'd3-geo';
 import {
   getNumberFormatter,
   getSequentialSchemeRegistry,
-  t,
-  useTheme,
 } from '@superset-ui/core';
+import { t } from '@apache-superset/core/translation';
+import { useTheme } from '@apache-superset/core/theme';
 import { CountryMapTransformedProps } from './types';
 
 interface FeatureProps {
@@ -113,14 +113,14 @@ const CountryMap: FC<CountryMapTransformedProps> = props => {
 
   const theme = useTheme();
   const colors = {
-    fillFallback: theme.colors.grayscale.light4,
-    schemeFallback: theme.colors.grayscale.light2,
-    hoverFallback: theme.colors.grayscale.light1,
-    stroke: theme.colors.grayscale.light5,
-    tooltipBg: theme.colors.grayscale.dark2,
-    tooltipFg: theme.colors.grayscale.light5,
-    errorFg: theme.colors.error.base,
-    loadingFg: theme.colors.grayscale.base,
+    fillFallback: theme.colorFillTertiary,
+    schemeFallback: theme.colorFill,
+    hoverFallback: theme.colorFillSecondary,
+    stroke: theme.colorBgContainer,
+    tooltipBg: theme.colorBgSpotlight,
+    tooltipFg: theme.colorTextLightSolid,
+    errorFg: theme.colorErrorText,
+    loadingFg: theme.colorTextSecondary,
   };
   const tooltipStyle: CSSProperties = {
     position: 'absolute',
