@@ -70,6 +70,7 @@ superset-websocket/config.json
 node_modules
 npm-debug.log*
 superset/static/*
+!superset/static/assets/
 superset/static/assets/*
 !superset/static/assets/.gitkeep
 # Country Map plugin's generated GeoJSON outputs are committed so a

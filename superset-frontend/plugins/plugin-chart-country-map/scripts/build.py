@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
 """
 Country Map build pipeline — Natural Earth → GeoJSON.
 
@@ -40,6 +57,11 @@ NE_REPO = "nvkelso/natural-earth-vector"
 NE_PINNED_TAG = "v5.1.2"
 NE_PINNED_SHA = "f1890d9f152c896d250a77557a5751a93d494776"
 NE_RAW_URL = f"https://raw.githubusercontent.com/{NE_REPO}/{NE_PINNED_SHA}/10m_cultural"
+
+# Mapshaper pinned version — outputs are not byte-deterministic across
+# major mapshaper revisions (different simplification quantization),
+# so we pin via npx for both local + CI runs.
+MAPSHAPER_VERSION = "0.7.15"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 CONFIG_DIR = SCRIPT_DIR / "config"
@@ -130,7 +152,7 @@ def shp_to_geojson(shp: Path, output: Path) -> None:
         )
     log(f"  mapshaper: {shp.name} → {output.name}")
     subprocess.run(
-        ["npx", "--yes", "mapshaper", str(shp), "-o", str(output), "format=geojson"],
+        ["npx", "--yes", "mapshaper@" + MAPSHAPER_VERSION, str(shp), "-o", str(output), "format=geojson"],
         check=True,
         stderr=subprocess.DEVNULL,
     )
@@ -156,7 +178,7 @@ def simplify_geojson(src: Path, dst: Path, percentage: float = 5.0) -> None:
     log(f"  mapshaper -simplify {percentage}% keep-shapes: {src.name} → {dst.name}")
     subprocess.run(
         [
-            "npx", "--yes", "mapshaper",
+            "npx", "--yes", "mapshaper@" + MAPSHAPER_VERSION,
             str(src),
             "-simplify", f"{percentage}%", "keep-shapes",
             "-o", str(dst), "format=geojson",
@@ -412,7 +434,7 @@ def apply_composite_maps(
                 dissolved_path = OUTPUT_DIR / f"_composite_dissolved_{composite_id}_{source_a3}.geo.json"
                 subprocess.run(
                     [
-                        "npx", "--yes", "mapshaper",
+                        "npx", "--yes", "mapshaper@" + MAPSHAPER_VERSION,
                         str(inter),
                         "-each", "this.properties._x = 1",
                         "-dissolve", "_x",
@@ -452,7 +474,7 @@ def apply_composite_maps(
         output = OUTPUT_DIR / f"composite_{composite_id}_{wv_label}.geo.json"
         subprocess.run(
             [
-                "npx", "--yes", "mapshaper",
+                "npx", "--yes", "mapshaper@" + MAPSHAPER_VERSION,
                 str(inter),
                 "-simplify", f"{simplify_pct}%", "keep-shapes",
                 "-o", str(output), "format=geojson",
@@ -552,7 +574,7 @@ def apply_regional_aggregations(
             output = OUTPUT_DIR / f"regional_{country_a3}_{set_name}_{wv_label}.geo.json"
             subprocess.run(
                 [
-                    "npx", "--yes", "mapshaper",
+                    "npx", "--yes", "mapshaper@" + MAPSHAPER_VERSION,
                     str(inter),
                     "-dissolve", "_region_code",
                     "copy-fields=_region_name,adm0_a3",
@@ -795,7 +817,7 @@ def _write_admin1_per_country(
         out = OUTPUT_DIR / f"{wv_label}_admin1_{a3}.geo.json"
         subprocess.run(
             [
-                "npx", "--yes", "mapshaper",
+                "npx", "--yes", "mapshaper@" + MAPSHAPER_VERSION,
                 str(inter),
                 "-simplify", f"{simplify_pct}%", "keep-shapes",
                 "-o", str(out), "format=geojson",
@@ -815,9 +837,11 @@ def write_manifest(targets: list[tuple[str, int]]) -> Path:
     worldview / country / region-set / composite dropdowns dynamically,
     so adding a new entry to the YAML configs doesn't require a plugin
     code change.
-    """
-    from datetime import datetime, timezone
 
+    Manifest is intentionally byte-deterministic given the same inputs
+    (no build timestamps, no environment-specific data) so the regen
+    CI workflow can drift-detect against the committed snapshot.
+    """
     # Walk the OUTPUT_DIR for everything we wrote
     worldviews = sorted({wv or "default" for wv, _ in targets})
     admin_levels = sorted({al for _, al in targets})
@@ -859,7 +883,6 @@ def write_manifest(targets: list[tuple[str, int]]) -> Path:
     manifest = {
         "ne_pinned_tag": NE_PINNED_TAG,
         "ne_pinned_sha": NE_PINNED_SHA,
-        "build_timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "worldviews": worldviews,
         "admin_levels": admin_levels,
         "countries_by_worldview": {
