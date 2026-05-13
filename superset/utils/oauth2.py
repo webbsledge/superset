@@ -149,6 +149,13 @@ def refresh_oauth2_token(
         if token is None:
             return None
 
+        if token.access_token and datetime.now() < token.access_token_expiration:
+            return token.access_token
+
+        if not token.refresh_token:
+            db.session.delete(token)
+            return None
+
         try:
             token_response = db_engine_spec.get_oauth2_fresh_token(
                 config,
