@@ -45,7 +45,7 @@ test('Admin 0 (no country) → world choropleth URL', () => {
   );
 });
 
-test('Admin 1 + country → per-country file URL', () => {
+test('Admin 1 + country → per-country file URL (worldview-agnostic)', () => {
   const out = transformProps(
     buildChartProps({ admin_level: 1, country: 'FRA', worldview: 'ukr' }),
   );
@@ -54,13 +54,22 @@ test('Admin 1 + country → per-country file URL', () => {
   );
 });
 
-test('Region set + country → regional aggregation URL', () => {
+test('Admin 1 stays on the shared (ukr) file regardless of worldview', () => {
+  const out = transformProps(
+    buildChartProps({ admin_level: 1, country: 'FRA', worldview: 'chn' }),
+  );
+  expect(out.geoJsonUrl).toBe(
+    '/static/assets/country-maps/ukr_admin1_FRA.geo.json',
+  );
+});
+
+test('Region set + country → regional aggregation URL (shared)', () => {
   const out = transformProps(
     buildChartProps({
       admin_level: 1,
       country: 'TUR',
       region_set: 'nuts_1',
-      worldview: 'ukr',
+      worldview: 'rus', // exotic worldview — regional URL still resolves to ukr
     }),
   );
   expect(out.geoJsonUrl).toBe(
@@ -68,13 +77,13 @@ test('Region set + country → regional aggregation URL', () => {
   );
 });
 
-test('Composite overrides admin_level + country', () => {
+test('Composite overrides admin_level + country (shared across worldviews)', () => {
   const out = transformProps(
     buildChartProps({
       admin_level: 1,
       country: 'FRA',
       composite: 'france_overseas',
-      worldview: 'ukr',
+      worldview: 'chn',
     }),
   );
   expect(out.geoJsonUrl).toBe(

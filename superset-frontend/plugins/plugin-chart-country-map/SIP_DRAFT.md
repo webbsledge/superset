@@ -467,8 +467,8 @@ The fixes that survive (France typos/ISO codes, Philippines admin renames, China
 - [x] Pipeline produces correct counts on every transform vs. notebook expectations
 - [ ] Verify Russia Chukchi renders correctly with current NE data + D3 projection (to confirm antimeridian-fix obsolescence)
 - [ ] Verify India J&K geometry against current Indian boundary expectations under `_ukr` worldview
-- [ ] Generate Default worldview (currently only UA shipped — Default + a few others come once renderer is wired)
-- [ ] CI workflow for regeneration
+- [x] Generate all NE-published worldviews at Admin 0 (33 worldviews: default + 32 country-specific editorials shipped from NE 5.1.2). Admin 1 remains shared (single shared file per country, worldview-agnostic) because NE doesn't publish per-worldview Admin 1 variants.
+- [x] CI workflow for regeneration (informational drift detection — cross-platform mapshaper output reproducibility is still WIP, so failures comment on the PR but don't block)
 
 ### Phase 2: Plugin scaffolding
 - [x] Scaffold `plugin-chart-country-map` directory matching modern plugin structure

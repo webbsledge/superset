@@ -79,12 +79,52 @@ OUTPUT_DIR = REPO_ROOT / "superset" / "static" / "assets" / "country-maps"
 
 SHAPEFILE_EXTS = ["shp", "shx", "dbf", "prj", "cpg"]
 
-# Worldview codes shipped by NE as suffixes on the Admin 0 file name. Empty
-# string = the "Default" (ungrouped) NE editorial. The new plugin's
-# documented default is "ukr".
+# Worldview codes shipped by Natural Earth as filename suffixes on the
+# Admin 0 layer. Empty string = NE's "Default" editorial; every other
+# entry maps 1-to-1 to a file `ne_10m_admin_0_countries_<code>.shp`
+# published at the pinned NE tag. Adding a code here is all it takes to
+# expose a new worldview in the chart's dropdown — provided NE actually
+# publishes that suffix at the pinned version.
+#
+# Admin 1 (subdivisions within a country) is published by NE as a single
+# global file with no worldview variants, so subdivision boundaries
+# don't change with the worldview choice. That means we build Admin 1
+# once (under the "ukr" name for back-compat with earlier output) and
+# the frontend always points Admin 1 URLs at that shared output.
 WORLDVIEWS_ADMIN_0 = [
-    "",  # Default
+    "",  # Default — NE's ungrouped editorial baseline
+    "arg",  # Argentina
+    "bdg",  # Bangladesh (NE uses bdg, ISO code is BGD)
+    "bra",  # Brazil
+    "chn",  # China
+    "deu",  # Germany
+    "egy",  # Egypt
+    "esp",  # Spain
+    "fra",  # France
+    "gbr",  # United Kingdom
+    "grc",  # Greece
+    "idn",  # Indonesia
+    "ind",  # India
+    "iso",  # ISO 3166-1 (neutral / UN-style boundaries)
+    "isr",  # Israel
+    "ita",  # Italy
+    "jpn",  # Japan
+    "kor",  # South Korea
+    "mar",  # Morocco
+    "nep",  # Nepal
+    "nld",  # Netherlands
+    "pak",  # Pakistan
+    "pol",  # Poland
+    "prt",  # Portugal
+    "pse",  # Palestine
+    "rus",  # Russia
+    "sau",  # Saudi Arabia
+    "swe",  # Sweden
+    "tur",  # Türkiye
+    "twn",  # Taiwan
     "ukr",  # Ukraine — Superset's documented default
+    "usa",  # United States
+    "vnm",  # Vietnam
 ]
 
 
@@ -1027,12 +1067,12 @@ def main() -> int:
         f"Loaded composite_maps: {len(composite_maps.get('composites', {}))} composites"
     )
 
-    # POC scope: UA worldview, both Admin 0 and Admin 1. Future commits
-    # add more worldviews (Default, and other major NE worldviews).
-    targets: list[tuple[str, int]] = [
-        ("ukr", 0),
-        ("ukr", 1),  # Admin 1 — exercises name_overrides + per-country fly-island rules
-    ]
+    # Build Admin 0 for every NE-published worldview, plus Admin 1 only
+    # for the documented default ("ukr"). NE's Admin 1 layer has no
+    # worldview variants, so subdivisions are worldview-agnostic and the
+    # frontend always references the ukr_admin1_<country> files.
+    targets: list[tuple[str, int]] = [(wv, 0) for wv in WORLDVIEWS_ADMIN_0]
+    targets.append(("ukr", 1))
 
     for worldview, admin_level in targets:
         build_one(

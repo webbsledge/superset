@@ -41,6 +41,26 @@ scripts/
   output/                    # gitignored — build artifacts
 ```
 
+## Worldviews
+
+Natural Earth publishes per-country editorial variants of its Admin 0
+(countries) layer: `ne_10m_admin_0_countries_<code>.shp`. Each variant
+encodes that country's official stance on disputed borders — e.g.
+`ne_10m_admin_0_countries_ukr.shp` shows Crimea as Ukrainian; `_chn`
+shows Taiwan as part of China; `_iso` uses neutral ISO 3166-1 boundaries.
+
+`build.py` builds Admin 0 for every NE-published worldview listed in
+the `WORLDVIEWS_ADMIN_0` constant — outputs are named
+`<worldview>_admin0.geo.json`. The plugin's worldview control reads the
+list from `manifest.json` and shows whatever the build produced.
+
+NE does **not** publish per-worldview Admin 1 variants — subdivisions
+within a country come from a single global file. We build Admin 1 once
+(under the `ukr` filename prefix for back-compat) and the frontend
+always points Admin 1, regional, and composite URLs at that shared
+output regardless of which worldview the user has selected. The
+worldview choice only changes the country-borders map (Admin 0).
+
 ## Operating principles
 
 - **Default tool: declarative YAML.** Most touchups are renames, repositions, dissolves, or filters — all expressible in YAML. Diffs are small, conflicts localize cleanly to one entry, contributors can submit "fix typo X" as a one-line PR.

@@ -28,15 +28,20 @@ import {
  * can fetch the right output from the build pipeline.
  *
  * URL layout (matches the build script's output naming):
- *   <worldview>_admin0.geo.json                — world choropleth
- *   <worldview>_admin1_<adm0_a3>.geo.json      — country subdivisions
- *   regional_<adm0_a3>_<set>_<worldview>.geo.json — aggregated regions
- *   composite_<id>_<worldview>.geo.json         — composite maps
+ *   <worldview>_admin0.geo.json                — world choropleth, per worldview
+ *   ukr_admin1_<adm0_a3>.geo.json              — country subdivisions, shared
+ *   regional_<adm0_a3>_<set>_ukr.geo.json      — aggregated regions, shared
+ *   composite_<id>_ukr.geo.json                — composite maps, shared
  *
- * The actual hosting path is wired up in a follow-up commit; for now
- * the renderer prefixes URLs with a stubbed base.
+ * Worldview only affects Admin 0 because Natural Earth's Admin 1 layer is
+ * a single global file with no worldview variants — subdivisions within a
+ * country don't change with the user's worldview choice. Aggregated
+ * regions and composites dissolve / regroup Admin 1, so they inherit the
+ * shared baseline too. The "_ukr" suffix on shared outputs is historical
+ * and kept for back-compat with the build pipeline's naming.
  */
 const GEOJSON_BASE = '/static/assets/country-maps';
+const SHARED_ADMIN1_WORLDVIEW = 'ukr';
 
 export default function transformProps(
   chartProps: CountryMapChartProps,
@@ -52,11 +57,11 @@ export default function transformProps(
 
   let geoJsonUrl: string | null = null;
   if (formData.composite) {
-    geoJsonUrl = `${GEOJSON_BASE}/composite_${formData.composite}_${worldview}.geo.json`;
+    geoJsonUrl = `${GEOJSON_BASE}/composite_${formData.composite}_${SHARED_ADMIN1_WORLDVIEW}.geo.json`;
   } else if (formData.region_set && formData.country) {
-    geoJsonUrl = `${GEOJSON_BASE}/regional_${formData.country}_${formData.region_set}_${worldview}.geo.json`;
+    geoJsonUrl = `${GEOJSON_BASE}/regional_${formData.country}_${formData.region_set}_${SHARED_ADMIN1_WORLDVIEW}.geo.json`;
   } else if (adminLevel === 1 && formData.country) {
-    geoJsonUrl = `${GEOJSON_BASE}/${worldview}_admin1_${formData.country}.geo.json`;
+    geoJsonUrl = `${GEOJSON_BASE}/${SHARED_ADMIN1_WORLDVIEW}_admin1_${formData.country}.geo.json`;
   } else if (adminLevel === 0) {
     geoJsonUrl = `${GEOJSON_BASE}/${worldview}_admin0.geo.json`;
   }

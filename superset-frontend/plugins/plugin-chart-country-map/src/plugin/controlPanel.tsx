@@ -50,22 +50,45 @@ interface CountryMapManifest {
 const M = manifest as CountryMapManifest;
 
 // Display-name labels for worldviews. Anything not listed here renders
-// as the worldview code itself in the dropdown.
+// as the worldview code itself in the dropdown. The list of *available*
+// worldviews is driven by the manifest (= what the build pipeline
+// produced), not this map — so a worldview added to scripts/build.py
+// and re-built will appear in the dropdown automatically, just with a
+// raw code label until you add an entry here.
 const WORLDVIEW_LABELS: Record<string, string> = {
-  ukr: t('Ukraine (default — Crimea as Ukrainian)'),
   default: t('Natural Earth Default'),
-  ind: t('India'),
-  pak: t('Pakistan'),
+  arg: t('Argentina'),
+  bdg: t('Bangladesh'),
+  bra: t('Brazil'),
   chn: t('China'),
-  rus: t('Russia'),
-  isr: t('Israel'),
-  pse: t('Palestine'),
-  tur: t('Türkiye'),
-  jpn: t('Japan'),
-  kor: t('Korea'),
-  usa: t('United States'),
+  deu: t('Germany'),
+  egy: t('Egypt'),
+  esp: t('Spain'),
   fra: t('France'),
   gbr: t('United Kingdom'),
+  grc: t('Greece'),
+  idn: t('Indonesia'),
+  ind: t('India'),
+  iso: t('ISO 3166 (UN-style)'),
+  isr: t('Israel'),
+  ita: t('Italy'),
+  jpn: t('Japan'),
+  kor: t('South Korea'),
+  mar: t('Morocco'),
+  nep: t('Nepal'),
+  nld: t('Netherlands'),
+  pak: t('Pakistan'),
+  pol: t('Poland'),
+  prt: t('Portugal'),
+  pse: t('Palestine'),
+  rus: t('Russia'),
+  sau: t('Saudi Arabia'),
+  swe: t('Sweden'),
+  tur: t('Türkiye'),
+  twn: t('Taiwan'),
+  ukr: t('Ukraine (Superset default — Crimea as Ukrainian)'),
+  usa: t('United States'),
+  vnm: t('Vietnam'),
 };
 
 const WORLDVIEW_CHOICES: Array<[string, string]> = M.worldviews.map(wv => [

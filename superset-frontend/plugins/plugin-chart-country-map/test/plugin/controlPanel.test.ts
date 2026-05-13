@@ -103,6 +103,16 @@ test('worldview includes ukr', () => {
   expect(codes).toContain('ukr');
 });
 
+test('worldview offers multiple NE-published editorials', () => {
+  const c = findControl('worldview');
+  const codes = c.choices.map((ch: [string, string]) => ch[0]);
+  // Sanity-check a handful of high-impact ones — we don't pin the full
+  // set so the build pipeline can add/remove worldviews without
+  // tripping this test.
+  expect(codes).toEqual(expect.arrayContaining(['default', 'ukr']));
+  expect(codes.length).toBeGreaterThanOrEqual(2);
+});
+
 test('country selector visibility hides on Admin 0', () => {
   const c = findControl('country');
   expect(c).not.toBeNull();
