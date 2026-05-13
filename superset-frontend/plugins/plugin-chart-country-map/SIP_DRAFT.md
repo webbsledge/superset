@@ -456,22 +456,22 @@ The fixes that survive (France typos/ISO codes, Philippines admin renames, China
 - [x] Register against `chart/data` endpoint (buildQuery + ChartPlugin class)
 - [x] transformProps derives `geoJsonUrl` from form_data using the build script's output naming
 - [x] D3 renderer ported to modern modules (d3-geo, d3-color, d3-array); fully typed, no @ts-nocheck; fit-to-selection projection
-- [ ] Wire actual GeoJSON output hosting path (currently stubbed to `/static/assets/country-maps/`)
-- [ ] Click-to-zoom interaction (legacy had this)
-- [ ] Cross-filter integration
+- [x] Hosting path wired — outputs ship to `superset/static/assets/country-maps/`, served by Flask at `/static/assets/country-maps/`
+- [x] Click-to-zoom interaction (4x zoom on click, click-elsewhere to zoom out, 600ms transition)
+- [ ] Cross-filter integration via setDataMask
 - [ ] Composite projection support (geoAlbersUsa for USA, etc.) at render time
 
 ### Phase 3: Controls
-- [x] Worldview selector (hardcoded snapshot — manifest-driven in follow-up)
+- [x] Worldview selector (manifest-driven from build pipeline)
 - [x] Admin level segmented control (0 / 1 / Aggregated)
-- [x] Country selector (visible when admin_level !== 0)
-- [x] Region set selector (visible when admin_level === 'aggregated')
-- [x] Composite selector (overrides admin_level + country)
+- [x] Country selector (visible when admin_level !== 0; manifest-driven)
+- [x] Region set selector (visible when admin_level === 'aggregated'; manifest-driven)
+- [x] Composite selector (overrides admin_level + country; manifest-driven)
 - [x] Region include/exclude multi-selects
 - [x] Flying islands toggle (default ON)
 - [x] Name language selector (20 NE languages)
 - [x] Fit-to-selection projection refit (renderer auto-fits to filtered features)
-- [ ] Replace hardcoded choice tables with manifest-driven lookups
+- [x] Replace hardcoded choice tables with manifest-driven lookups
 
 ### Phase 4: Deprecation wiring
 - [x] Add new VizType.CountryMapV2 = 'country_map_v2'
@@ -484,12 +484,12 @@ The fixes that survive (France typos/ISO codes, Philippines admin renames, China
 
 ### Phase 5: Polish + docs
 - [x] Build manifest output (NE SHA + worldviews + admin levels + sizes)
-- [x] Tests: transformProps (10 cases) + buildQuery (3 cases)
-- [ ] UPDATING.md entry
-- [ ] CI workflow that regenerates outputs and PRs the diff
-- [ ] Real example images / thumbnails for the chart type picker
+- [x] Tests: transformProps (10 cases) + buildQuery (3 cases) + controlPanel (10 cases) + build.py transforms (18 cases) = 41 total
+- [x] UPDATING.md entry
+- [x] CI workflow that regenerates outputs (fails PR if drift)
+- [ ] Real example images / thumbnails for the chart type picker (need actual rendering capture)
 - [ ] Update Superset docs site
-- [ ] Tests: controlPanel, build.py transforms (Python)
+- [x] Manifest also written to `src/data/manifest.json` for synchronous import in controlPanel
 
 ## Current PR state (snapshot as of latest commit)
 
