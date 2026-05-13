@@ -871,6 +871,13 @@ def write_manifest(targets: list[tuple[str, int]]) -> Path:
 
     manifest_path = OUTPUT_DIR / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2))
+
+    # Also write a copy into the plugin source tree so the control
+    # panel can `import manifest from '../data/manifest.json'` without
+    # an async fetch at chart-edit time.
+    plugin_data_dir = SCRIPT_DIR.parent / "src" / "data"
+    plugin_data_dir.mkdir(parents=True, exist_ok=True)
+    (plugin_data_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
     log(
         f"\nWrote manifest.json — {len(worldviews)} worldview(s), "
         f"{sum(len(v) for v in countries_by_wv.values())} country files, "
