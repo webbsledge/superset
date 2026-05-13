@@ -799,6 +799,77 @@ def _write_admin1_per_country(
     return outputs
 
 
+def write_manifest(targets: list[tuple[str, int]]) -> Path:
+    """Emit manifest.json describing what the build produced.
+
+    The plugin's control panel reads this at runtime to populate
+    worldview / country / region-set / composite dropdowns dynamically,
+    so adding a new entry to the YAML configs doesn't require a plugin
+    code change.
+    """
+    from datetime import datetime, timezone
+
+    # Walk the OUTPUT_DIR for everything we wrote
+    worldviews = sorted({wv or "default" for wv, _ in targets})
+    admin_levels = sorted({al for _, al in targets})
+
+    countries_by_wv: dict[str, list[str]] = {wv: [] for wv in worldviews}
+    regional_sets: list[dict] = []
+    composites: list[dict] = []
+
+    for path in sorted(OUTPUT_DIR.glob("*.geo.json")):
+        name = path.stem.replace(".geo", "")
+        # ukr_admin1_FRA → worldview=ukr, admin1=FRA
+        for wv in worldviews:
+            prefix = f"{wv}_admin1_"
+            if name.startswith(prefix):
+                countries_by_wv[wv].append(name[len(prefix):])
+        # regional_TUR_nuts_1_ukr
+        if name.startswith("regional_"):
+            parts = name.split("_")
+            wv = parts[-1]
+            country = parts[1]
+            set_name = "_".join(parts[2:-1])
+            regional_sets.append({
+                "country": country,
+                "set_id": set_name,
+                "worldview": wv,
+                "size_bytes": path.stat().st_size,
+            })
+        # composite_france_overseas_ukr
+        elif name.startswith("composite_"):
+            parts = name.split("_")
+            wv = parts[-1]
+            cid = "_".join(parts[1:-1])
+            composites.append({
+                "id": cid,
+                "worldview": wv,
+                "size_bytes": path.stat().st_size,
+            })
+
+    manifest = {
+        "ne_pinned_tag": NE_PINNED_TAG,
+        "ne_pinned_sha": NE_PINNED_SHA,
+        "build_timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "worldviews": worldviews,
+        "admin_levels": admin_levels,
+        "countries_by_worldview": {
+            wv: sorted(set(codes)) for wv, codes in countries_by_wv.items()
+        },
+        "regional_aggregations": regional_sets,
+        "composites": composites,
+    }
+
+    manifest_path = OUTPUT_DIR / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2))
+    log(
+        f"\nWrote manifest.json — {len(worldviews)} worldview(s), "
+        f"{sum(len(v) for v in countries_by_wv.values())} country files, "
+        f"{len(regional_sets)} regional sets, {len(composites)} composites"
+    )
+    return manifest_path
+
+
 def main() -> int:
     OUTPUT_DIR.mkdir(exist_ok=True)
 
@@ -849,6 +920,8 @@ def main() -> int:
             regional_aggregations,
             composite_maps,
         )
+
+    write_manifest(targets)
 
     log("\nDone.")
     return 0
