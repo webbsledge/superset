@@ -429,13 +429,13 @@ def _tool_allowed_for_current_user(tool: Any) -> bool:
         if not getattr(g, "user", None):
             try:
                 g.user = get_user_from_request()
-            except ValueError:
+            except (ValueError, PermissionError):
                 return False
 
         method_permission_name = getattr(tool_func, METHOD_PERMISSION_ATTR, "read")
         permission_name = f"{PERMISSION_PREFIX}{method_permission_name}"
         return security_manager.can_access(permission_name, class_permission_name)
-    except (AttributeError, RuntimeError, ValueError):
+    except (AttributeError, RuntimeError, ValueError, PermissionError):
         logger.debug("Could not evaluate tool search permission", exc_info=True)
         return False
 
