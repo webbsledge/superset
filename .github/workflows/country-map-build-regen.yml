@@ -40,6 +40,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyyaml
 
+      - name: Run unit tests for build transforms
+        run: |
+          cd superset-frontend/plugins/plugin-chart-country-map/scripts
+          python -m unittest test_build -v
+
       - name: Run build pipeline
         run: |
           cd superset-frontend/plugins/plugin-chart-country-map/scripts
