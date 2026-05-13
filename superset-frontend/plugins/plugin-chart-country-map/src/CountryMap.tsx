@@ -212,8 +212,37 @@ const CountryMap: FC<CountryMapTransformedProps> = props => {
     const path = geoPath(projection);
 
     const ns = 'http://www.w3.org/2000/svg';
+
+    // Background rect — clicking it zooms back out.
+    const bg = document.createElementNS(ns, 'rect');
+    bg.setAttribute('width', String(width));
+    bg.setAttribute('height', String(height));
+    bg.setAttribute('fill', 'transparent');
+    bg.style.cursor = 'pointer';
+    svg.appendChild(bg);
+
     const g = document.createElementNS(ns, 'g');
+    g.style.transition = 'transform 600ms ease-in-out';
     svg.appendChild(g);
+
+    // Click-to-zoom state lives on the svg element so the background
+    // click handler can read/clear it without React state churn.
+    let zoomedFeature: Feature | null = null;
+    const setTransform = (feature: Feature | null) => {
+      if (!feature) {
+        g.setAttribute('transform', '');
+        zoomedFeature = null;
+        return;
+      }
+      const centroid = path.centroid(feature);
+      if (!centroid || centroid.some(Number.isNaN)) return;
+      const k = 4;
+      const tx = width / 2 - centroid[0] * k;
+      const ty = height / 2 - centroid[1] * k;
+      g.setAttribute('transform', `translate(${tx}, ${ty}) scale(${k})`);
+      zoomedFeature = feature;
+    };
+    bg.addEventListener('click', () => setTransform(null));
 
     filteredFeatures.forEach(feature => {
       const d = path(feature);
@@ -238,6 +267,10 @@ const CountryMap: FC<CountryMapTransformedProps> = props => {
       el.addEventListener('mouseleave', () => {
         el.setAttribute('fill', colorByKey[key] || '#eee');
         setTooltip(null);
+      });
+      el.addEventListener('click', (event: globalThis.MouseEvent) => {
+        event.stopPropagation();
+        setTransform(zoomedFeature === feature ? null : feature);
       });
       el.addEventListener('mousemove', (event: globalThis.MouseEvent) => {
         const rect = svg.getBoundingClientRect();
