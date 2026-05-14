@@ -222,7 +222,7 @@ def _make_cached_dispatch(
     Row-count queries bypass the cache. Cache failures are logged and the
     dispatcher is called as if the cache were absent.
     """
-    if query_object.is_rowcount:
+    if query_object.is_rowcount or query_object.force_query:
         return dispatcher
 
     view = query_object.datasource

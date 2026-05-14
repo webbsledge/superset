@@ -637,13 +637,14 @@ def _apply_post_processing(
     note_def = "Served from semantic view smart cache (post-processed locally)"
     if projection_needed:
         groupby = [d.name for d in query.dimensions]
-        aggregates = {
-            m.name: {
+        aggregates: dict[str, dict[str, str]] = {}
+        for m in query.metrics:
+            if m.aggregation is None:
+                continue
+            aggregates[m.name] = {
                 "column": m.name,
                 "operator": _AGGREGATION_TO_PANDAS[m.aggregation],
             }
-            for m in query.metrics
-        }
         df = aggregate(df, groupby=groupby, aggregates=aggregates)
         note_def = "Served from semantic view smart cache (re-aggregated locally)"
 

@@ -106,6 +106,7 @@ def _qo(
     filter_op: str | None = None,
     filter_val: Any = None,
     limit: int | None = None,
+    force_query: bool = False,
 ) -> ValidatedQueryObject:
     qo_filters: list[dict[str, Any]] = (
         [{"col": "a", "op": filter_op, "val": filter_val}] if filter_op else []
@@ -116,6 +117,7 @@ def _qo(
         columns=["a"],
         filters=qo_filters,  # type: ignore[arg-type]
         row_limit=limit,
+        force_query=force_query,
     )
 
 
@@ -189,6 +191,20 @@ def test_changed_on_invalidates_cache(
     # Bumping changed_on yields a different shape key — cache misses.
     datasource.changed_on = datetime(2026, 2, 1, 0, 0, 0)
     get_results(_qo(datasource, ">", 1))
+    assert view_implementation.get_table.call_count == 2
+
+
+def test_force_query_bypasses_semantic_cache(
+    fake_cache: _InMemoryCache,
+    view_implementation: Any,
+    datasource: MagicMock,
+) -> None:
+    view_implementation.get_table = MagicMock(return_value=_result([(2, 1.0)]))
+
+    get_results(_qo(datasource, ">", 1))
+    assert view_implementation.get_table.call_count == 1
+
+    get_results(_qo(datasource, ">", 1, force_query=True))
     assert view_implementation.get_table.call_count == 2
 
 
