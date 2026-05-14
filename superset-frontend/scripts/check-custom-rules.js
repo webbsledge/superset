@@ -65,10 +65,9 @@ function hasEslintDisable(path, ruleName = 'theme-colors/no-literal-colors') {
     if (hasDisable) return true;
   }
 
-  // Check if parent is a statement with leading comments
-  let current = path;
-  while (current.parent) {
-    current = current.parent;
+  // Walk up the ancestor chain using parentPath (NodePath, not raw node)
+  let current = path.parentPath;
+  while (current) {
     if (current.node && current.node.leadingComments) {
       const hasDisable = current.node.leadingComments.some(
         comment =>
@@ -78,6 +77,7 @@ function hasEslintDisable(path, ruleName = 'theme-colors/no-literal-colors') {
       );
       if (hasDisable) return true;
     }
+    current = current.parentPath;
   }
 
   return false;

@@ -441,6 +441,8 @@ export interface ControlPanelConfig {
   sectionOverrides?: SectionOverrides;
   onInit?: (state: ControlStateMapping) => void;
   formDataOverrides?: (formData: QueryFormData) => QueryFormData;
+  /** @internal Raw glyph argument definitions from defineChart() – used for native control panel rendering */
+  _glyphArgs?: unknown;
 }
 
 export type ControlOverrides = {
