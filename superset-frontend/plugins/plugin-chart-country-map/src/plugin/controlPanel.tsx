@@ -45,7 +45,14 @@ interface CountryMapManifest {
     worldview: string;
     size_bytes: number;
   }>;
-  composites: Array<{ id: string; worldview: string; size_bytes: number }>;
+  composites: Array<{
+    id: string;
+    worldview: string;
+    size_bytes: number;
+    /** Anchor country (ISO_A3); when set, the composite is only offered
+     * while that country is selected. Older manifests omitted this field. */
+    country?: string;
+  }>;
 }
 
 const M = manifest as CountryMapManifest;
@@ -248,6 +255,36 @@ const COMPOSITE_CHOICES: Array<[string, string]> = M.composites.map(c => [
   COMPOSITE_LABELS[c.id] || c.id,
 ]);
 
+// Composites grouped by anchor country (ISO_A3). Composites without a
+// country in the manifest fall into a "global" bucket and remain
+// available regardless of the country selection — keeps backward
+// compatibility with older manifests that didn't carry the field.
+const COMPOSITES_GLOBAL: Array<[string, string]> = M.composites
+  .filter(c => !c.country)
+  .map(c => [c.id, COMPOSITE_LABELS[c.id] || c.id]);
+const COMPOSITES_BY_COUNTRY: Record<string, Array<[string, string]>> = (() => {
+  const out: Record<string, Array<[string, string]>> = {};
+  M.composites.forEach(c => {
+    if (!c.country) return;
+    out[c.country] = out[c.country] || [];
+    out[c.country].push([c.id, COMPOSITE_LABELS[c.id] || c.id]);
+  });
+  return out;
+})();
+const COUNTRIES_WITH_COMPOSITE = new Set(Object.keys(COMPOSITES_BY_COUNTRY));
+
+const compositeChoicesFor = (
+  controls: Record<string, { value?: unknown }>,
+): Array<[string, string]> => {
+  const country = String(controls.country?.value || '');
+  return [
+    ...(country && COMPOSITES_BY_COUNTRY[country]
+      ? COMPOSITES_BY_COUNTRY[country]
+      : []),
+    ...COMPOSITES_GLOBAL,
+  ];
+};
+
 // NE NAME_<lang> language codes available across most features.
 const NAME_LANGUAGE_CHOICES: Array<[string, string]> = [
   ['en', t('English (en)')],
@@ -391,19 +428,28 @@ const config: ControlPanelConfig = {
               label: t('Composite map'),
               description: t(
                 'Multi-country composite (e.g. France with overseas territories). ' +
-                  'Only relevant at subdivision/aggregated views; overrides ' +
-                  'admin level + country when set.',
+                  'Only offered when the selected country has a composite ' +
+                  'definition; overrides admin level + country when set.',
               ),
-              choices: COMPOSITE_CHOICES,
               default: null,
               renderTrigger: true,
               clearable: true,
-              // Hide when nothing is composite-shaped — at Admin 0 (world
-              // map) it would override the world choropleth, and if the
-              // build pipeline didn't emit any composites there's nothing
-              // to pick. Also leaves room for future per-country scoping.
-              visibility: ({ controls }: any) =>
-                COMPOSITE_CHOICES.length > 0 && !isAdminCountry(controls),
+              // Choices narrow to whatever composites are scoped to the
+              // currently selected country, plus any country-agnostic
+              // ("global") composites in the manifest.
+              mapStateToProps: ({ controls }: any) => ({
+                choices: compositeChoicesFor(controls),
+              }),
+              // Hide when nothing applies: not at the world-map view, not
+              // when there are simply no composites in the manifest, and
+              // not when the selected country has no scoped composite
+              // (and no global composite is available either).
+              visibility: ({ controls }: any) => {
+                if (isAdminCountry(controls)) return false;
+                if (COMPOSITES_GLOBAL.length > 0) return true;
+                const country = String(controls.country?.value || '');
+                return COUNTRIES_WITH_COMPOSITE.has(country);
+              },
             },
           },
         ],

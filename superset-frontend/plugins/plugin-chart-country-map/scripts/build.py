@@ -946,7 +946,10 @@ def _write_admin1_per_country(
     return outputs
 
 
-def write_manifest(targets: list[tuple[str, int]]) -> Path:
+def write_manifest(
+    targets: list[tuple[str, int]],
+    composite_maps: dict[str, Any] | None = None,
+) -> Path:
     """Emit manifest.json describing what the build produced.
 
     The plugin's control panel reads this at runtime to populate
@@ -992,13 +995,22 @@ def write_manifest(targets: list[tuple[str, int]]) -> Path:
             parts = name.split("_")
             wv = parts[-1]
             cid = "_".join(parts[1:-1])
-            composites.append(
-                {
-                    "id": cid,
-                    "worldview": wv,
-                    "size_bytes": path.stat().st_size,
-                }
-            )
+            entry: dict[str, Any] = {
+                "id": cid,
+                "worldview": wv,
+                "size_bytes": path.stat().st_size,
+            }
+            # Anchor country comes from the composite's `base.adm0_a3`
+            # in composite_maps.yaml. Carrying it in the manifest lets
+            # the frontend hide irrelevant composites once the user
+            # picks a country (e.g. don't show france_overseas under
+            # country=USA).
+            if composite_maps:
+                cdef = (composite_maps.get("composites", {}) or {}).get(cid, {})
+                base_country = (cdef.get("base") or {}).get("adm0_a3")
+                if base_country:
+                    entry["country"] = base_country
+            composites.append(entry)
 
     manifest = {
         "ne_pinned_tag": NE_PINNED_TAG,
@@ -1085,7 +1097,7 @@ def main() -> int:
             composite_maps,
         )
 
-    write_manifest(targets)
+    write_manifest(targets, composite_maps=composite_maps)
 
     # Pre-commit's end-of-file-fixer requires every text file to end with
     # a newline. mapshaper does not add one to its JSON output, so post-

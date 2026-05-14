@@ -170,17 +170,13 @@ Future optimizations if maintenance burden grows: gitignore + postinstall hook, 
 
 ### Deprecation of legacy plugin
 
-Two-phase, modeled on existing deprecated-chart pattern:
+Three-phase, modeled on existing deprecated-chart patterns:
 
-- **Phase 1 (release N):** legacy plugin gets a deprecation banner in the chart UI ("This chart type is deprecated. Switch to the new Country Map.") plus an in-UI **"Switch to new Country Map"** button that:
-  - Creates a new chart with `viz_type='country_map'` (the new one)
-  - Copies form_data fields where they map cleanly (datasource, metric, color settings)
-  - Sets `worldview` to the configured default
-  - Optionally pre-selects same country
-  - Leaves the original chart untouched (user explicitly saves over or discards)
-- **Phase 2 (release N+1, ideally a major):** legacy plugin removed from default install, banner becomes hard error, button no longer needed (no legacy charts left to migrate from).
+- **Phase 1 (release N):** legacy plugin gets a deprecation banner in the chart UI ("This chart type is deprecated. Switch to the new Country Map."). No separate "Switch to new Country Map" button is needed — Superset already supports cross-viz form_data hand-off when a user picks a different viz type, and we wired up `formDataOverrides` in the new plugin's controlPanel so the legacy `select_country` value auto-translates into the new admin_level + country + composite/region_set quartet. Users get one-click migration just by picking the new viz type from the chart-type chooser.
+- **Phase 2 (release N+1):** ship a metadata-DB migration that bulk-rewrites every `viz_type='country_map'` row in `slices.params` using the same `migrateFromLegacy` mapping, so dashboards and saved charts pick up the new plugin without anyone clicking through. Migration is idempotent and runs offline.
+- **Phase 3 (release N+2, ideally a major):** legacy plugin removed from default install, banner becomes a hard error for any unmigrated chart (rare — the Phase 2 migration should have caught them).
 
-No DB migrations required at any phase. Old `viz_type` continues to function during Phase 1; in Phase 2 it gracefully degrades to "this chart type is no longer supported, please switch to country_map".
+Phase 1 needs no DB migration. Phase 2 is a single one-shot migration with a downgrade that restores `viz_type='country_map'` and strips the new fields (loses worldview/composite picks but preserves country selection). Phase 3 is plugin-removal only.
 
 ## Spike findings: UA worldview vs Default
 
@@ -498,7 +494,16 @@ The fixes that survive (France typos/ISO codes, Philippines admin renames, China
 - [x] Add @superset-ui/plugin-chart-country-map as workspace dep
 - [x] Mark legacy plugin with `label: ChartLabel.Deprecated` + explanation
 - [x] Rename legacy plugin's display to "Country Map (Legacy)"
-- [ ] "Switch to new Country Map" button + form_data migration logic
+- [x] form_data migration on viz-type switch (`formDataOverrides` in
+      controlPanel.tsx + `migrateFromLegacy.ts`) — when a user switches a
+      saved legacy chart's viz type to `country_map_v2`, `select_country`
+      auto-translates to admin_level + country + composite/region_set
+      via the standard cross-viz form_data hand-off; no separate "Switch
+      to new Country Map" button needed
+- [ ] **Future:** DB migration that auto-ports every existing
+      `viz_type='country_map'` chart in the metadata DB to
+      `country_map_v2` (using the same migrateFromLegacy mapping) —
+      eliminates the legacy plugin entirely once shipped
 - [ ] Auto-close superseded duplicate PRs (#32497, etc.) on merge
 
 ### Phase 5: Polish + docs

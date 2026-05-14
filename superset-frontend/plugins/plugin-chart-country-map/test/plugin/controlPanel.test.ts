@@ -164,8 +164,44 @@ test('composite selector hides on Admin 0', () => {
   expect(c.visibility({ controls: { admin_level: { value: '0' } } })).toBe(
     false,
   );
-  expect(c.visibility({ controls: { admin_level: { value: '1' } } })).toBe(
-    true,
+  // At Admin 1 with the composite's anchor country (FRA) → visible
+  expect(
+    c.visibility({
+      controls: {
+        admin_level: { value: '1' },
+        country: { value: 'FRA' },
+      },
+    }),
+  ).toBe(true);
+});
+
+test('composite selector hides for countries with no scoped composite', () => {
+  // The only composite shipped today is france_overseas, anchored on
+  // FRA. Picking USA should leave nothing relevant to show.
+  const c = findControl('composite');
+  expect(
+    c.visibility({
+      controls: {
+        admin_level: { value: '1' },
+        country: { value: 'USA' },
+      },
+    }),
+  ).toBe(false);
+});
+
+test('composite choices narrow to the selected country', () => {
+  const c = findControl('composite');
+  // FRA → france_overseas should be present
+  const fra = c.mapStateToProps({
+    controls: { country: { value: 'FRA' } },
+  }).choices;
+  expect(fra.map((ch: [string, string]) => ch[0])).toContain('france_overseas');
+  // USA → no scoped composites today
+  const usa = c.mapStateToProps({
+    controls: { country: { value: 'USA' } },
+  }).choices;
+  expect(usa.map((ch: [string, string]) => ch[0])).not.toContain(
+    'france_overseas',
   );
 });
 
@@ -205,10 +241,4 @@ test('region_set choices key off the selected country (via mapStateToProps)', ()
     controls: { country: { value: 'USA' } },
   }).choices;
   expect(usaChoices).toEqual([]);
-});
-
-test('composite selector includes france_overseas', () => {
-  const c = findControl('composite');
-  const codes = c.choices.map((ch: [string, string]) => ch[0]);
-  expect(codes).toContain('france_overseas');
 });
