@@ -21,6 +21,7 @@ from typing import Any, TYPE_CHECKING
 from urllib import parse
 
 import sqlalchemy as sqla
+from flask import url_for
 from flask_appbuilder import Model
 from flask_appbuilder.models.decorators import renders
 from markupsafe import escape, Markup
@@ -309,7 +310,7 @@ class Slice(  # pylint: disable=too-many-public-methods
     @property
     def explore_json_url(self) -> str:
         """Defines the url to access the slice"""
-        return self.get_explore_url("/superset/explore_json")
+        return self.get_explore_url("/explore_json")
 
     @property
     def edit_url(self) -> str:
@@ -322,7 +323,11 @@ class Slice(  # pylint: disable=too-many-public-methods
     @property
     def slice_link(self) -> Markup:
         name = escape(self.chart)
-        return Markup(f'<a href="{self.url}">{name}</a>')
+        # FAB list view renders this raw HTML; use url_for so Flask prepends
+        # SCRIPT_NAME (the application_root). `Slice.url` itself stays router-
+        # relative so frontend callers can apply ensureAppRoot exactly once.
+        href = url_for("ExploreView.root", slice_id=self.id)
+        return Markup(f'<a href="{href}">{name}</a>')
 
     @property
     def icons(self) -> str:

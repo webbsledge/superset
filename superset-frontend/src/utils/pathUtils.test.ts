@@ -294,6 +294,17 @@ test('stripAppRoot handles nested application roots', async () => {
   expect(stripAppRoot('/welcome/')).toBe('/welcome/');
 });
 
+test('stripAppRoot greedily removes a doubled application root', async () => {
+  const { stripAppRoot } = await loadPathUtils('/superset/');
+
+  // Upstream double-prefix bug: ensure both copies are stripped so a downstream
+  // react-router basename re-prepend produces a single, correct prefix.
+  expect(stripAppRoot('/superset/superset/welcome/')).toBe('/welcome/');
+  expect(stripAppRoot('/superset/superset/superset/welcome/')).toBe(
+    '/welcome/',
+  );
+});
+
 test('stripAppRoot passes absolute and protocol-relative URLs through', async () => {
   const { stripAppRoot } = await loadPathUtils('/superset/');
 

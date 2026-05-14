@@ -89,9 +89,12 @@ export function stripAppRoot(path: string): string {
   }
   const root = applicationRoot();
   if (!root) return path;
-  if (path === root) return '/';
-  if (path.startsWith(`${root}/`)) {
-    return path.slice(root.length);
+  let stripped = path;
+  // Greedy strip handles upstream double-prefix bugs (e.g. a backend payload
+  // that emitted `/superset/superset/x`). Without this, a single pass would
+  // leave one stale prefix, which react-router's `basename` would then re-add.
+  while (stripped === root || stripped.startsWith(`${root}/`)) {
+    stripped = stripped === root ? '/' : stripped.slice(root.length);
   }
-  return path;
+  return stripped;
 }

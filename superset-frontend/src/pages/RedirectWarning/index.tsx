@@ -100,7 +100,7 @@ export default function RedirectWarning() {
   // Redirect immediately if the URL is already trusted
   useEffect(() => {
     if (targetUrl && isAllowedScheme(targetUrl) && isUrlTrusted(targetUrl)) {
-      window.location.href = targetUrl;
+      redirect(targetUrl);
     }
   }, [targetUrl]);
 
@@ -109,7 +109,7 @@ export default function RedirectWarning() {
     if (trustChecked) {
       trustUrl(targetUrl);
     }
-    window.location.href = targetUrl;
+    redirect(targetUrl);
   }, [trustChecked, targetUrl]);
 
   const handleReturn = useCallback(() => {

@@ -166,3 +166,67 @@ def test_dashboard_model_url_has_no_route_prefix() -> None:
 
     assert Dashboard.get_url(11) == "/dashboard/11/"
     assert Dashboard.get_url(11, "births") == "/dashboard/births/"
+
+
+def test_slice_explore_json_url_has_no_route_prefix(app_context: None) -> None:
+    """`Slice.explore_json_url` previously baked `/superset/explore_json` into
+    the path. After `Superset.route_base = ""` the rule is `/explore_json/`,
+    so the literal pointed at a non-existent route. Pin the prefix-free shape
+    so downstream `ensureAppRoot` callers prepend the application root once.
+    """
+    from superset.models.slice import Slice
+
+    slc = Slice(id=42)
+    assert slc.explore_json_url.startswith("/explore_json/")
+    assert "/superset/explore_json" not in slc.explore_json_url
+
+
+def test_database_sql_url_resolves_to_live_sqllab_route() -> None:
+    """`Database.sql_url` previously returned `/superset/sql/<id>/` — a route
+    that was removed when SQL Lab moved to its own blueprint at `/sqllab/`.
+    The property now deep-links to SQL Lab via the `dbid` query parameter so
+    it resolves under any application_root.
+    """
+    from superset.models.core import Database
+
+    db = Database(database_name="db", id=7)
+    assert db.sql_url == "/sqllab/?dbid=7"
+
+
+def test_dashboard_link_emits_script_name_under_subdirectory(
+    app_context: None,
+) -> None:
+    """`dashboard_link` renders raw HTML for the FAB list-view "title" column.
+    Flask does not auto-apply SCRIPT_NAME to string fragments, so a literal
+    `/dashboard/<id>/` href routed outside the application_root under
+    subdirectory deployment. Pin that the rendered href now carries the
+    SCRIPT_NAME prefix exactly once.
+    """
+    from flask import current_app
+
+    from superset.models.dashboard import Dashboard
+
+    dash = Dashboard(id=5, slug=None, dashboard_title="t")
+    with current_app.test_request_context(
+        "/", environ_overrides={"SCRIPT_NAME": "/superset"}
+    ):
+        html = str(dash.dashboard_link())
+        assert 'href="/superset/dashboard/5/"' in html
+        assert "/superset/superset/" not in html
+
+
+def test_slice_link_emits_script_name_under_subdirectory(
+    app_context: None,
+) -> None:
+    """Mirror of `dashboard_link` for `Slice.slice_link`."""
+    from flask import current_app
+
+    from superset.models.slice import Slice
+
+    slc = Slice(id=9, slice_name="chart")
+    with current_app.test_request_context(
+        "/", environ_overrides={"SCRIPT_NAME": "/superset"}
+    ):
+        html = str(slc.slice_link)
+        assert 'href="/superset/explore/?slice_id=9"' in html
+        assert "/superset/superset/" not in html

@@ -60,12 +60,12 @@ export function navigateWithState(
 
 const NEW_TAB_FEATURES = 'noopener noreferrer';
 
-// Allow-list of safe URL shapes for navigation: relative paths, protocol-
-// relative URLs, and a small set of known-safe schemes. `ensureAppRoot`
-// already neutralises `javascript:` / `data:` by prefixing them as relative
-// paths, but checking here gives CodeQL a locally-visible sanitiser on the
-// sinks below.
-const SAFE_NAVIGATION_URL_RE = /^(?:\/(?!\/)|\/\/|https?:|ftp:|mailto:|tel:)/i;
+// Allow-list of safe URL shapes for navigation: router-relative paths and a
+// small set of known-safe schemes. `ensureAppRoot` already neutralises
+// `javascript:` / `data:` by prefixing them as relative paths; protocol-
+// relative `//host` is intentionally excluded here because it is a cross-
+// origin navigation primitive that previously enabled open redirects.
+const SAFE_NAVIGATION_URL_RE = /^(?:\/(?!\/)|https?:|ftp:|mailto:|tel:)/i;
 
 function assertSafeNavigationUrl(url: string): string {
   if (!SAFE_NAVIGATION_URL_RE.test(url)) {

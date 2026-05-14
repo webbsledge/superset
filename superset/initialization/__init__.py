@@ -299,10 +299,15 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         if app_root.endswith("/"):
             app_root = app_root.rstrip("/")
 
+        # FAB renders this href verbatim in menus and does not apply
+        # SCRIPT_NAME at render time, so the application_root has to be baked
+        # in at registration. The previous hardcoded `/superset/welcome/`
+        # collided with non-`/superset/` deployments AND with the new
+        # `Superset.route_base = ""`. `app_root` is normalized above.
         appbuilder.add_link(
             "Home",
             label=_("Home"),
-            href="/superset/welcome/",
+            href=f"{app_root}/welcome/",
             cond=lambda: bool(current_app.config["LOGO_TARGET_PATH"]),
         )
 

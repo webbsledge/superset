@@ -102,6 +102,16 @@ describe('openInNewTab', () => {
       expect(features).toContain('noreferrer');
     });
   });
+
+  test('refuses protocol-relative URLs to block open-redirect via `//evil.com`', async () => {
+    await withApplicationRoot('/superset/', async () => {
+      const { openInNewTab } = await import('src/utils/navigationUtils');
+      expect(() => openInNewTab('//evil.example.com/phish')).toThrow(
+        /refused unsafe URL/,
+      );
+      expect(openSpy).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('redirect', () => {

@@ -22,7 +22,7 @@ from collections import defaultdict, deque
 from typing import Any, Callable
 
 import sqlalchemy as sqla
-from flask import current_app as app
+from flask import current_app as app, url_for
 from flask_appbuilder import Model
 from flask_appbuilder.models.decorators import renders
 from flask_appbuilder.security.sqla.models import User
@@ -221,7 +221,12 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
     @renders("dashboard_title")
     def dashboard_link(self) -> Markup:
         title = escape(self.dashboard_title or "<empty>")
-        return Markup(f'<a href="{self.url}">{title}</a>')
+        # FAB list view renders this raw HTML; use url_for so Flask prepends
+        # SCRIPT_NAME (the application_root) and the row link works under
+        # subdirectory deployments. `Dashboard.url` itself stays router-
+        # relative so frontend callers can apply ensureAppRoot exactly once.
+        href = url_for("Superset.dashboard", dashboard_id_or_slug=self.slug or self.id)
+        return Markup(f'<a href="{href}">{title}</a>')
 
     @property
     def digest(self) -> str | None:

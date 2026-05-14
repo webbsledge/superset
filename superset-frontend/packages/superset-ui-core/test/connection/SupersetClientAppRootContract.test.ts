@@ -42,12 +42,25 @@ describe('SupersetClient applies the application root exactly once', () => {
     );
   });
 
-  // Documents the double-prefix symptom: wrapping the endpoint in
-  // ensureAppRoot before passing it to SupersetClient duplicates the root.
-  // navigationUtils.invariants.test.ts catches this pattern statically.
-  test('does not double-apply the application root when caller pre-prefixes', () => {
+  // Runtime safety net: if a caller pre-prefixes the endpoint (e.g. by wrapping
+  // with ensureAppRoot before calling), getUrl strips the duplicate. The L2
+  // static invariant still flags the pattern at the call site — this guards
+  // against the bug reaching production if the static check is bypassed.
+  test('dedupes a leading application-root segment from a pre-prefixed endpoint', () => {
     expect(buildClient().getUrl({ endpoint: '/superset/api/v1/chart' })).toBe(
-      'https://config_host/superset/superset/api/v1/chart',
+      'https://config_host/superset/api/v1/chart',
+    );
+  });
+
+  test('dedupe is segment-boundary aware — `/supersetfoo` is not a prefix match', () => {
+    expect(buildClient().getUrl({ endpoint: '/supersetfoo/x' })).toBe(
+      'https://config_host/superset/supersetfoo/x',
+    );
+  });
+
+  test('dedupes the bare application root to an empty endpoint', () => {
+    expect(buildClient().getUrl({ endpoint: '/superset' })).toBe(
+      'https://config_host/superset/',
     );
   });
 

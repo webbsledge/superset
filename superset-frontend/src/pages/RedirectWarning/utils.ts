@@ -36,8 +36,14 @@ function normalizeUrl(url: string): string {
 /**
  * Return true if the URL scheme is safe for navigation.
  * Blocks javascript:, data:, vbscript:, file:, etc.
+ *
+ * Protocol-relative URLs (`//host/...`) are rejected because they perform a
+ * cross-origin navigation despite parsing as "relative" — the standalone
+ * `new URL(...)` call throws on them, so without an explicit guard the catch
+ * branch would let them through.
  */
 export function isAllowedScheme(url: string): boolean {
+  if (url.startsWith('//')) return false;
   try {
     const parsed = new URL(url);
     return ALLOWED_SCHEMES.includes(parsed.protocol);

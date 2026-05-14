@@ -26,6 +26,7 @@ import Table, {
   TableSize,
 } from '@superset-ui/core/components/Table';
 import { DatasetObject } from 'src/features/datasets/AddDataset/types';
+import { openInNewTab } from 'src/utils/navigationUtils';
 import { ITableColumn } from './types';
 import MessageContent from './MessageContent';
 
@@ -227,11 +228,9 @@ const renderExistingDatasetAlert = (dataset?: DatasetObject) => (
         <span
           role="button"
           onClick={() => {
-            window.open(
-              dataset?.explore_url,
-              '_blank',
-              'noreferrer noopener popup=false',
-            );
+            if (dataset?.explore_url) {
+              openInNewTab(dataset.explore_url);
+            }
           }}
           tabIndex={0}
           className="view-dataset-button"
