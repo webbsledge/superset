@@ -56,6 +56,19 @@ test('isAllowedScheme allows relative URLs (unparseable as absolute)', () => {
   expect(isAllowedScheme('/dashboard/1')).toBe(true);
 });
 
+test('isAllowedScheme blocks protocol-relative URLs', () => {
+  // `new URL('//evil.example.com')` throws standalone, so without the
+  // explicit guard the catch branch would let cross-origin protocol-
+  // relative URLs through as "relative".
+  expect(isAllowedScheme('//evil.example.com')).toBe(false);
+  expect(isAllowedScheme('//evil.example.com/phish?token=abc')).toBe(false);
+});
+
+test('isAllowedScheme does not block single-leading-slash absolute paths', () => {
+  // Guard against an over-broad fix that strips both `//` and `/foo`.
+  expect(isAllowedScheme('/dashboard/list/')).toBe(true);
+});
+
 test('getTargetUrl reads the url query parameter', () => {
   Object.defineProperty(window, 'location', {
     value: { search: '?url=https%3A%2F%2Fexample.com%2Fpage' },

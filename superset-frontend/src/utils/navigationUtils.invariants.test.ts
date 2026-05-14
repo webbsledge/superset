@@ -16,7 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { expectNoHits, scanSource } from 'spec/helpers/sourceTreeScanner';
+import {
+  expectNoHits,
+  scanSource,
+  type ScanHit,
+} from 'spec/helpers/sourceTreeScanner';
+
+// Hits whose source line is a comment are not real violations. The scanner is
+// line-based and cannot tell apart `const u = '/superset/x'` from `// example
+// '/superset/x'` — explanatory JSDoc and block comments that reference the
+// doubled-prefix bug intentionally contain the literal. Drop those lines here
+// so the invariant flags only executable code.
+function dropCommentLines(hits: ScanHit[]): ScanHit[] {
+  return hits.filter(({ text }) => {
+    const trimmed = text.trimStart();
+    return !(
+      trimmed.startsWith('//') ||
+      trimmed.startsWith('* ') ||
+      trimmed.startsWith('*/') ||
+      trimmed === '*' ||
+      trimmed.startsWith('/*') ||
+      trimmed.startsWith('/**')
+    );
+  });
+}
 
 test('no file outside navigationUtils.ts imports from pathUtils', () => {
   // pathUtils.ts is the implementation module; navigationUtils.ts re-exports
@@ -87,6 +110,183 @@ test('RAW_HREF_ABSOLUTE_PATH_ALLOWLIST has no stale entries', () => {
   );
 
   const stale = RAW_HREF_ABSOLUTE_PATH_ALLOWLIST.filter(
+    file => !hitFiles.has(file),
+  );
+
+  expect(stale).toEqual([]);
+});
+
+// Direct `applicationRoot()` calls are the channel-2 escape hatch for reading
+// the deployment root. The sanctioned shape is to route everything through
+// `navigationUtils` helpers (which delegate to pathUtils.ensureAppRoot /
+// makeUrl). Only a small set of modules legitimately needs the raw root: the
+// definition itself, the bootstrap entry points that hand `appRoot` to
+// `setupClient`, the router basename wiring, and the pathUtils
+// implementation.
+const APPLICATION_ROOT_CALL_PATTERN = /\bapplicationRoot\s*\(/;
+
+const APPLICATION_ROOT_CALL_ALLOWLIST: string[] = [
+  // Sanctioned: definition + the 5 modules described in the project memory.
+  'src/utils/getBootstrapData.ts',
+  'src/utils/pathUtils.ts',
+  'src/preamble.ts',
+  'src/views/App.tsx',
+  'src/embedded/index.tsx',
+  // Migration targets: still call applicationRoot() directly to build paths
+  // outside the helper. Replace with ensureAppRoot / stripAppRoot /
+  // navigationUtils before dropping from this list.
+  'src/dashboard/components/nativeFilters/FilterBar/index.tsx',
+  'src/components/StreamingExportModal/useStreamingExport.ts',
+];
+
+test('applicationRoot() is called only from sanctioned modules', () => {
+  const hits = dropCommentLines(
+    scanSource({
+      pattern: APPLICATION_ROOT_CALL_PATTERN,
+      allowlist: APPLICATION_ROOT_CALL_ALLOWLIST,
+    }),
+  );
+
+  expectNoHits(
+    hits,
+    'Found direct applicationRoot() calls outside the sanctioned set. ' +
+      'Most call sites should route through navigationUtils helpers ' +
+      '(ensureAppRoot / makeUrl / openInNewTab / AppLink) so the app root ' +
+      'is applied exactly once. If a new caller genuinely needs the raw ' +
+      'root, justify it and add the file to APPLICATION_ROOT_CALL_ALLOWLIST.',
+  );
+});
+
+test('APPLICATION_ROOT_CALL_ALLOWLIST has no stale entries', () => {
+  const hitFiles = new Set(
+    dropCommentLines(
+      scanSource({ pattern: APPLICATION_ROOT_CALL_PATTERN }),
+    ).map(hit => hit.file),
+  );
+
+  const stale = APPLICATION_ROOT_CALL_ALLOWLIST.filter(
+    file => !hitFiles.has(file),
+  );
+
+  expect(stale).toEqual([]);
+});
+
+// Direct DOM navigation (`window.open(...)`, `window.location.href = ...`,
+// `window.location.assign(...)`, `window.location.replace(...)`) bypasses
+// `navigationUtils.openInNewTab` / `redirect` and therefore skips both
+// `ensureAppRoot` and the `assertSafeNavigationUrl` scheme guard. Under
+// subdirectory deployment they emit unprefixed paths that 404; in the open-
+// redirect threat model they accept `javascript:` / protocol-relative URLs
+// that the helpers refuse. Migration target: replace with the navigationUtils
+// helpers, or — for mailto:/external schemes — keep the raw call and add a
+// localized justification + this allow-list entry.
+const DIRECT_DOM_NAV_PATTERN =
+  /\bwindow\.(?:open\(|location\.(?:href\s*=|assign\(|replace\()|history\.(?:pushState\(|replaceState\())/;
+
+const DIRECT_DOM_NAV_ALLOWLIST: string[] = [
+  // Sanctioned entry point: the helpers themselves wrap window.open /
+  // window.location and history.{push,replace}State after ensuring the app
+  // root is applied exactly once.
+  'src/utils/navigationUtils.ts',
+  // Migration targets: still call window.open / window.location directly.
+  'src/dashboard/components/Header/index.tsx',
+  'src/dashboard/components/menu/ShareMenuItems/index.tsx',
+  'src/explore/components/useExploreAdditionalActionsMenu/index.tsx',
+  'src/components/Datasource/components/DatasourceEditor/DatasourceEditor.tsx',
+  'src/components/ErrorMessage/OAuth2RedirectMessage.tsx',
+  'src/SqlLab/components/ResultSet/index.tsx',
+  'src/SqlLab/components/SaveDatasetModal/index.tsx',
+  'packages/superset-ui-core/src/connection/SupersetClientClass.ts',
+  'packages/superset-ui-core/src/components/Form/LabeledErrorBoundInput.tsx',
+];
+
+test('no direct window.open/window.location navigation outside navigationUtils', () => {
+  const hits = scanSource({
+    pattern: DIRECT_DOM_NAV_PATTERN,
+    allowlist: DIRECT_DOM_NAV_ALLOWLIST,
+  });
+
+  expectNoHits(
+    hits,
+    'Found direct window.open / window.location / window.history navigation. ' +
+      'These bypass ensureAppRoot (broken under subdirectory deployment) ' +
+      'and the assertSafeNavigationUrl scheme guard (open-redirect surface). ' +
+      'Replace with openInNewTab / redirect / navigateWithState from ' +
+      'src/utils/navigationUtils.',
+  );
+});
+
+test('DIRECT_DOM_NAV_ALLOWLIST has no stale entries', () => {
+  const hitFiles = new Set(
+    scanSource({ pattern: DIRECT_DOM_NAV_PATTERN }).map(hit => hit.file),
+  );
+
+  const stale = DIRECT_DOM_NAV_ALLOWLIST.filter(file => !hitFiles.has(file));
+
+  expect(stale).toEqual([]);
+});
+
+// Hard-coded `/superset/...` path literals in source bake the legacy
+// `route_base` into the frontend and double-prefix under subdirectory
+// deployment. The backend now serves these endpoints under their own
+// blueprint routes (e.g. `/dashboard/<id>/`, `/explore/...`, `/sqllab/`),
+// and the helper-aware shape is `ensureAppRoot('/dashboard/<id>/')`.
+//
+// Match a quote/backtick followed by `/superset` followed by `/` or a
+// closing quote. The lookahead also allows `?` and `#` so query/hash
+// shapes don't slip through.
+const HARDCODED_SUPERSET_LITERAL_PATTERN = /['"`]\/superset(?:[/?#]|['"`])/;
+
+const HARDCODED_SUPERSET_LITERAL_ALLOWLIST: string[] = [
+  // Frontend src/: migration targets that still emit legacy /superset/...
+  'src/preamble.ts',
+  'src/explore/exploreUtils/index.ts',
+  'src/dashboard/actions/dashboardState.ts',
+  'src/dashboard/actions/datasources.ts',
+  'src/dashboard/components/nativeFilters/FilterBar/index.tsx',
+  'src/components/Datasource/components/DatasourceEditor/components/DashboardLinksExternal/index.tsx',
+  'src/components/ListView/CrossLinks.tsx',
+  'src/pages/FileHandler/index.tsx',
+  'src/pages/Tags/index.tsx',
+  'src/pages/DatabaseList/index.tsx',
+  'src/pages/DatasetList/index.tsx',
+  // Test-fixture helpers (referenced as production data but shaped as the
+  // legacy URL the backend used to emit). Drop after `Dashboard.url` etc.
+  // stop returning `/superset/...`.
+  'src/pages/ChartList/ChartList.testHelpers.tsx',
+  'src/pages/DashboardList/DashboardList.testHelpers.tsx',
+  // packages/superset-ui-core/src: chart-client endpoints + legacy query.
+  'packages/superset-ui-core/src/chart/clients/ChartClient.ts',
+  'packages/superset-ui-core/src/chart/components/StatefulChart.tsx',
+  'packages/superset-ui-core/src/query/api/legacy/getDatasourceMetadata.ts',
+];
+
+test('no hard-coded /superset/ path literals outside the migration allow-list', () => {
+  const hits = dropCommentLines(
+    scanSource({
+      pattern: HARDCODED_SUPERSET_LITERAL_PATTERN,
+      allowlist: HARDCODED_SUPERSET_LITERAL_ALLOWLIST,
+    }),
+  );
+
+  expectNoHits(
+    hits,
+    'Found hard-coded /superset/ path literal in source. Under subdirectory ' +
+      'deployment these become /<approot>/superset/... (doubled prefix) ' +
+      'and after the `Superset.route_base = ""` cleanup most are 404s. ' +
+      'Replace with the post-route_base route (e.g. /dashboard/<id>/, ' +
+      '/explore/...) and let ensureAppRoot apply the deployment root.',
+  );
+});
+
+test('HARDCODED_SUPERSET_LITERAL_ALLOWLIST has no stale entries', () => {
+  const hitFiles = new Set(
+    dropCommentLines(
+      scanSource({ pattern: HARDCODED_SUPERSET_LITERAL_PATTERN }),
+    ).map(hit => hit.file),
+  );
+
+  const stale = HARDCODED_SUPERSET_LITERAL_ALLOWLIST.filter(
     file => !hitFiles.has(file),
   );
 
