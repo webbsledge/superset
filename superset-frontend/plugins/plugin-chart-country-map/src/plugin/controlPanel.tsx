@@ -250,11 +250,6 @@ const COMPOSITE_LABELS: Record<string, string> = {
   france_overseas: t('France (with overseas territories)'),
 };
 
-const COMPOSITE_CHOICES: Array<[string, string]> = M.composites.map(c => [
-  c.id,
-  COMPOSITE_LABELS[c.id] || c.id,
-]);
-
 // Composites grouped by anchor country (ISO_A3). Composites without a
 // country in the manifest fall into a "global" bucket and remain
 // available regardless of the country selection — keeps backward
