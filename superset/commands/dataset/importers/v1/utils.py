@@ -21,6 +21,7 @@ from typing import Any
 from urllib import request
 
 import pandas as pd
+from pandas.errors import OutOfBoundsDatetime
 from flask import current_app as app
 from sqlalchemy import BigInteger, Boolean, Date, DateTime, Float, String, Text
 from sqlalchemy.exc import MultipleResultsFound
@@ -192,6 +193,27 @@ def import_dataset(  # noqa: C901
     return dataset
 
 
+def _convert_temporal_columns(
+    df: pd.DataFrame, dtype: dict[str, Any]
+) -> None:
+    """Convert Date/DateTime columns in-place, coercing only out-of-bounds values."""
+    for column_name, sqla_type in dtype.items():
+        if isinstance(sqla_type, (Date, DateTime)):
+            try:
+                df[column_name] = pd.to_datetime(df[column_name])
+            except OutOfBoundsDatetime:
+                converted = pd.to_datetime(df[column_name], errors="coerce")
+                # net-new NaTs from coercion, excluding pre-existing nulls
+                n_coerced = int(converted.isna().sum() - df[column_name].isna().sum())
+                if n_coerced > 0:
+                    logger.warning(
+                        "Coerced %d out-of-bounds datetime value(s) in column '%s' to NaT",
+                        n_coerced,
+                        column_name,
+                    )
+                df[column_name] = converted
+
+
 def load_data(data_uri: str, dataset: SqlaTable, database: Database) -> None:
     """
     Load data from a data URI into a dataset.
@@ -212,10 +234,7 @@ def load_data(data_uri: str, dataset: SqlaTable, database: Database) -> None:
     df = pd.read_csv(data, encoding="utf-8")
     dtype = get_dtype(df, dataset)
 
-    # convert temporal columns
-    for column_name, sqla_type in dtype.items():
-        if isinstance(sqla_type, (Date, DateTime)):
-            df[column_name] = pd.to_datetime(df[column_name])
+    _convert_temporal_columns(df, dtype)
 
     # reuse session when loading data if possible, to make import atomic
     if database.sqlalchemy_uri == app.config.get("SQLALCHEMY_DATABASE_URI"):
