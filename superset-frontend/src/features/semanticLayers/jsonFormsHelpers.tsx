@@ -264,9 +264,7 @@ const enumNamesEntry = {
         const names = (s as Record<string, unknown>)['x-enumNames'];
         return Array.isArray(names) && (names as unknown[]).length > 0;
       }),
-      schemaMatches(
-        s => (s as Record<string, unknown>)?.type !== 'array',
-      ),
+      schemaMatches(s => (s as Record<string, unknown>)?.type !== 'array'),
     ),
   ),
   renderer: EnumNamesRenderer,

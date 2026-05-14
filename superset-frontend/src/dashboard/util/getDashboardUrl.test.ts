@@ -122,7 +122,9 @@ describe('getChartIdsFromLayout', () => {
       hash: '',
       standalone: DashboardStandaloneMode.HideNav,
     });
-    expect(url).toBe(`/dashboard/1/?standalone=${DashboardStandaloneMode.HideNav}`);
+    expect(url).toBe(
+      `/dashboard/1/?standalone=${DashboardStandaloneMode.HideNav}`,
+    );
   });
 
   test('should process native filters key', () => {

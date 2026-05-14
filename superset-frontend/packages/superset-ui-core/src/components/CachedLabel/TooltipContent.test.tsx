@@ -38,7 +38,9 @@ test('Rendering TooltipContent correctly - with timestep', () => {
 });
 
 test('Rendering TooltipContent correctly - semantic cache', () => {
-  render(<TooltipContent cacheSource="semantic" cachedTimestamp="01-01-2000" />);
+  render(
+    <TooltipContent cacheSource="semantic" cachedTimestamp="01-01-2000" />,
+  );
   expect(screen.getByTestId('tooltip-content')?.textContent).toBe(
     `Loaded from semantic smart cache ${extendedDayjs
       .utc('01-01-2000')

@@ -173,7 +173,11 @@ describe('ChartContainer', () => {
       chart: {
         chartStatus: 'rendered',
         queriesResponse: [
-          { is_cached: false, semantic_cache_hit: true, queried_dttm: '2026-01-01' },
+          {
+            is_cached: false,
+            semantic_cache_hit: true,
+            queried_dttm: '2026-01-01',
+          },
         ],
       },
     });
