@@ -16,14 +16,14 @@
 # under the License.
 """add granular export permissions
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: 41292324bf4e
 Revises: 4b2a8c9d3e1f
 Create Date: 2026-03-02 12:00:00.000000
 
 """
 
 # revision identifiers, used by Alembic.
-revision = "a1b2c3d4e5f6"
+revision = "41292324bf4e"
 down_revision = "4b2a8c9d3e1f"
 
 from alembic import op  # noqa: E402
