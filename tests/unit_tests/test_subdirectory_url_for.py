@@ -109,3 +109,60 @@ def test_dashboard_permalink_external_url_is_single_prefixed(
         url = url_for("Superset.dashboard_permalink", key="abc123", _external=True)
         assert url.endswith("/superset/dashboard/p/abc123/")
         assert "/superset/superset/" not in url
+
+
+def test_explore_permalink_url_is_single_prefixed(app_context: None) -> None:
+    """ExplorePermalinkView previously hard-coded route_base = "/superset".
+
+    The `superset/explore/permalink/api.py` endpoint serves the clipboard URL
+    via `url_for("ExplorePermalinkView.permalink", _external=True)`. Under
+    SCRIPT_NAME=/superset that combination doubled to
+    `/superset/superset/explore/p/<key>/`. Mirroring the Superset.route_base=""
+    decision pins the single-prefix shape and prevents the doubled emission
+    from regressing.
+    """
+    from flask import current_app
+
+    with current_app.test_request_context(
+        "/",
+        environ_overrides={"SCRIPT_NAME": "/superset"},
+    ):
+        url = url_for("ExplorePermalinkView.permalink", key="abc123", _external=True)
+        assert url.endswith("/superset/explore/p/abc123/")
+        assert "/superset/superset/" not in url
+
+
+def test_tag_views_urls_are_single_prefixed(app_context: None) -> None:
+    """TagModelView and TaggedObjectsModelView previously hard-coded
+    `route_base = "/superset/tags"` / `/superset/all_entities"`.
+
+    Mirroring the Superset.route_base="" decision, the rule is now
+    `/tags/` / `/all_entities/` and `url_for` under SCRIPT_NAME=/superset
+    must carry the prefix exactly once.
+    """
+    from flask import current_app
+
+    with current_app.test_request_context(
+        "/",
+        environ_overrides={"SCRIPT_NAME": "/superset"},
+    ):
+        assert url_for("TagModelView.list") == "/superset/tags/"
+        assert url_for("TaggedObjectsModelView.list") == "/superset/all_entities/"
+
+
+def test_dashboard_model_url_has_no_route_prefix() -> None:
+    """`Dashboard.url` / `Dashboard.get_url` previously hard-coded
+    `/superset/dashboard/<id>/` as a string literal.
+
+    After `Superset.route_base = ""` the backend rule is `/dashboard/<id>/`,
+    so the literal was wrong on both root deployments (no matching rule) and
+    on subdirectory deployments (downstream callers re-applied the app root
+    and produced doubled paths in DashboardList row hrefs, ultimately leading
+    to the user-visible discard-edit 404). The method now returns a
+    prefix-free relative URL that downstream `ensureAppRoot`-aware helpers
+    can prepend exactly once.
+    """
+    from superset.models.dashboard import Dashboard
+
+    assert Dashboard.get_url(11) == "/dashboard/11/"
+    assert Dashboard.get_url(11, "births") == "/dashboard/births/"

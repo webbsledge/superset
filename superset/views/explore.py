@@ -37,7 +37,12 @@ class ExploreView(BaseSupersetView):
 
 
 class ExplorePermalinkView(BaseSupersetView):
-    route_base = "/superset"
+    # Mirror `Superset.route_base = ""` (see `views/core.py`): Flask-AppBuilder
+    # auto-derives `/explorepermalink` from the class name, but the rule pattern
+    # already encodes the full path. Leaving the auto-derived value collides
+    # with `AppRootMiddleware` under subdirectory deployments and doubles the
+    # prefix emitted by `url_for("ExplorePermalinkView.permalink")`.
+    route_base = ""
     class_permission_name = "Explore"
 
     @expose("/explore/p/<key>/")
