@@ -20,6 +20,7 @@
 import {
   isUrlExternal,
   parseUrl,
+  rewritePermalinkOrigin,
   toQueryString,
   getDashboardUrlParams,
   getUrlParam,
@@ -188,4 +189,79 @@ test('getUrlParam uses provided search string instead of window.location.search 
     writable: true,
     configurable: true,
   });
+});
+
+const originalLocationForRewriteTests = window.location;
+
+const setBrowsingOriginForRewriteTests = (origin: string) => {
+  Object.defineProperty(window, 'location', {
+    value: { ...originalLocationForRewriteTests, origin },
+    writable: true,
+    configurable: true,
+  });
+};
+
+const restoreLocationForRewriteTests = () => {
+  Object.defineProperty(window, 'location', {
+    value: originalLocationForRewriteTests,
+    writable: true,
+    configurable: true,
+  });
+};
+
+test('rewritePermalinkOrigin replaces backend host with browsing origin', () => {
+  // Reproduces the docker-light share-embed bug: the backend returns the
+  // internal container hostname; the iframe must use the browsing origin
+  // instead.
+  setBrowsingOriginForRewriteTests('http://localhost:9004');
+  expect(
+    rewritePermalinkOrigin(
+      'http://superset-light:8088/superset/explore/p/abc/',
+    ),
+  ).toBe('http://localhost:9004/superset/explore/p/abc/');
+  restoreLocationForRewriteTests();
+});
+
+test('rewritePermalinkOrigin preserves query string and hash', () => {
+  setBrowsingOriginForRewriteTests('http://localhost:9004');
+  expect(
+    rewritePermalinkOrigin(
+      'http://superset-light:8088/superset/explore/p/abc/?standalone=1&height=400#x',
+    ),
+  ).toBe(
+    'http://localhost:9004/superset/explore/p/abc/?standalone=1&height=400#x',
+  );
+  restoreLocationForRewriteTests();
+});
+
+test('rewritePermalinkOrigin is a no-op when origins already match', () => {
+  setBrowsingOriginForRewriteTests('https://superset.example.com');
+  expect(
+    rewritePermalinkOrigin(
+      'https://superset.example.com/superset/dashboard/p/xyz/',
+    ),
+  ).toBe('https://superset.example.com/superset/dashboard/p/xyz/');
+  restoreLocationForRewriteTests();
+});
+
+test('rewritePermalinkOrigin returns input unchanged when URL cannot be parsed', () => {
+  setBrowsingOriginForRewriteTests('http://localhost:9004');
+  expect(rewritePermalinkOrigin('not a url')).toBe('not a url');
+  expect(rewritePermalinkOrigin('/relative/path')).toBe('/relative/path');
+  restoreLocationForRewriteTests();
+});
+
+test('rewritePermalinkOrigin returns input unchanged when window.location.origin is missing', () => {
+  // Some test setups stub window.location to a minimal shape with no
+  // origin (e.g., ShareMenuItems tests). The rewrite must no-op rather
+  // than producing "undefined/..." URLs.
+  Object.defineProperty(window, 'location', {
+    value: { href: '' },
+    writable: true,
+    configurable: true,
+  });
+  expect(
+    rewritePermalinkOrigin('http://superset.com/superset/dashboard/p/x/'),
+  ).toBe('http://superset.com/superset/dashboard/p/x/');
+  restoreLocationForRewriteTests();
 });
