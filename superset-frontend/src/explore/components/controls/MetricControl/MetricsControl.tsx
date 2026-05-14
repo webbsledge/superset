@@ -32,7 +32,6 @@ import MetricDefinitionValue from './MetricDefinitionValue';
 import AdhocMetric from './AdhocMetric';
 import AdhocMetricPopoverTrigger from './AdhocMetricPopoverTrigger';
 
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getOptionsForSavedMetrics(
   savedMetrics: any,

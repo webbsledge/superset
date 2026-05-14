@@ -17,8 +17,9 @@
  * under the License.
  */
 import { forwardRef } from 'react';
-import { Popover as AntdPopover, type TooltipRef } from 'antd';
+import { Popover as AntdPopover } from 'antd';
 import { PopoverProps as AntdPopoverProps } from 'antd/es/popover';
+import type { TooltipRef } from 'antd/es/tooltip';
 
 export interface PopoverProps extends AntdPopoverProps {
   forceRender?: boolean;

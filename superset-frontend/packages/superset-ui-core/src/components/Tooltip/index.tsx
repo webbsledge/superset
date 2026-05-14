@@ -17,7 +17,8 @@
  * under the License.
  */
 import { forwardRef } from 'react';
-import { Tooltip as AntdTooltip, type TooltipRef } from 'antd';
+import { Tooltip as AntdTooltip } from 'antd';
+import type { TooltipRef } from 'antd/es/tooltip';
 
 import type { TooltipProps, TooltipPlacement } from './types';
 

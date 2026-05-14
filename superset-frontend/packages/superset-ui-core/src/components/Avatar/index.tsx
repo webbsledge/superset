@@ -25,8 +25,8 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => (
   <AntdAvatar ref={ref} {...props} />
 ));
 
-export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(
-  (props, ref) => <AntdAvatar.Group ref={ref} {...props} />,
+export const AvatarGroup = (props: AvatarGroupProps) => (
+  <AntdAvatar.Group {...props} />
 );
 
 export type { AvatarProps, AvatarGroupProps };

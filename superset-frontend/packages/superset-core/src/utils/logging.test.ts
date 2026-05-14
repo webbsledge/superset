@@ -50,20 +50,24 @@ test('should pipe to `console` methods', () => {
 });
 
 test('should use noop functions when console unavailable', () => {
+  const originalConsole = window.console;
   Object.assign(window, { console: undefined });
-  const { logging } = require('@apache-superset/core/utils');
+  try {
+    const { logging } = require('@apache-superset/core/utils');
 
-  expect(() => {
-    logging.debug();
-    logging.log();
-    logging.info();
-    logging.warn('warn');
-    logging.error('error');
-    logging.trace();
-    logging.table([
-      [1, 2],
-      [3, 4],
-    ]);
-  }).not.toThrow();
-  Object.assign(window, { console });
+    expect(() => {
+      logging.debug();
+      logging.log();
+      logging.info();
+      logging.warn('warn');
+      logging.error('error');
+      logging.trace();
+      logging.table([
+        [1, 2],
+        [3, 4],
+      ]);
+    }).not.toThrow();
+  } finally {
+    Object.assign(window, { console: originalConsole });
+  }
 });

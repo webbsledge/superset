@@ -111,12 +111,16 @@ const createController = (
     ...options,
   });
 
-// Shared console spies
-const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+// Shared console spies — re-installed in beforeEach because the global
+// jest-fail-on-console setup re-assigns console.warn/console.error before
+// each test, which would otherwise overwrite a module-scope spy.
+let consoleSpy: jest.SpyInstance;
+let consoleErrorSpy: jest.SpyInstance;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
   // Setup DOM environment
   Object.defineProperty(window, 'localStorage', {

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { forwardRef } from 'react';
+import { forwardRef, type ComponentType } from 'react';
 import { css, useTheme, getFontSize } from '@apache-superset/core/theme';
 import { AntdIconType, BaseIconProps, CustomIconType, IconType } from './types';
 
@@ -37,11 +37,19 @@ const genAriaLabel = (fileName: string) => {
 };
 
 export const BaseIconComponent = forwardRef<
-  HTMLSpanElement,
+  HTMLSpanElement | SVGSVGElement,
   BaseIconProps & Omit<IconType, 'component'>
 >(
   (
-    { component: Component, iconColor, iconSize, viewBox, customIcons, fileName, ...rest },
+    {
+      component: Component,
+      iconColor,
+      iconSize,
+      viewBox,
+      customIcons,
+      fileName,
+      ...rest
+    },
     ref,
   ) => {
     const theme = useTheme();
@@ -55,9 +63,14 @@ export const BaseIconComponent = forwardRef<
       cursor: rest?.onClick ? 'pointer' : undefined,
     };
 
+    const AntdComponent = Component as ComponentType<
+      Record<string, unknown> & {
+        ref?: React.Ref<HTMLSpanElement | SVGSVGElement>;
+      }
+    >;
     return customIcons ? (
       <span
-        ref={ref}
+        ref={ref as React.Ref<HTMLSpanElement>}
         role={whatRole}
         aria-label={ariaLabel}
         data-test={ariaLabel}
@@ -87,7 +100,7 @@ export const BaseIconComponent = forwardRef<
         />
       </span>
     ) : (
-      <Component
+      <AntdComponent
         ref={ref}
         role={whatRole}
         style={style}
