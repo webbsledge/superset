@@ -24,7 +24,7 @@ import {
   QueryFormColumn,
   QueryFormOrderBy,
 } from '@superset-ui/core';
-import { PivotTableQueryFormData } from '../types';
+import { PivotTableQueryFormData } from './types';
 
 export default function buildQuery(formData: PivotTableQueryFormData) {
   const { groupbyColumns = [], groupbyRows = [], extra_form_data } = formData;

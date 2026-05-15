@@ -33,7 +33,7 @@ import {
   validateNonEmpty,
   QueryFormColumn,
 } from '@superset-ui/core';
-import { MetricsLayoutEnum } from '../types';
+import { MetricsLayoutEnum } from './types';
 
 const config: ControlPanelConfig = {
   controlPanelSections: [

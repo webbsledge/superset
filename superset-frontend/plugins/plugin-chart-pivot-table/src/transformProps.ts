@@ -28,7 +28,7 @@ import {
 } from '@superset-ui/core';
 import { GenericDataType } from '@apache-superset/core/common';
 import { getColorFormatters } from '@superset-ui/chart-controls';
-import { DateFormatter } from '../types';
+import { DateFormatter } from './types';
 
 const { DATABASE_DATETIME } = TimeFormats;
 
