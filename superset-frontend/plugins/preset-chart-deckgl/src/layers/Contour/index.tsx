@@ -16,12 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  ControlPanelConfig,
-  getStandardizedControls,
-} from '@superset-ui/chart-controls';
 import { t } from '@apache-superset/core/translation';
-import { validateNonEmpty } from '@superset-ui/core';
+import { Behavior, validateNonEmpty } from '@superset-ui/core';
+import { getStandardizedControls } from '@superset-ui/chart-controls';
+import { defineChart } from '@superset-ui/glyph-core';
+import ContourComponent from './Contour';
+import {
+  SpatialFormData,
+  buildSpatialQuery,
+  transformSpatialProps,
+} from '../spatialUtils';
 import {
   autozoom,
   filterNulls,
@@ -37,9 +41,46 @@ import {
   tooltipContents,
   tooltipTemplate,
 } from '../../utilities/Shared_DeckGL';
+import thumbnail from './images/thumbnail.png';
+import thumbnailDark from './images/thumbnail-dark.png';
+import example from './images/example.png';
+import exampleDark from './images/example-dark.png';
 
-const config: ControlPanelConfig = {
-  controlPanelSections: [
+export { getSafeCellSize } from './getSafeCellSize';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export interface DeckContourFormData extends SpatialFormData {
+  cellSize?: string;
+  aggregation?: string;
+  contours?: Array<{
+    color: { r: number; g: number; b: number };
+    lowerThreshold: number;
+    upperThreshold?: number;
+    strokeWidth?: number;
+  }>;
+}
+
+// ─── Plugin definition ───────────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default defineChart<Record<string, never>, any>({
+  metadata: {
+    name: t('deck.gl Contour'),
+    description: t(
+      'Uses Gaussian Kernel Density Estimation to visualize spatial distribution of data',
+    ),
+    category: t('Map'),
+    credits: ['https://uber.github.io/deck.gl'],
+    behaviors: [Behavior.InteractiveChart],
+    tags: [t('deckGL'), t('Spatial'), t('Comparison')],
+    thumbnail,
+    thumbnailDark,
+    exampleGallery: [{ url: example, urlDark: exampleDark }],
+  },
+  arguments: {},
+  suppressQuerySection: true,
+  prependSections: [
     {
       label: t('Query'),
       expanded: true,
@@ -124,7 +165,7 @@ const config: ControlPanelConfig = {
       ],
     },
   ],
-  controlOverrides: {
+  additionalControlOverrides: {
     size: {
       label: t('Weight'),
       description: t("Metric used as a weight for the grid's coloring"),
@@ -135,6 +176,12 @@ const config: ControlPanelConfig = {
     ...formData,
     size: getStandardizedControls().shiftMetric(),
   }),
-};
-
-export default config;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  buildQuery: (formData: any) =>
+    buildSpatialQuery(formData as DeckContourFormData),
+  transform: chartProps => transformSpatialProps(chartProps),
+  render: ({ transformedProps }) => (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <ContourComponent {...(transformedProps as any)} />
+  ),
+});
