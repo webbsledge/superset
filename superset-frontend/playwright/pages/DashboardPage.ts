@@ -43,7 +43,7 @@ export class DashboardPage {
    * @param slug - The dashboard slug (e.g., 'world_health')
    */
   async gotoBySlug(slug: string): Promise<void> {
-    await this.page.goto(`superset/dashboard/${slug}/`);
+    await this.page.goto(`dashboard/${slug}/`);
   }
 
   /**
@@ -51,7 +51,7 @@ export class DashboardPage {
    * @param id - The dashboard ID
    */
   async gotoById(id: number): Promise<void> {
-    await this.page.goto(`superset/dashboard/${id}/`);
+    await this.page.goto(`dashboard/${id}/`);
   }
 
   /**
