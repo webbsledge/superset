@@ -251,7 +251,7 @@ export function processScatterData(
   });
 }
 
-function transformProps(chartProps: ChartProps) {
+export function transformProps(chartProps: ChartProps) {
   const { rawFormData: formData } = chartProps;
   const {
     spatial: spatialCfg,

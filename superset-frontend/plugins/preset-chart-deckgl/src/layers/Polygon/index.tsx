@@ -320,7 +320,7 @@ export function processPolygonData(
     .filter((feature): feature is PolygonFeature => feature !== null);
 }
 
-function transformProps(chartProps: ChartProps) {
+export function transformProps(chartProps: ChartProps) {
   const { rawFormData: formData } = chartProps;
   const records = getRecordsFromQuery(chartProps.queriesData);
   const features = processPolygonData(records, formData as DeckPolygonFormData);
