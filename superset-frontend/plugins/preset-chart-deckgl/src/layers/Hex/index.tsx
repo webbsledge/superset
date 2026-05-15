@@ -16,11 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  ControlPanelConfig,
-  getStandardizedControls,
-} from '@superset-ui/chart-controls';
 import { t } from '@apache-superset/core/translation';
+import { Behavior } from '@superset-ui/core';
+import { getStandardizedControls } from '@superset-ui/chart-controls';
+import { defineChart } from '@superset-ui/glyph-core';
+import HexComponent from './Hex';
+import {
+  SpatialFormData,
+  buildSpatialQuery,
+  transformSpatialProps,
+} from '../spatialUtils';
 import {
   autozoom,
   extruded,
@@ -40,9 +45,39 @@ import {
   tooltipTemplate,
 } from '../../utilities/Shared_DeckGL';
 import { COLOR_SCHEME_TYPES } from '../../utilities/utils';
+import thumbnail from './images/thumbnail.png';
+import thumbnailDark from './images/thumbnail-dark.png';
+import example from './images/example.png';
+import exampleDark from './images/example-dark.png';
 
-const config: ControlPanelConfig = {
-  controlPanelSections: [
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export interface DeckHexFormData extends SpatialFormData {
+  extruded?: boolean;
+  js_agg_function?: string;
+  grid_size?: number;
+}
+
+// ─── Plugin definition ───────────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default defineChart<Record<string, never>, any>({
+  metadata: {
+    name: t('deck.gl 3D Hexagon'),
+    description: t(
+      'Overlays a hexagonal grid on a map, and aggregates data within the boundary of each cell.',
+    ),
+    category: t('Map'),
+    credits: ['https://uber.github.io/deck.gl'],
+    behaviors: [Behavior.InteractiveChart],
+    tags: [t('deckGL'), t('3D'), t('Geo'), t('Comparison')],
+    thumbnail,
+    thumbnailDark,
+    exampleGallery: [{ url: example, urlDark: exampleDark }],
+  },
+  arguments: {},
+  suppressQuerySection: true,
+  prependSections: [
     {
       label: t('Query'),
       expanded: true,
@@ -115,6 +150,11 @@ const config: ControlPanelConfig = {
     ...formData,
     size: getStandardizedControls().shiftMetric(),
   }),
-};
-
-export default config;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  buildQuery: (formData: any) => buildSpatialQuery(formData as DeckHexFormData),
+  transform: chartProps => transformSpatialProps(chartProps),
+  render: ({ transformedProps }) => (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <HexComponent {...(transformedProps as any)} />
+  ),
+});
