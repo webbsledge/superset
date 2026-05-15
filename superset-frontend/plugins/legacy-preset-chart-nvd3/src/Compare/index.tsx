@@ -17,11 +17,9 @@
  * under the License.
  */
 import { t } from '@apache-superset/core/translation';
-import {
-  ControlPanelConfig,
-  getStandardizedControls,
-  sections,
-} from '@superset-ui/chart-controls';
+import { ChartLabel } from '@superset-ui/core';
+import { getStandardizedControls, sections } from '@superset-ui/chart-controls';
+import { defineChart } from '@superset-ui/glyph-core';
 import {
   xAxisLabel,
   yAxisLabel,
@@ -35,9 +33,47 @@ import {
   leftMargin,
   timeSeriesSection,
 } from '../NVD3Controls';
+import thumbnail from './images/thumbnail.png';
+import thumbnailDark from './images/thumbnail-dark.png';
+import example from './images/example.jpg';
+import exampleDark from './images/example-dark.jpg';
 
-const config: ControlPanelConfig = {
-  controlPanelSections: [
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const transformPropsJs = require('../transformProps').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ReactNVD3 = require('../ReactNVD3').default;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type NVD3Extra = Record<string, any>;
+
+export default defineChart<Record<string, never>, NVD3Extra>({
+  metadata: {
+    name: t('Time-series Percent Change'),
+    description: t(
+      'Visualizes many different time-series objects in a single chart. This chart is being deprecated and we recommend using the Time-series Chart instead.',
+    ),
+    category: t('Evolution'),
+    credits: ['http://nvd3.org'],
+    label: ChartLabel.Deprecated,
+    tags: [
+      t('Legacy'),
+      t('Time'),
+      t('nvd3'),
+      t('Advanced-Analytics'),
+      t('Comparison'),
+      t('Line'),
+      t('Percentages'),
+      t('Predictive'),
+      t('Trend'),
+    ],
+    thumbnail,
+    thumbnailDark,
+    exampleGallery: [{ url: example, urlDark: exampleDark }],
+    useLegacyApi: true,
+  },
+  arguments: {},
+  suppressQuerySection: true,
+  prependSections: [
     sections.legacyTimeseriesTime,
     timeSeriesSection[0],
     {
@@ -71,6 +107,6 @@ const config: ControlPanelConfig = {
     groupby: getStandardizedControls().popAllColumns(),
     metrics: getStandardizedControls().popAllMetrics(),
   }),
-};
-
-export default config;
+  transform: chartProps => transformPropsJs(chartProps),
+  render: props => <ReactNVD3 {...props} />,
+});

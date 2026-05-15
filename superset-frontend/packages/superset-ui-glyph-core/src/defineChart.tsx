@@ -35,6 +35,7 @@ import {
   ChartPlugin,
   ChartMetadata,
   Behavior,
+  ChartLabel,
   ChartProps,
   buildQueryContext,
   QueryFormData,
@@ -199,6 +200,7 @@ export interface ChartDefinition<
     exampleGallery?: Array<{ url: string; urlDark?: string; caption?: string }>;
     supportedAnnotationTypes?: string[];
     useLegacyApi?: boolean;
+    label?: ChartLabel;
   };
 
   /**
@@ -1013,6 +1015,7 @@ export function defineChart<
     exampleGallery: metadata.exampleGallery,
     supportedAnnotationTypes: metadata.supportedAnnotationTypes,
     useLegacyApi: metadata.useLegacyApi,
+    label: metadata.label,
   });
 
   // Return a ChartPlugin class

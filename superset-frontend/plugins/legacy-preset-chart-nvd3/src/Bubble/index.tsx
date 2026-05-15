@@ -17,12 +17,13 @@
  * under the License.
  */
 import { t } from '@apache-superset/core/translation';
+import { ChartLabel } from '@superset-ui/core';
 import {
-  ControlPanelConfig,
   formatSelectOptions,
   D3_FORMAT_OPTIONS,
   getStandardizedControls,
 } from '@superset-ui/chart-controls';
+import { defineChart } from '@superset-ui/glyph-core';
 import {
   showLegend,
   xAxisLabel,
@@ -36,9 +37,48 @@ import {
   leftMargin,
   yAxisBounds,
 } from '../NVD3Controls';
+import example from './images/example.jpg';
+import exampleDark from './images/example-dark.jpg';
+import thumbnail from './images/thumbnail.png';
+import thumbnailDark from './images/thumbnail-dark.png';
 
-const config: ControlPanelConfig = {
-  controlPanelSections: [
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const transformPropsJs = require('../transformProps').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ReactNVD3 = require('../ReactNVD3').default;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type NVD3Extra = Record<string, any>;
+
+/**
+ * @deprecated in version 4.0.
+ */
+export default defineChart<Record<string, never>, NVD3Extra>({
+  metadata: {
+    name: t('Bubble Chart (legacy)'),
+    description: t(
+      'Visualizes a metric across three dimensions of data in a single chart (X axis, Y axis, and bubble size). Bubbles from the same group can be showcased using bubble color.',
+    ),
+    category: t('Correlation'),
+    credits: ['http://nvd3.org'],
+    label: ChartLabel.Deprecated,
+    tags: [
+      t('Multi-Dimensions'),
+      t('Comparison'),
+      t('Legacy'),
+      t('Scatter'),
+      t('Time'),
+      t('Trend'),
+      t('nvd3'),
+    ],
+    thumbnail,
+    thumbnailDark,
+    exampleGallery: [{ url: example, urlDark: exampleDark }],
+    useLegacyApi: true,
+  },
+  arguments: {},
+  suppressQuerySection: true,
+  prependSections: [
     {
       label: t('Query'),
       expanded: true,
@@ -122,7 +162,7 @@ const config: ControlPanelConfig = {
       ],
     },
   ],
-  controlOverrides: {
+  additionalControlOverrides: {
     color_scheme: {
       renderTrigger: false,
     },
@@ -135,6 +175,6 @@ const config: ControlPanelConfig = {
     y: getStandardizedControls().shiftMetric(),
     size: getStandardizedControls().shiftMetric(),
   }),
-};
-
-export default config;
+  transform: chartProps => transformPropsJs(chartProps),
+  render: props => <ReactNVD3 {...props} />,
+});
