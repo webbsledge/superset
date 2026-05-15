@@ -245,12 +245,15 @@ def test_prophet_uncertainty_lower_bound_can_be_negative_for_negative_series():
     )
 
     assert "temperature__yhat_lower" in result.columns
-    # At least one forecast point's lower bound must be negative for a
-    # series whose actuals span both signs. A clamp at zero would force
-    # this assertion to fail.
-    assert (result["temperature__yhat_lower"] < 0).any(), (
-        "Forecast lower bound was non-negative everywhere despite a "
-        "series with negative actuals — suggests an unexpected clamp at "
+    # Restrict to the forecast horizon (the last `periods` rows). The full
+    # output also contains historical fitted points, which can be negative
+    # for in-sample data even if a future-only clamp were introduced — so
+    # asserting on the whole frame would let a future-only clamp slip past.
+    forecast_periods = 3
+    forecast_lower = result["temperature__yhat_lower"].iloc[-forecast_periods:]
+    assert (forecast_lower < 0).any(), (
+        "Forecast (future) lower bound was non-negative everywhere despite "
+        "a series with negative actuals — suggests an unexpected clamp at "
         "zero was reintroduced (regression of #21734)."
     )
 
@@ -292,4 +295,9 @@ def test_prophet_does_not_clamp_yhat_below_zero_for_negative_actuals():
         confidence_interval=0.8,
     )
 
-    assert (result["balance__yhat"] < 0).any()
+    # Restrict to the forecast horizon — see lower-bound test above for the
+    # rationale. A future-only clamp on `__yhat` could leave historical
+    # in-sample fitted points negative and pass an unrestricted assertion.
+    forecast_periods = 2
+    forecast_yhat = result["balance__yhat"].iloc[-forecast_periods:]
+    assert (forecast_yhat < 0).any()
