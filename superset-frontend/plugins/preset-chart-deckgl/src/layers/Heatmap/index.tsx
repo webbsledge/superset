@@ -16,16 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  ControlPanelConfig,
-  formatSelectOptions,
-} from '@superset-ui/chart-controls';
 import { t } from '@apache-superset/core/translation';
 import {
-  validateNonEmpty,
-  legacyValidateNumber,
+  Behavior,
   legacyValidateInteger,
+  legacyValidateNumber,
+  validateNonEmpty,
 } from '@superset-ui/core';
+import { formatSelectOptions } from '@superset-ui/chart-controls';
+import { defineChart } from '@superset-ui/glyph-core';
+import HeatmapComponent from './Heatmap';
+import {
+  SpatialFormData,
+  buildSpatialQuery,
+  transformSpatialProps,
+} from '../spatialUtils';
 import {
   autozoom,
   deckGLCategoricalColorSchemeTypeSelect,
@@ -45,6 +50,10 @@ import {
   tooltipTemplate,
 } from '../../utilities/Shared_DeckGL';
 import { COLOR_SCHEME_TYPES } from '../../utilities/utils';
+import thumbnail from './images/thumbnail.png';
+import thumbnailDark from './images/thumbnail-dark.png';
+import example from './images/example.png';
+import exampleDark from './images/example-dark.png';
 
 const INTENSITY_OPTIONS = Array.from(
   { length: 10 },
@@ -55,8 +64,24 @@ const RADIUS_PIXEL_OPTIONS = Array.from(
   (_, index) => index * 5 + 5,
 );
 
-const config: ControlPanelConfig = {
-  controlPanelSections: [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default defineChart<Record<string, never>, any>({
+  metadata: {
+    name: t('deck.gl Heatmap'),
+    description: t(
+      'Uses Gaussian Kernel Density Estimation to visualize spatial distribution of data',
+    ),
+    category: t('Map'),
+    credits: ['https://uber.github.io/deck.gl'],
+    behaviors: [Behavior.InteractiveChart],
+    tags: [t('deckGL'), t('Spatial'), t('Comparison')],
+    thumbnail,
+    thumbnailDark,
+    exampleGallery: [{ url: example, urlDark: exampleDark }],
+  },
+  arguments: {},
+  suppressQuerySection: true,
+  prependSections: [
     {
       label: t('Query'),
       expanded: true,
@@ -158,16 +183,18 @@ const config: ControlPanelConfig = {
       ],
     },
   ],
-  controlOverrides: {
+  additionalControlOverrides: {
     size: {
       label: t('Weight'),
       description: t("Metric used as a weight for the grid's coloring"),
       validators: [validateNonEmpty],
     },
   },
-  formDataOverrides: formData => ({
-    ...formData,
-  }),
-};
-
-export default config;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  buildQuery: (formData: any) => buildSpatialQuery(formData as SpatialFormData),
+  transform: chartProps => transformSpatialProps(chartProps),
+  render: ({ transformedProps }) => (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <HeatmapComponent {...(transformedProps as any)} />
+  ),
+});
