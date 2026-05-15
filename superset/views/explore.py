@@ -21,6 +21,7 @@ from flask_appbuilder.security.decorators import has_access
 
 from superset import event_logger
 from superset.superset_typing import FlaskResponse
+from superset.views.utils import loads_request_json
 
 from .base import BaseSupersetView
 
@@ -37,11 +38,20 @@ class ExploreView(BaseSupersetView):
         # After `Superset.route_base = ""`, both `Superset.explore` and this
         # view register at `/explore/`; this view wins. Preserve the legacy
         # form_data → form_data_key cache-and-redirect contract here so
-        # callers passing `?form_data=...` still get the short cache-key URL.
-        if request.args.get("form_data"):
-            from superset.views.core import Superset  # avoid circular import
+        # callers passing `?form_data=...` with a datasource still get the
+        # short cache-key URL. Form_data without a datasource (e.g. legacy
+        # `slice_url` payloads carrying only `slice_id`) cannot be cached,
+        # so `get_redirect_url` would return the same URL — falling back to
+        # SPA rendering avoids a 302 loop.
+        if request_form_data := request.args.get("form_data"):
+            try:
+                parsed_form_data = loads_request_json(request_form_data)
+            except ValueError:
+                parsed_form_data = {}
+            if parsed_form_data.get("datasource"):
+                from superset.views.core import Superset  # avoid circular import
 
-            return redirect(Superset.get_redirect_url())
+                return redirect(Superset.get_redirect_url())
         return super().render_app_template()
 
 
