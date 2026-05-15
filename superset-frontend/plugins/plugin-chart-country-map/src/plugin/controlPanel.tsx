@@ -574,6 +574,14 @@ const config: ControlPanelConfig = {
     linear_color_scheme: {
       renderTrigger: true,
     },
+    // Choropleths key one row per region — even the densest country maps
+    // (e.g. France 101 departments, India 36 states, US 51 territories)
+    // are well under 10k rows. The shared row_limit default of 50k is
+    // both wasteful and exceeds many deployments' configured ROW_LIMIT
+    // ceiling, blocking Update Chart with no visible explanation.
+    row_limit: {
+      default: 10000,
+    },
   },
   // formDataOverrides runs when the user switches a chart's viz_type to
   // this plugin. We use it for two jobs:

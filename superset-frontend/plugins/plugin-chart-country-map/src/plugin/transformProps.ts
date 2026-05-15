@@ -53,16 +53,21 @@ export default function transformProps(
   const data = (queriesData?.[0]?.data as Record<string, unknown>[]) ?? [];
 
   const worldview = formData.worldview || 'ukr';
-  const adminLevel = formData.admin_level ?? 0;
+  // SelectControl serializes the admin_level value as a string ('0' /
+  // '1' / 'aggregated'), but the form_data type allows number 0/1 too
+  // (legacy migration, jest tests). Normalize to a string before any
+  // comparison so we don't silently fall through every branch and
+  // return a null URL.
+  const adminLevel = String(formData.admin_level ?? '0');
 
   let geoJsonUrl: string | null = null;
   if (formData.composite) {
     geoJsonUrl = `${GEOJSON_BASE}/composite_${formData.composite}_${SHARED_ADMIN1_WORLDVIEW}.geo.json`;
   } else if (formData.region_set && formData.country) {
     geoJsonUrl = `${GEOJSON_BASE}/regional_${formData.country}_${formData.region_set}_${SHARED_ADMIN1_WORLDVIEW}.geo.json`;
-  } else if (adminLevel === 1 && formData.country) {
+  } else if (adminLevel === '1' && formData.country) {
     geoJsonUrl = `${GEOJSON_BASE}/${SHARED_ADMIN1_WORLDVIEW}_admin1_${formData.country}.geo.json`;
-  } else if (adminLevel === 0) {
+  } else if (adminLevel === '0') {
     geoJsonUrl = `${GEOJSON_BASE}/${worldview}_admin0.geo.json`;
   }
 

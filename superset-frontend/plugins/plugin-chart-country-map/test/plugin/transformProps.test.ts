@@ -63,6 +63,33 @@ test('Admin 1 stays on the shared (ukr) file regardless of worldview', () => {
   );
 });
 
+// Regression: SelectControl serializes admin_level as a string '1', but
+// the form_data type also allows the number 1 (legacy migration, jest
+// cases). Both must resolve to the same Admin 1 URL — previously the
+// number-only check meant real-world string values silently fell
+// through every branch and the chart rendered "No GeoJSON URL resolved".
+test('Admin 1 with string admin_level resolves the URL too', () => {
+  const out = transformProps(
+    buildChartProps({
+      admin_level: '1' as unknown as 1,
+      country: 'FRA',
+      worldview: 'ukr',
+    }),
+  );
+  expect(out.geoJsonUrl).toBe(
+    '/static/assets/country-maps/ukr_admin1_FRA.geo.json',
+  );
+});
+
+test('Admin 0 with string admin_level resolves the URL too', () => {
+  const out = transformProps(
+    buildChartProps({ admin_level: '0' as unknown as 0, worldview: 'ukr' }),
+  );
+  expect(out.geoJsonUrl).toBe(
+    '/static/assets/country-maps/ukr_admin0.geo.json',
+  );
+});
+
 test('Region set + country → regional aggregation URL (shared)', () => {
   const out = transformProps(
     buildChartProps({
