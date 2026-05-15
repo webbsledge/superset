@@ -199,6 +199,7 @@ export interface ChartDefinition<
     credits?: string[];
     exampleGallery?: Array<{ url: string; urlDark?: string; caption?: string }>;
     supportedAnnotationTypes?: string[];
+    canBeAnnotationTypes?: string[];
     useLegacyApi?: boolean;
     label?: ChartLabel;
   };
@@ -1029,6 +1030,7 @@ export function defineChart<
     credits: metadata.credits,
     exampleGallery: metadata.exampleGallery,
     supportedAnnotationTypes: metadata.supportedAnnotationTypes,
+    canBeAnnotationTypes: metadata.canBeAnnotationTypes,
     useLegacyApi: metadata.useLegacyApi,
     label: metadata.label,
   });
