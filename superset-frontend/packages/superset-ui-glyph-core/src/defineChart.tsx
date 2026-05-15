@@ -266,6 +266,14 @@ export interface ChartDefinition<
   formDataOverrides?: (formData: QueryFormData) => QueryFormData;
 
   /**
+   * onInit hook - called once when the chart's controls are first initialized.
+   * Use to reset/override control values that should not persist from the
+   * dataset's defaults (e.g., clearing time_grain_sqla on charts that don't
+   * use it).
+   */
+  onInit?: ControlPanelConfig['onInit'];
+
+  /**
    * Custom buildQuery function - use for charts that need post-processing operators
    * If not provided, a default query builder is generated from arguments
    */
@@ -627,6 +635,7 @@ function generateControlPanel<TArgs extends ChartArguments>(
   controlOverrides?: ChartDefinition<TArgs>['controlOverrides'],
   additionalControlOverrides?: ChartDefinition<TArgs>['additionalControlOverrides'],
   formDataOverrides?: ChartDefinition<TArgs>['formDataOverrides'],
+  onInit?: ChartDefinition<TArgs>['onInit'],
   additionalSections?: ControlPanelSectionConfig[],
   prependSections?: ControlPanelSectionConfig[],
   chartOptionsTabOverride?: 'customize' | 'data',
@@ -751,6 +760,10 @@ function generateControlPanel<TArgs extends ChartArguments>(
 
   if (formDataOverrides) {
     config.formDataOverrides = formDataOverrides;
+  }
+
+  if (onInit) {
+    config.onInit = onInit;
   }
 
   // Store raw glyph args for native rendering (bypasses expandControlConfig pipeline)
@@ -973,6 +986,7 @@ export function defineChart<
     controlOverrides,
     additionalControlOverrides,
     formDataOverrides,
+    onInit,
     buildQuery: customBuildQuery,
     transform,
     render,
@@ -989,6 +1003,7 @@ export function defineChart<
     controlOverrides,
     additionalControlOverrides,
     formDataOverrides,
+    onInit,
     additionalSections,
     prependSections,
     chartOptionsTabOverride,
