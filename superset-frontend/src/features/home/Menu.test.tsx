@@ -846,131 +846,131 @@ describe('brand link single-prefix regressions (subdirectory deployment)', () =>
     observedGenericLinkTo = null;
   });
 
-test('brand link hands a root-stripped path to GenericLink when brand.path arrives already rooted (SPA route)', async () => {
-  applicationRootMock.mockReturnValue('/superset');
-  staticAssetsPrefixMock.mockReturnValue('/superset');
-  useSelectorMock.mockReturnValue({ roles: user.roles });
+  test('brand link hands a root-stripped path to GenericLink when brand.path arrives already rooted (SPA route)', async () => {
+    applicationRootMock.mockReturnValue('/superset');
+    staticAssetsPrefixMock.mockReturnValue('/superset');
+    useSelectorMock.mockReturnValue({ roles: user.roles });
 
-  const propsWithRootedBrand = {
-    ...mockedProps,
-    isFrontendRoute: () => true,
-    data: {
-      ...mockedProps.data,
-      brand: {
-        ...mockedProps.data.brand,
-        path: '/superset/welcome/',
-        icon: '/superset/static/assets/images/superset-logo-horiz.png',
+    const propsWithRootedBrand = {
+      ...mockedProps,
+      isFrontendRoute: () => true,
+      data: {
+        ...mockedProps.data,
+        brand: {
+          ...mockedProps.data.brand,
+          path: '/superset/welcome/',
+          icon: '/superset/static/assets/images/superset-logo-horiz.png',
+        },
       },
-    },
-  };
+    };
 
-  render(<Menu {...propsWithRootedBrand} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
+    render(<Menu {...propsWithRootedBrand} />, {
+      useRedux: true,
+      useQueryParams: true,
+      useRouter: true,
+      useTheme: true,
+    });
+
+    // Wait for the mocked GenericLink to render.
+    await screen.findByRole('link', {
+      name: new RegExp(propsWithRootedBrand.data.brand.alt, 'i'),
+    });
+    expect(observedGenericLinkTo).toBe('/welcome/');
   });
 
-  // Wait for the mocked GenericLink to render.
-  await screen.findByRole('link', {
-    name: new RegExp(propsWithRootedBrand.data.brand.alt, 'i'),
-  });
-  expect(observedGenericLinkTo).toBe('/welcome/');
-});
+  test('brand link is single-prefix when brand.path arrives already rooted (non-SPA route)', async () => {
+    applicationRootMock.mockReturnValue('/superset');
+    staticAssetsPrefixMock.mockReturnValue('/superset');
+    useSelectorMock.mockReturnValue({ roles: user.roles });
 
-test('brand link is single-prefix when brand.path arrives already rooted (non-SPA route)', async () => {
-  applicationRootMock.mockReturnValue('/superset');
-  staticAssetsPrefixMock.mockReturnValue('/superset');
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-
-  const propsWithRootedBrand = {
-    ...mockedProps,
-    isFrontendRoute: () => false,
-    data: {
-      ...mockedProps.data,
-      brand: {
-        ...mockedProps.data.brand,
-        path: '/superset/welcome/',
-        icon: '/superset/static/assets/images/superset-logo-horiz.png',
+    const propsWithRootedBrand = {
+      ...mockedProps,
+      isFrontendRoute: () => false,
+      data: {
+        ...mockedProps.data,
+        brand: {
+          ...mockedProps.data.brand,
+          path: '/superset/welcome/',
+          icon: '/superset/static/assets/images/superset-logo-horiz.png',
+        },
       },
-    },
-  };
+    };
 
-  render(<Menu {...propsWithRootedBrand} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
+    render(<Menu {...propsWithRootedBrand} />, {
+      useRedux: true,
+      useQueryParams: true,
+      useRouter: true,
+      useTheme: true,
+    });
+
+    const brandLink = await screen.findByRole('link', {
+      name: new RegExp(propsWithRootedBrand.data.brand.alt, 'i'),
+    });
+    expect(brandLink).toHaveAttribute('href', '/superset/welcome/');
+    const brandImg = brandLink.querySelector('img');
+    expect(brandImg).toHaveAttribute(
+      'src',
+      '/superset/static/assets/images/superset-logo-horiz.png',
+    );
   });
 
-  const brandLink = await screen.findByRole('link', {
-    name: new RegExp(propsWithRootedBrand.data.brand.alt, 'i'),
-  });
-  expect(brandLink).toHaveAttribute('href', '/superset/welcome/');
-  const brandImg = brandLink.querySelector('img');
-  expect(brandImg).toHaveAttribute(
-    'src',
-    '/superset/static/assets/images/superset-logo-horiz.png',
-  );
-});
+  test('brand link strips a nested application root before handing to GenericLink', async () => {
+    applicationRootMock.mockReturnValue('/preset/superset');
+    staticAssetsPrefixMock.mockReturnValue('/preset/superset');
+    useSelectorMock.mockReturnValue({ roles: user.roles });
 
-test('brand link strips a nested application root before handing to GenericLink', async () => {
-  applicationRootMock.mockReturnValue('/preset/superset');
-  staticAssetsPrefixMock.mockReturnValue('/preset/superset');
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-
-  const propsWithRootedBrand = {
-    ...mockedProps,
-    isFrontendRoute: () => true,
-    data: {
-      ...mockedProps.data,
-      brand: {
-        ...mockedProps.data.brand,
-        path: '/preset/superset/welcome/',
-        icon: '/preset/superset/static/assets/images/superset-logo-horiz.png',
+    const propsWithRootedBrand = {
+      ...mockedProps,
+      isFrontendRoute: () => true,
+      data: {
+        ...mockedProps.data,
+        brand: {
+          ...mockedProps.data.brand,
+          path: '/preset/superset/welcome/',
+          icon: '/preset/superset/static/assets/images/superset-logo-horiz.png',
+        },
       },
-    },
-  };
+    };
 
-  render(<Menu {...propsWithRootedBrand} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
+    render(<Menu {...propsWithRootedBrand} />, {
+      useRedux: true,
+      useQueryParams: true,
+      useRouter: true,
+      useTheme: true,
+    });
+
+    await screen.findByRole('link', {
+      name: new RegExp(propsWithRootedBrand.data.brand.alt, 'i'),
+    });
+    expect(observedGenericLinkTo).toBe('/welcome/');
   });
 
-  await screen.findByRole('link', {
-    name: new RegExp(propsWithRootedBrand.data.brand.alt, 'i'),
-  });
-  expect(observedGenericLinkTo).toBe('/welcome/');
-});
+  test('brand link from theme.brandLogoHref is single-prefix when already rooted', async () => {
+    applicationRootMock.mockReturnValue('/superset');
+    staticAssetsPrefixMock.mockReturnValue('/superset');
+    useSelectorMock.mockReturnValue({ roles: user.roles });
 
-test('brand link from theme.brandLogoHref is single-prefix when already rooted', async () => {
-  applicationRootMock.mockReturnValue('/superset');
-  staticAssetsPrefixMock.mockReturnValue('/superset');
-  useSelectorMock.mockReturnValue({ roles: user.roles });
+    useThemeMock.mockReturnValue({
+      ...CoreTheme.supersetTheme,
+      brandLogoUrl: '/superset/static/assets/images/custom-logo.png',
+      brandLogoHref: '/superset/welcome/',
+    });
 
-  useThemeMock.mockReturnValue({
-    ...CoreTheme.supersetTheme,
-    brandLogoUrl: '/superset/static/assets/images/custom-logo.png',
-    brandLogoHref: '/superset/welcome/',
-  });
+    render(<Menu {...mockedProps} />, {
+      useRedux: true,
+      useQueryParams: true,
+      useRouter: true,
+      useTheme: true,
+    });
 
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
+    const brandLink = await screen.findByRole('link', {
+      name: /apache superset/i,
+    });
+    expect(brandLink).toHaveAttribute('href', '/superset/welcome/');
+    const brandImg = brandLink.querySelector('img');
+    expect(brandImg).toHaveAttribute(
+      'src',
+      '/superset/static/assets/images/custom-logo.png',
+    );
   });
-
-  const brandLink = await screen.findByRole('link', {
-    name: /apache superset/i,
-  });
-  expect(brandLink).toHaveAttribute('href', '/superset/welcome/');
-  const brandImg = brandLink.querySelector('img');
-  expect(brandImg).toHaveAttribute(
-    'src',
-    '/superset/static/assets/images/custom-logo.png',
-  );
-});
 });
