@@ -36,6 +36,7 @@ else:
 from flask import Flask, Response
 from werkzeug.exceptions import NotFound
 
+from superset.extensions.cache_middleware import ExtensionCacheMiddleware
 from superset.extensions.local_extensions_watcher import (
     start_local_extensions_watcher_thread,
 )
@@ -44,7 +45,7 @@ from superset.initialization import SupersetAppInitializer
 logger = logging.getLogger(__name__)
 
 
-def create_app(
+def create_app(  # noqa: C901
     superset_config_module: Optional[str] = None,
     superset_app_root: Optional[str] = None,
 ) -> Flask:
@@ -66,7 +67,6 @@ def create_app(
             or app.config["APPLICATION_ROOT"],
         )
         if app_root != "/":
-            app.wsgi_app = AppRootMiddleware(app.wsgi_app, app_root)
             # If not set, manually configure options that depend on the
             # value of app_root so things work out of the box
             if not app.config["STATIC_ASSETS_PREFIX"]:
@@ -92,6 +92,13 @@ def create_app(
 
         app_initializer = app.config.get("APP_INITIALIZER", SupersetAppInitializer)(app)
         app_initializer.init_app()
+
+        # Must be applied before AppRootMiddleware so the path prefix
+        # is stripped before the extension asset path regex runs.
+        app.wsgi_app = ExtensionCacheMiddleware(app.wsgi_app)
+
+        if app_root != "/":
+            app.wsgi_app = AppRootMiddleware(app.wsgi_app, app_root)
 
         # Set up LOCAL_EXTENSIONS file watcher when in debug mode
         if app.debug:
