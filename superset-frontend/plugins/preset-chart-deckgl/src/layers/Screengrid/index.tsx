@@ -16,12 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  ControlPanelConfig,
-  getStandardizedControls,
-} from '@superset-ui/chart-controls';
 import { t } from '@apache-superset/core/translation';
-import { validateNonEmpty } from '@superset-ui/core';
+import { Behavior, validateNonEmpty } from '@superset-ui/core';
+import { getStandardizedControls } from '@superset-ui/chart-controls';
+import { defineChart } from '@superset-ui/glyph-core';
+import ScreengridComponent from './Screengrid';
+import {
+  SpatialFormData,
+  buildSpatialQuery,
+  transformSpatialProps,
+} from '../spatialUtils';
 import timeGrainSqlaAnimationOverrides from '../../utilities/controls';
 import {
   filterNulls,
@@ -43,9 +47,29 @@ import {
   tooltipTemplate,
 } from '../../utilities/Shared_DeckGL';
 import { COLOR_SCHEME_TYPES } from '../../utilities/utils';
+import thumbnail from './images/thumbnail.png';
+import thumbnailDark from './images/thumbnail-dark.png';
+import example from './images/example.png';
+import exampleDark from './images/example-dark.png';
 
-const config: ControlPanelConfig = {
-  controlPanelSections: [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default defineChart<Record<string, never>, any>({
+  metadata: {
+    name: t('deck.gl Screen Grid'),
+    description: t(
+      'Aggregates data within the boundary of grid cells and maps the aggregated values to a dynamic color scale',
+    ),
+    category: t('Map'),
+    credits: ['https://uber.github.io/deck.gl'],
+    behaviors: [Behavior.InteractiveChart],
+    tags: [t('deckGL'), t('Comparison'), t('Intensity'), t('Density')],
+    thumbnail,
+    thumbnailDark,
+    exampleGallery: [{ url: example, urlDark: exampleDark }],
+  },
+  arguments: {},
+  suppressQuerySection: true,
+  prependSections: [
     {
       label: t('Query'),
       expanded: true,
@@ -104,7 +128,7 @@ const config: ControlPanelConfig = {
       ],
     },
   ],
-  controlOverrides: {
+  additionalControlOverrides: {
     size: {
       label: t('Weight'),
       description: t("Metric used as a weight for the grid's coloring"),
@@ -116,6 +140,11 @@ const config: ControlPanelConfig = {
     ...formData,
     size: getStandardizedControls().shiftMetric(),
   }),
-};
-
-export default config;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  buildQuery: (formData: any) => buildSpatialQuery(formData as SpatialFormData),
+  transform: chartProps => transformSpatialProps(chartProps),
+  render: ({ transformedProps }) => (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <ScreengridComponent {...(transformedProps as any)} />
+  ),
+});
