@@ -16,13 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlPanelConfig } from '@superset-ui/chart-controls';
 import { t } from '@apache-superset/core/translation';
 import {
-  legacyValidateInteger,
-  isFeatureEnabled,
+  Behavior,
+  buildQueryContext,
+  ChartProps,
+  ensureIsArray,
   FeatureFlag,
+  getColumnLabel,
+  isFeatureEnabled,
+  legacyValidateInteger,
+  QueryFormColumn,
+  QueryObject,
+  QueryObjectFilterClause,
+  SqlaFormData,
 } from '@superset-ui/core';
+import { defineChart } from '@superset-ui/glyph-core';
+import GeojsonComponent from './Geojson';
+import { DataRecord } from '../spatialUtils';
+import {
+  createBaseTransformResult,
+  getRecordsFromQuery,
+} from '../transformUtils';
+import {
+  addJsColumnsToColumns,
+  addTooltipColumnsToQuery,
+} from '../buildQueryUtils';
 import { formatSelectOptions } from '../../utilities/utils';
 import {
   filterNulls,
@@ -47,6 +66,99 @@ import {
 } from '../../utilities/Shared_DeckGL';
 import { dndGeojsonColumn } from '../../utilities/sharedDndControls';
 import { BLACK_COLOR } from '../../utilities/controls';
+import thumbnail from './images/thumbnail.png';
+import thumbnailDark from './images/thumbnail-dark.png';
+import example from './images/example.png';
+import exampleDark from './images/example-dark.png';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export interface DeckGeoJsonFormData extends SqlaFormData {
+  geojson?: string;
+  filter_nulls?: boolean;
+  js_columns?: string[];
+  tooltip_contents?: unknown[];
+}
+
+// ─── buildQuery ──────────────────────────────────────────────────────────────
+
+export function buildQuery(formData: DeckGeoJsonFormData) {
+  const {
+    geojson,
+    filter_nulls = true,
+    js_columns,
+    tooltip_contents,
+  } = formData;
+
+  if (!geojson) {
+    throw new Error('GeoJSON column is required for GeoJSON charts');
+  }
+
+  return buildQueryContext(formData, (baseQueryObject: QueryObject) => {
+    let columns: QueryFormColumn[] = [
+      ...ensureIsArray(baseQueryObject.columns || []),
+      geojson,
+    ];
+
+    const columnStrings = columns.map(col =>
+      typeof col === 'string' ? col : col.label || col.sqlExpression || '',
+    );
+    const withJsColumns = addJsColumnsToColumns(columnStrings, js_columns);
+    columns = withJsColumns as QueryFormColumn[];
+
+    columns = addTooltipColumnsToQuery(columns, tooltip_contents);
+
+    const filters: QueryObjectFilterClause[] = ensureIsArray(
+      baseQueryObject.filters || [],
+    );
+    if (filter_nulls) {
+      filters.push({ col: geojson, op: 'IS NOT NULL' });
+    }
+
+    return [
+      {
+        ...baseQueryObject,
+        columns,
+        metrics: [],
+        groupby: [],
+        filters,
+        is_timeseries: false,
+      },
+    ];
+  });
+}
+
+// ─── transformProps ──────────────────────────────────────────────────────────
+
+function transformProps(chartProps: ChartProps) {
+  const { rawFormData: formData } = chartProps;
+  const geojsonCol = formData.geojson
+    ? getColumnLabel(formData.geojson)
+    : undefined;
+
+  if (!geojsonCol) {
+    return createBaseTransformResult(chartProps, []);
+  }
+
+  const records = getRecordsFromQuery(chartProps.queriesData);
+
+  // Parse each record's geojson column value (replicates backend DeckGeoJson.get_properties)
+  const features = records
+    .map((record: DataRecord) => {
+      const geojsonStr = record[geojsonCol];
+      if (geojsonStr == null) return null;
+      try {
+        return JSON.parse(String(geojsonStr));
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+
+  return createBaseTransformResult(chartProps, features);
+}
+
+// ─── Default control config templates ────────────────────────────────────────
 
 const defaultLabelConfigGenerator = `() => ({
   // Check the documentation at:
@@ -65,8 +177,26 @@ const defaultIconConfigGenerator = `() => ({
   iconSizeUnits: 'pixels',
 })`;
 
-const config: ControlPanelConfig = {
-  controlPanelSections: [
+// ─── Plugin definition ───────────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default defineChart<Record<string, never>, any>({
+  metadata: {
+    name: t('deck.gl Geojson'),
+    description: t(
+      'The GeoJsonLayer takes in GeoJSON formatted data and renders it as interactive polygons, lines and points (circles, icons and/or texts).',
+    ),
+    category: t('Map'),
+    credits: ['https://uber.github.io/deck.gl'],
+    behaviors: [Behavior.InteractiveChart],
+    tags: [t('deckGL'), t('2D')],
+    thumbnail,
+    thumbnailDark,
+    exampleGallery: [{ url: example, urlDark: exampleDark }],
+  },
+  arguments: {},
+  suppressQuerySection: true,
+  prependSections: [
     {
       label: t('Query'),
       expanded: true,
@@ -374,6 +504,11 @@ const config: ControlPanelConfig = {
       ],
     },
   ],
-};
-
-export default config;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  buildQuery: (formData: any) => buildQuery(formData as DeckGeoJsonFormData),
+  transform: chartProps => transformProps(chartProps),
+  render: ({ transformedProps }) => (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <GeojsonComponent {...(transformedProps as any)} />
+  ),
+});
