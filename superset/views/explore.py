@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from flask import redirect, request
 from flask_appbuilder import permission_name
 from flask_appbuilder.api import expose
 from flask_appbuilder.security.decorators import has_access
@@ -33,6 +34,14 @@ class ExploreView(BaseSupersetView):
     @permission_name("read")
     @event_logger.log_this
     def root(self) -> FlaskResponse:
+        # After `Superset.route_base = ""`, both `Superset.explore` and this
+        # view register at `/explore/`; this view wins. Preserve the legacy
+        # form_data → form_data_key cache-and-redirect contract here so
+        # callers passing `?form_data=...` still get the short cache-key URL.
+        if request.args.get("form_data"):
+            from superset.views.core import Superset  # avoid circular import
+
+            return redirect(Superset.get_redirect_url())
         return super().render_app_template()
 
 
