@@ -1204,6 +1204,91 @@ def test_convert_query_object_filter_like() -> None:
     }
 
 
+def test_convert_query_object_filter_coerces_integer_string_value() -> None:
+    """Test scalar filter values are coerced to dimension type."""
+    all_dimensions = {
+        "birthyear": Dimension(
+            "birthyear",
+            "birthyear",
+            pa.int64(),
+            "birthyear",
+            "Birthyear",
+        )
+    }
+
+    filter_: ValidatedQueryObjectFilterClause = {
+        "op": FilterOperator.GREATER_THAN_OR_EQUALS.value,
+        "col": "birthyear",
+        "val": "1982",
+    }
+
+    result = _convert_query_object_filter(filter_, all_dimensions)
+
+    assert result == {
+        Filter(
+            type=PredicateType.WHERE,
+            column=all_dimensions["birthyear"],
+            operator=Operator.GREATER_THAN_OR_EQUAL,
+            value=1982,
+        )
+    }
+
+
+def test_convert_query_object_filter_coerces_in_integer_values() -> None:
+    """Test IN filter list values are coerced element-wise."""
+    all_dimensions = {
+        "order_id__amount": Dimension(
+            "order_id__amount",
+            "order_id__amount",
+            pa.int64(),
+            "order_id__amount",
+            "Order amount",
+        )
+    }
+
+    filter_: ValidatedQueryObjectFilterClause = {
+        "op": FilterOperator.IN.value,
+        "col": "order_id__amount",
+        "val": ["58", "61"],
+    }
+
+    result = _convert_query_object_filter(filter_, all_dimensions)
+
+    assert result == {
+        Filter(
+            type=PredicateType.WHERE,
+            column=all_dimensions["order_id__amount"],
+            operator=Operator.IN,
+            value=frozenset({58, 61}),
+        )
+    }
+
+
+def test_convert_query_object_filter_invalid_integer_value_raises() -> None:
+    """Test invalid integer value raises a clear error."""
+    all_dimensions = {
+        "birthyear": Dimension(
+            "birthyear",
+            "birthyear",
+            pa.int64(),
+            "birthyear",
+            "Birthyear",
+        )
+    }
+
+    filter_: ValidatedQueryObjectFilterClause = {
+        "op": FilterOperator.GREATER_THAN_OR_EQUALS.value,
+        "col": "birthyear",
+        "val": "nineteen-eighty-two",
+    }
+
+    with pytest.raises(
+        ValueError,
+        match="Invalid integer value 'nineteen-eighty-two' for filter column birthyear",
+    ):
+        _convert_query_object_filter(filter_, all_dimensions)
+
+
 def test_get_results_without_time_offsets(
     mock_datasource: MagicMock,
     mocker: MockerFixture,

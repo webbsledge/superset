@@ -141,6 +141,27 @@ def test_narrower_filter_reuses_cache(
     assert sorted(second.df["a"].tolist()) == [3, 5]
 
 
+def test_narrower_filter_reuses_cache_when_values_are_strings(
+    fake_cache: _InMemoryCache,
+    view_implementation: Any,
+    datasource: MagicMock,
+) -> None:
+    # Regression: QueryObject filters may provide numeric values as strings.
+    # When the semantic dimension is numeric, mapper coercion should convert
+    # these values so cache containment (`a >= 1984` subset of `a >= 1982`)
+    # can be evaluated correctly.
+    cached = _result([(1982, 2.0), (1984, 3.0), (1985, 5.0)])
+    view_implementation.get_table = MagicMock(return_value=cached)
+
+    first = get_results(_qo(datasource, ">=", "1982"))
+    assert view_implementation.get_table.call_count == 1
+    assert sorted(first.df["a"].tolist()) == [1982, 1984, 1985]
+
+    second = get_results(_qo(datasource, ">=", "1984"))
+    assert view_implementation.get_table.call_count == 1  # cache hit
+    assert sorted(second.df["a"].tolist()) == [1984, 1985]
+
+
 def test_smaller_limit_reuses_cache(
     fake_cache: _InMemoryCache,
     view_implementation: Any,

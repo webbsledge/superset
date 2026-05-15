@@ -24,8 +24,8 @@ single dataframe.
 
 """
 
-from datetime import datetime, timedelta
-from time import time
+from datetime import date, datetime, time, timedelta
+from time import time as current_time
 from typing import Any, Callable, cast, Sequence, TypeGuard
 
 import isodate
@@ -108,7 +108,7 @@ def get_results(query_object: QueryObject) -> QueryResult:
         raise ValueError("QueryObject must have a datasource defined.")
 
     # Track execution time
-    start_time = time()
+    start_time = current_time()
 
     semantic_view = query_object.datasource.implementation
     dispatcher = (
@@ -134,7 +134,7 @@ def get_results(query_object: QueryObject) -> QueryResult:
 
     # If no time offsets, return the main result as-is
     if not query_object.time_offsets or len(queries) <= 1:
-        duration = timedelta(seconds=time() - start_time)
+        duration = timedelta(seconds=current_time() - start_time)
         return map_semantic_result_to_query_result(
             main_result,
             query_object,
@@ -204,7 +204,7 @@ def get_results(query_object: QueryObject) -> QueryResult:
         requests=all_requests,
         results=pa.Table.from_pandas(main_df),
     )
-    duration = timedelta(seconds=time() - start_time)
+    duration = timedelta(seconds=current_time() - start_time)
     return map_semantic_result_to_query_result(
         semantic_result,
         query_object,
@@ -598,6 +598,8 @@ def _convert_query_object_filter(
             ),
         }
 
+    value = _coerce_filter_value(value, dimension)
+
     # Map QueryObject operators to semantic layer operators
     operator_mapping = {
         FilterOperator.EQUALS.value: Operator.EQUALS,
@@ -627,6 +629,123 @@ def _convert_query_object_filter(
             value=value,
         )
     }
+
+
+def _coerce_filter_value(
+    value: FilterValues | frozenset[FilterValues],
+    dimension: Dimension,
+) -> FilterValues | frozenset[FilterValues]:
+    if isinstance(value, frozenset):
+        return frozenset(_coerce_scalar_filter_value(v, dimension) for v in value)
+    return _coerce_scalar_filter_value(value, dimension)
+
+
+def _coerce_scalar_filter_value(value: FilterValues, dimension: Dimension) -> FilterValues:
+    if value is None:
+        return None
+
+    dtype = dimension.type
+
+    if pa.types.is_boolean(dtype):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            parsed = value.strip().lower()
+            if parsed in {"true", "t", "1", "yes", "y", "on"}:
+                return True
+            if parsed in {"false", "f", "0", "no", "n", "off"}:
+                return False
+        raise ValueError(
+            f"Invalid boolean value {value!r} for filter column {dimension.name}"
+        )
+
+    if pa.types.is_integer(dtype):
+        if isinstance(value, bool):
+            raise ValueError(
+                f"Invalid integer value {value!r} for filter column {dimension.name}"
+            )
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            try:
+                return int(value.strip())
+            except ValueError as ex:
+                raise ValueError(
+                    f"Invalid integer value {value!r} for filter column "
+                    f"{dimension.name}"
+                ) from ex
+        raise ValueError(
+            f"Invalid integer value {value!r} for filter column {dimension.name}"
+        )
+
+    if pa.types.is_floating(dtype) or pa.types.is_decimal(dtype):
+        if isinstance(value, bool):
+            raise ValueError(
+                f"Invalid numeric value {value!r} for filter column {dimension.name}"
+            )
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            try:
+                return float(value.strip())
+            except ValueError as ex:
+                raise ValueError(
+                    f"Invalid numeric value {value!r} for filter column "
+                    f"{dimension.name}"
+                ) from ex
+        raise ValueError(
+            f"Invalid numeric value {value!r} for filter column {dimension.name}"
+        )
+
+    if pa.types.is_date(dtype):
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value.strip()).date()
+            except ValueError as ex:
+                raise ValueError(
+                    f"Invalid date value {value!r} for filter column {dimension.name}"
+                ) from ex
+        raise ValueError(
+            f"Invalid date value {value!r} for filter column {dimension.name}"
+        )
+
+    if pa.types.is_timestamp(dtype):
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, date):
+            return datetime.combine(value, time.min)
+        if isinstance(value, str):
+            normalized = value.strip().replace("Z", "+00:00")
+            try:
+                return datetime.fromisoformat(normalized)
+            except ValueError as ex:
+                raise ValueError(
+                    f"Invalid timestamp value {value!r} for filter column "
+                    f"{dimension.name}"
+                ) from ex
+        raise ValueError(
+            f"Invalid timestamp value {value!r} for filter column {dimension.name}"
+        )
+
+    if pa.types.is_time(dtype):
+        if isinstance(value, time):
+            return value
+        if isinstance(value, str):
+            try:
+                return time.fromisoformat(value.strip())
+            except ValueError as ex:
+                raise ValueError(
+                    f"Invalid time value {value!r} for filter column {dimension.name}"
+                ) from ex
+        raise ValueError(
+            f"Invalid time value {value!r} for filter column {dimension.name}"
+        )
+
+    return value
 
 
 def _get_order_from_query_object(
