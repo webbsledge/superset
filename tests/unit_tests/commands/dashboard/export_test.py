@@ -250,7 +250,10 @@ def test_file_content_omits_roles_field_when_dashboard_has_no_roles():
         content = ExportDashboardsCommand._file_content(mock_dashboard)
 
     result = yaml.safe_load(content)
-    assert "roles" not in result or result["roles"] == []
+    # Strict: the key must be absent (not an empty list). The import side
+    # treats "missing" as "no restriction"; emitting an empty list could
+    # trip importers that distinguish the two states.
+    assert "roles" not in result
 
 
 def test_file_content_missing_dataset_preserves_dataset_id():
