@@ -674,10 +674,6 @@ function generateControlPanel<TArgs extends ChartArguments>(
       controlConfig.visibility = visibility;
       controlConfig.resetOnHide = resetOnHide ?? false;
     }
-    // Store raw visibleWhen condition so renderers can evaluate directly from formData
-    if ('arg' in argDef && argDef.visibleWhen) {
-      controlConfig._glyphVisibleWhen = argDef.visibleWhen;
-    }
     if (disabled) {
       // Superset uses shouldMapStateToProps + mapStateToProps for dynamic disabled state
       controlConfig.shouldMapStateToProps = () => true;
