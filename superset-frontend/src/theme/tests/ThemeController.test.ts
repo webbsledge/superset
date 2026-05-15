@@ -111,9 +111,8 @@ const createController = (
     ...options,
   });
 
-// Shared console spies — re-installed in beforeEach because the global
-// jest-fail-on-console setup re-assigns console.warn/console.error before
-// each test, which would otherwise overwrite a module-scope spy.
+// Shared console spies — re-installed in beforeEach so each test starts
+// with a fresh call count and a clean implementation.
 let consoleSpy: jest.SpyInstance;
 let consoleErrorSpy: jest.SpyInstance;
 
