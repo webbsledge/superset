@@ -1231,8 +1231,8 @@ class TestRolePermission(SupersetTestCase):
 
         self.login(GAMMA_USERNAME)
         data = str(self.client.get("api/v1/dashboard/").data)
-        assert "/superset/dashboard/world_health/" in data
-        assert "/superset/dashboard/births/" not in data
+        assert "/dashboard/world_health/" in data
+        assert "/dashboard/births/" not in data
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @pytest.mark.usefixtures("public_role_like_gamma")
