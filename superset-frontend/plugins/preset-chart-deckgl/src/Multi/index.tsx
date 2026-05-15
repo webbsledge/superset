@@ -18,6 +18,9 @@
  */
 import { t } from '@apache-superset/core/translation';
 import { validateNonEmpty } from '@superset-ui/core';
+import { defineChart } from '@superset-ui/glyph-core';
+import MultiComponent from './Multi';
+import transformProps from '../transformProps';
 import {
   viewport,
   mapboxStyle,
@@ -25,9 +28,27 @@ import {
   mapProvider,
   autozoom,
 } from '../utilities/Shared_DeckGL';
+import thumbnail from './images/thumbnail.png';
+import thumbnailDark from './images/thumbnail-dark.png';
+import example from './images/example.png';
+import exampleDark from './images/example-dark.png';
 
-export default {
-  controlPanelSections: [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default defineChart<Record<string, never>, any>({
+  metadata: {
+    name: t('deck.gl Multiple Layers'),
+    description: t('Compose multiple layers together to form complex visuals.'),
+    category: t('Map'),
+    credits: ['https://uber.github.io/deck.gl'],
+    tags: [t('deckGL'), t('Multi-Layers')],
+    thumbnail,
+    thumbnailDark,
+    exampleGallery: [{ url: example, urlDark: exampleDark }],
+    useLegacyApi: true,
+  },
+  arguments: {},
+  suppressQuerySection: true,
+  prependSections: [
     {
       label: t('Map'),
       expanded: true,
@@ -87,4 +108,9 @@ export default {
       controlSetRows: [['adhoc_filters']],
     },
   ],
-};
+  transform: chartProps => transformProps(chartProps),
+  render: ({ transformedProps }) => (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <MultiComponent {...(transformedProps as any)} />
+  ),
+});
