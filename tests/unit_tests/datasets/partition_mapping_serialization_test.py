@@ -119,7 +119,10 @@ def test_the_mapping_summary_reports_inactive_without_a_transform(
     table.columns[0].partition_value_transform = None
 
     with app.app_context():
-        assert table.data["partition_filter_mapping"]["active"] is False
+        summary = table.data["partition_filter_mapping"]
+
+    assert summary is not None
+    assert summary["active"] is False
 
 
 def test_there_is_no_mapping_summary_without_a_partition_column(
