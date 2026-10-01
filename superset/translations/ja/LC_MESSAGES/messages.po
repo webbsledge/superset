@@ -17,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: 2024-05-14 13:30+0900\n"
 "Last-Translator: Yuri Umezaki <bungoume@gmail.com>\n"
 "Language: ja\n"
@@ -1142,6 +1142,9 @@ msgstr "中止中"
 msgid "About"
 msgstr "概要"
 
+msgid "Accept"
+msgstr ""
+
 msgid "Access"
 msgstr "アクセス"
 
@@ -1548,6 +1551,9 @@ msgstr "集計"
 
 msgid "Aggregation Method"
 msgstr "集計方法"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -4341,6 +4347,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "カウント (件数)"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "国"
@@ -8647,6 +8665,9 @@ msgstr "グループ一覧"
 msgid "List Roles"
 msgstr "ロール一覧"
 
+msgid "List Unique Values"
+msgstr ""
+
 msgid "List Users"
 msgstr "ユーザー一覧"
 
@@ -8991,6 +9012,9 @@ msgstr "指定期間内の平均値"
 
 msgid "Mean values"
 msgstr "平均値"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -13029,11 +13053,11 @@ msgstr "チャートクエリのタイムスタンプを表示"
 msgid "Show column headers"
 msgstr "列ヘッダーを表示"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "列の小計を表示"
-
-msgid "Show columns total"
-msgstr "列の合計を表示"
 
 msgid "Show empty columns"
 msgstr "空の列を表示"
@@ -13111,11 +13135,11 @@ msgstr "クエリ識別子を表示"
 msgid "Show row labels"
 msgstr "行ラベルを表示"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "行の小計を表示"
-
-msgid "Show rows total"
-msgstr "行の合計を表示"
 
 msgid "Show series values on the chart"
 msgstr "チャート上に系列の値を表示"
@@ -13737,6 +13761,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "合計"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "指定期間内の値の合計"
@@ -15447,6 +15480,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -15715,6 +15751,13 @@ msgstr "このページは iframe 内への埋め込みを想定しています�
 
 msgid "This password is too common; please choose a less guessable one."
 msgstr "このパスワードはありふれています。推測されにくいものを選んでください。"
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -16698,8 +16741,18 @@ msgstr "現在の表示範囲を使用"
 msgid "Use date formatting even when metric value is not a timestamp"
 msgstr "メトリック値がタイムスタンプでない場合も日付フォーマットを適用"
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 msgid "Use gradient"
 msgstr "グラデーションを使用"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr "メトリックを列または行の最上位グループとして使用"

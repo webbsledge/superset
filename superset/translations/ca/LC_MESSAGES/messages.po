@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superset VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: 2025-06-27 12:56+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -1278,6 +1278,9 @@ msgstr "Treballant"
 msgid "About"
 msgstr "Sobre"
 
+msgid "Accept"
+msgstr ""
+
 msgid "Access"
 msgstr "Accés"
 
@@ -1730,6 +1733,9 @@ msgstr "Agregació"
 
 msgid "Aggregation Method"
 msgstr "Mètode d'Agregació"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -4925,6 +4931,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "Recompte"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "País"
@@ -9860,6 +9878,9 @@ msgstr "Llistar Rols"
 msgid "List Roles"
 msgstr "Llistar Rols"
 
+msgid "List Unique Values"
+msgstr ""
+
 msgid "List Users"
 msgstr "Llistar Usuaris"
 
@@ -10254,6 +10275,9 @@ msgstr "Mitjana de valors durant el període especificat"
 
 msgid "Mean values"
 msgstr "Valors mitjans"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -14821,11 +14845,11 @@ msgstr "Mostrar Marca de Temps"
 msgid "Show column headers"
 msgstr "L'etiqueta de capçalera de columna"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "Mostrar subtotal de columnes"
-
-msgid "Show columns total"
-msgstr "Mostrar total de columnes"
 
 msgid "Show empty columns"
 msgstr "Mostrar columnes buides"
@@ -14908,11 +14932,11 @@ msgstr "Veure detalls de la consulta"
 msgid "Show row labels"
 msgstr "Mostrar Etiquetes"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "Mostrar subtotal de files"
-
-msgid "Show rows total"
-msgstr "Mostrar total de files"
 
 msgid "Show series values on the chart"
 msgstr "Mostrar valors de sèries al gràfic"
@@ -15628,6 +15652,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "Suma"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "Suma de valors durant el període especificat"
@@ -17668,6 +17701,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -18035,6 +18071,13 @@ msgid "This password is too common; please choose a less guessable one."
 msgstr ""
 "Aquesta contrasenya és massa comuna; si us plau, trieu-ne una de menys "
 "endevinable."
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -19182,9 +19225,19 @@ msgstr ""
 "Usar formatat de data fins i tot quan el valor de la mètrica no és una "
 "marca temporal"
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 #, fuzzy
 msgid "Use gradient"
 msgstr "Granularitat temporal"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr "Usar mètriques com a grup de nivell superior per columnes o per files"

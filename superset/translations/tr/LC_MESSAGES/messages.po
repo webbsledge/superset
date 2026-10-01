@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superset VERSION\n"
 "Report-Msgid-Bugs-To: avsarcoteli@gmail.com\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: 2024-02-25 14:00+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: tr\n"
@@ -1260,6 +1260,9 @@ msgstr "İptal Ediliyor"
 msgid "About"
 msgstr "Hakkında"
 
+msgid "Accept"
+msgstr ""
+
 msgid "Access"
 msgstr "Erişim"
 
@@ -1713,6 +1716,9 @@ msgstr "Aggregation"
 
 msgid "Aggregation Method"
 msgstr "Aggregation Method"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -4875,6 +4881,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "Say"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "Ülke"
@@ -9751,6 +9769,9 @@ msgstr "Sorguyu düzenle"
 msgid "List Roles"
 msgstr "Liste Roller"
 
+msgid "List Unique Values"
+msgstr ""
+
 #, fuzzy
 msgid "List Users"
 msgstr "Sorguyu düzenle"
@@ -10149,6 +10170,9 @@ msgstr "Belirtilen süre boyunca değerlerin anlamı"
 
 msgid "Mean values"
 msgstr "Ortalama değerler"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -14721,11 +14745,11 @@ msgstr "Show chart query timestamps"
 msgid "Show column headers"
 msgstr "Kolonlar bulunamadı"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "Show columns subtotal"
-
-msgid "Show columns total"
-msgstr "Show columns total"
 
 msgid "Show empty columns"
 msgstr "Boş sütunlar göster"
@@ -14806,11 +14830,11 @@ msgstr "Show query tanımlayıcıları göster"
 msgid "Show row labels"
 msgstr "Toplamı göster"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "Show rows sub total"
-
-msgid "Show rows total"
-msgstr "Show rows total"
 
 msgid "Show series values on the chart"
 msgstr "Grafikte seri değerleri göster"
@@ -15515,6 +15539,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "Sum"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "Belirtilen süre boyunca değerlerin sum"
@@ -17520,6 +17553,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -17849,6 +17885,13 @@ msgstr ""
 #, fuzzy
 msgid "This password is too common; please choose a less guessable one."
 msgstr "Bu parola çok yaygın; lütfen daha az tahmin edilebilir bir tane seçin."
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -18962,8 +19005,18 @@ msgstr "Mevcut ölçüde kullanın"
 msgid "Use date formatting even when metric value is not a timestamp"
 msgstr "metrik değerin bir zamantampamp olmadığı zaman bile tarih formatı kullanın"
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 msgid "Use gradient"
 msgstr "Kullanım gradient"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr "sütunlar veya satırlar için üst düzey bir grup olarak metrikleri kullanın"

@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superset VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: 2026-03-27 14:01+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: lv\n"
@@ -1277,6 +1277,9 @@ msgstr "Darbojas"
 msgid "About"
 msgstr "Par"
 
+msgid "Accept"
+msgstr ""
+
 msgid "Access"
 msgstr "Piekļuve"
 
@@ -1708,6 +1711,9 @@ msgstr "Apkopošana"
 
 msgid "Aggregation Method"
 msgstr "Apkopošanas metode"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -4715,6 +4721,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "Skaits"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "Valsts"
@@ -9325,6 +9343,9 @@ msgstr "Grupu saraksts"
 msgid "List Roles"
 msgstr "Lomu saraksts"
 
+msgid "List Unique Values"
+msgstr ""
+
 msgid "List Users"
 msgstr "Lietotāju saraksts"
 
@@ -9699,6 +9720,9 @@ msgstr "Vērtību vidējais norādītajā periodā"
 
 msgid "Mean values"
 msgstr "Vidējās vērtības"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -14046,11 +14070,11 @@ msgstr "Rādīt diagrammas vaicājumu laika zīmogus"
 msgid "Show column headers"
 msgstr "Rādīt kolonnas virsrakstus"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "Rādīt kolonnu starpsummu"
-
-msgid "Show columns total"
-msgstr "Rādīt kolonnu kopsummu"
 
 msgid "Show empty columns"
 msgstr "Rādīt tukšas kolonnas"
@@ -14130,11 +14154,11 @@ msgstr "Rādīt vaicājumu identifikatorus"
 msgid "Show row labels"
 msgstr "Rādīt rindu apzīmējumus"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "Rādīt rindu starpsummu"
-
-msgid "Show rows total"
-msgstr "Rādīt rindu kopsummu"
 
 msgid "Show series values on the chart"
 msgstr "Rādīt sēriju vērtības diagrammā"
@@ -14813,6 +14837,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "Summa"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "Vērtību summa norādītajā periodā"
@@ -16745,6 +16778,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -17062,6 +17098,13 @@ msgstr "Šī lapa ir paredzēta iegulšanai iframe, bet šķiet, ka tas tā nav.
 #, fuzzy
 msgid "This password is too common; please choose a less guessable one."
 msgstr "Šī parole ir pārāk izplatīta; lūdzu, izvēlieties grūtāk uzminamu paroli."
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -18145,8 +18188,18 @@ msgstr "Izmantot pašreizējo apjomu"
 msgid "Use date formatting even when metric value is not a timestamp"
 msgstr "Izmantot datuma formatēšanu pat tad, kad metrikas vērtība nav laika zīmogs"
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 msgid "Use gradient"
 msgstr "Izmantojiet gradientu"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr "Izmantot metriku kā augstākā līmeņa grupu kolonnām vai rindām"

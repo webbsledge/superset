@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superset VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: 2024-10-20 00:07+0330\n"
 "Last-Translator: Emad Rad <codewithemad@gmail.com>\n"
 "Language: fa\n"
@@ -1288,6 +1288,9 @@ msgstr "در حال کار کردن"
 msgid "About"
 msgstr "در مورد"
 
+msgid "Accept"
+msgstr ""
+
 #, fuzzy
 msgid "Access"
 msgstr "موفقیت"
@@ -1746,6 +1749,9 @@ msgstr "تجمیع"
 #, fuzzy
 msgid "Aggregation Method"
 msgstr "تجمیع"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -4944,6 +4950,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "شمارش"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "کشور"
@@ -9922,6 +9940,9 @@ msgstr "عدد را تقسیم کن"
 msgid "List Roles"
 msgstr "فهرست نقش‌ها"
 
+msgid "List Unique Values"
+msgstr ""
+
 #, fuzzy
 msgid "List Users"
 msgstr "عدد را تقسیم کن"
@@ -10327,6 +10348,9 @@ msgstr "میانگین مقادیر در دوره مشخص شده"
 
 msgid "Mean values"
 msgstr "مقادیر میانگین"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -14918,11 +14942,11 @@ msgstr "نمایش زمان‌سنج"
 msgid "Show column headers"
 msgstr "برچسب سرستون"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "نمایش زیرمجموعه ستون‌ها"
-
-msgid "Show columns total"
-msgstr "نمایش مجموع ستون‌ها"
 
 msgid "Show empty columns"
 msgstr "ستون‌های خالی را نمایش بدهید"
@@ -15005,11 +15029,11 @@ msgstr "جزئیات کوئری را ببینید"
 msgid "Show row labels"
 msgstr "نمایش برچسب‌ها"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "نمایش زیرمجموعه ردیف‌ها"
-
-msgid "Show rows total"
-msgstr "نمایش مجموع سطرها"
 
 msgid "Show series values on the chart"
 msgstr "نمایش مقادیر سری در نمودار"
@@ -15726,6 +15750,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "جمع"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "مجموع مقادیر در بازه زمانی مشخص شده"
@@ -17772,6 +17805,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -18137,6 +18173,13 @@ msgstr ""
 #, fuzzy
 msgid "This password is too common; please choose a less guessable one."
 msgstr "این رمز عبور بسیار رایج است؛ لطفاً رمز عبور کمتر قابل حدسی انتخاب کنید."
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -19282,9 +19325,19 @@ msgstr "اجرای کوئری جاری"
 msgid "Use date formatting even when metric value is not a timestamp"
 msgstr "از فرمت تاریخ استفاده کنید حتی زمانی که مقدار متریک زمان‌سنج نیست."
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 #, fuzzy
 msgid "Use gradient"
 msgstr "دانه زمانی"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr ""

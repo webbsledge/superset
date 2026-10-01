@@ -22,7 +22,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superset VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ro\n"
@@ -1350,6 +1350,9 @@ msgstr "Anulare"
 msgid "About"
 msgstr "Despre"
 
+msgid "Accept"
+msgstr ""
+
 # Machine-translated via backfill_po.py (claude-sonnet-4-6) [refs: ca, cs, de,
 # fr, it, ja, lv, mi, nl, ru, sk, sl, tr, uk]
 #, fuzzy
@@ -1814,6 +1817,9 @@ msgstr "Agregare"
 
 msgid "Aggregation Method"
 msgstr "Metodă de Agregare"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -4996,6 +5002,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "Numără"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "Țară"
@@ -9987,6 +10005,9 @@ msgstr "Listează Grupuri"
 msgid "List Roles"
 msgstr "Listează Roluri"
 
+msgid "List Unique Values"
+msgstr ""
+
 msgid "List Users"
 msgstr "Listează Utilizatori"
 
@@ -10386,6 +10407,9 @@ msgstr "Media valorilor pe perioada specificată"
 
 msgid "Mean values"
 msgstr "Valori medii"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -15009,11 +15033,11 @@ msgstr "Afișați marcajele de timp ale interogărilor graficului"
 msgid "Show column headers"
 msgstr "Afișează antetele coloanelor"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "Afișează subtotal coloane"
-
-msgid "Show columns total"
-msgstr "Afișează total coloane"
 
 msgid "Show empty columns"
 msgstr "Afișează coloane goale"
@@ -15093,11 +15117,11 @@ msgstr "Afișează identificatori interogare"
 msgid "Show row labels"
 msgstr "Afișează etichete rânduri"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "Afișează subtotal rânduri"
-
-msgid "Show rows total"
-msgstr "Afișează total rânduri"
 
 msgid "Show series values on the chart"
 msgstr "Afișează valori serie pe grafic"
@@ -15812,6 +15836,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "Sumă"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "Suma valorilor pe perioada specificată"
@@ -17873,6 +17906,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -18238,6 +18274,13 @@ msgid "This password is too common; please choose a less guessable one."
 msgstr ""
 "Această parolă este prea comună; vă rugăm să alegeți una mai greu de "
 "ghicit."
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -19377,8 +19420,18 @@ msgstr ""
 "Folosește formatarea datei chiar și atunci când valoarea indicatorului nu"
 " este un marcaj temporal"
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 msgid "Use gradient"
 msgstr "Folosește gradient"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr ""

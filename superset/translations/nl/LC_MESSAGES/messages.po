@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  superset-ds\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: 2024-05-08 14:41+0000\n"
 "Last-Translator: \n"
 "Language: nl\n"
@@ -1292,6 +1292,9 @@ msgstr "Werken"
 msgid "About"
 msgstr "Over"
 
+msgid "Accept"
+msgstr ""
+
 msgid "Access"
 msgstr "Toegang"
 
@@ -1759,6 +1762,9 @@ msgstr "Aggregatie"
 #, fuzzy
 msgid "Aggregation Method"
 msgstr "Aggregatie"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -5055,6 +5061,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "Tel"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "Land"
@@ -10140,6 +10158,9 @@ msgstr "Splits nummer"
 msgid "List Roles"
 msgstr "Rollen weergeven"
 
+msgid "List Unique Values"
+msgstr ""
+
 #, fuzzy
 msgid "List Users"
 msgstr "Splits nummer"
@@ -10548,6 +10569,9 @@ msgstr "Gemiddelde van waarden over de opgegeven periode"
 
 msgid "Mean values"
 msgstr "Gemiddelde waarden"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -15244,11 +15268,11 @@ msgstr "Toon Tijdstempel"
 msgid "Show column headers"
 msgstr "De kolomkop label"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "Toon kolommen subtotaal"
-
-msgid "Show columns total"
-msgstr "Toon kolommen totaal"
 
 msgid "Show empty columns"
 msgstr "Toon lege kolommen"
@@ -15332,11 +15356,11 @@ msgstr "Bekijk query details"
 msgid "Show row labels"
 msgstr "Toon Labels"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "Toon rijen subtotaal"
-
-msgid "Show rows total"
-msgstr "Toon rijen totaal"
 
 msgid "Show series values on the chart"
 msgstr "Toon series waarden op de grafiek"
@@ -16057,6 +16081,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "Som"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "Som van waarden over de opgegeven periode"
@@ -18204,6 +18237,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -18578,6 +18614,13 @@ msgstr ""
 #, fuzzy
 msgid "This password is too common; please choose a less guessable one."
 msgstr "Dit wachtwoord is te gewoon; kies een minder voorspelbaar wachtwoord."
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -19753,9 +19796,19 @@ msgstr "Voer huidige query uit"
 msgid "Use date formatting even when metric value is not a timestamp"
 msgstr "Gebruik datum opmaak zelfs wanneer metrische waarde geen tijdstempel is"
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 #, fuzzy
 msgid "Use gradient"
 msgstr "Tijdsinterval"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr "Gebruik metrieken als topniveau groep voor kolommen of rijen"

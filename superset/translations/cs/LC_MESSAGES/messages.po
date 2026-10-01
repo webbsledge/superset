@@ -18,7 +18,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superset VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: 2016-05-02 08:49-0700\n"
 "Last-Translator: Jan Šmejkal <jan.smejkal@orgis.cz>\n"
 "Language: cs\n"
@@ -1277,6 +1277,9 @@ msgstr "Pracuje se"
 msgid "About"
 msgstr "O aplikaci"
 
+msgid "Accept"
+msgstr ""
+
 msgid "Access"
 msgstr "Přístup"
 
@@ -1721,6 +1724,9 @@ msgstr "Agregace"
 
 msgid "Aggregation Method"
 msgstr "Metoda agregace"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -4767,6 +4773,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "Počet"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "Země"
@@ -9511,6 +9529,9 @@ msgstr "Seznam skupin"
 msgid "List Roles"
 msgstr "Seznam rolí"
 
+msgid "List Unique Values"
+msgstr ""
+
 msgid "List Users"
 msgstr "Seznam uživatelů"
 
@@ -9889,6 +9910,9 @@ msgstr "Průměr hodnot za zadané období"
 
 msgid "Mean values"
 msgstr "Průměrné hodnoty"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -14333,11 +14357,11 @@ msgstr "Zobrazit časové razítka dotazů na graf"
 msgid "Show column headers"
 msgstr "Zobrazit záhlaví sloupců"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "Zobrazit mezisoučet sloupců"
-
-msgid "Show columns total"
-msgstr "Zobrazit součet sloupců"
 
 msgid "Show empty columns"
 msgstr "Zobrazit prázdné sloupce"
@@ -14420,11 +14444,11 @@ msgstr "Zobrazit identifikátory dotazů"
 msgid "Show row labels"
 msgstr "Zobrazit popisky řádků"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "Zobrazit mezisoučet řádků"
-
-msgid "Show rows total"
-msgstr "Zobrazit součet řádků"
 
 msgid "Show series values on the chart"
 msgstr "Zobrazit hodnoty sérií v grafu"
@@ -15116,6 +15140,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "Součet"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "Součet hodnot za zadané období"
@@ -17067,6 +17100,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -17393,6 +17429,13 @@ msgstr "Tato stránka je určena k vložení do iframe, ale zdá se, že tomu ta
 #, fuzzy
 msgid "This password is too common; please choose a less guessable one."
 msgstr "Toto heslo je příliš běžné; zvolte prosím méně předvídatelné."
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -18493,9 +18536,19 @@ msgstr "Použít aktuální rozsah"
 msgid "Use date formatting even when metric value is not a timestamp"
 msgstr "Použít formátování data, i když hodnota metriky není časové razítko"
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 #, fuzzy
 msgid "Use gradient"
 msgstr "Použít gradient"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr "Použít metriky jako skupinu nejvyšší úrovně pro sloupce nebo řádky"

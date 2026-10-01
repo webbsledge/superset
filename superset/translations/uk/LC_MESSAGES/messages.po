@@ -18,7 +18,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: ted.korostiled@gmail.com\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: 2026-04-30 22:04+0300\n"
 "Last-Translator: Danylo Korostil\n"
 "Language: uk\n"
@@ -1301,6 +1301,9 @@ msgstr "Опрацьовується"
 msgid "About"
 msgstr "Про програму"
 
+msgid "Accept"
+msgstr ""
+
 msgid "Access"
 msgstr "Доступ"
 
@@ -1727,6 +1730,9 @@ msgstr "Агрегація"
 
 msgid "Aggregation Method"
 msgstr "Спосіб агрегації даних"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -4721,6 +4727,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "Кількість"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "Країна"
@@ -9332,6 +9350,9 @@ msgstr "Перелік груп"
 msgid "List Roles"
 msgstr "Перелік ролей"
 
+msgid "List Unique Values"
+msgstr ""
+
 msgid "List Users"
 msgstr "Перелік користувачів"
 
@@ -9704,6 +9725,9 @@ msgstr "Середнє значення за вказаний період"
 
 msgid "Mean values"
 msgstr "Середні значення"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -14049,11 +14073,11 @@ msgstr "Показати час запиту діаграми"
 msgid "Show column headers"
 msgstr "Показати заголовки стовпців"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "Показати проміжні підсумки стовпців"
-
-msgid "Show columns total"
-msgstr "Показати підсумки стовпців"
 
 msgid "Show empty columns"
 msgstr "Показати порожні стовпці"
@@ -14134,11 +14158,11 @@ msgstr "Показати ідентифікатори запитів"
 msgid "Show row labels"
 msgstr "Показати мітки рядків"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "Показати проміжні підсумки рядків"
-
-msgid "Show rows total"
-msgstr "Показати проміжки рядків"
 
 msgid "Show series values on the chart"
 msgstr "Показати значення ряду на діаграмі"
@@ -14818,6 +14842,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "Сума"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "Сума значень протягом вказаного періоду"
@@ -16747,6 +16780,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -17065,6 +17101,13 @@ msgstr "Ця сторінка має відкриватися лише в iframe
 #, fuzzy
 msgid "This password is too common; please choose a less guessable one."
 msgstr "Цей пароль занадто простий; будь ласка, оберіть більш складний."
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -18146,8 +18189,18 @@ msgstr "Використовувати поточний масштаб"
 msgid "Use date formatting even when metric value is not a timestamp"
 msgstr "Форматувати як дату, навіть коли показник не є часовою міткою"
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 msgid "Use gradient"
 msgstr "Використовувати градієнт"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr "Використовуйте показники як групу вищого рівня для стовпців або рядків"

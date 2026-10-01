@@ -18,7 +18,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-01 12:46+0300\n"
+"POT-Creation-Date: 2026-10-01 16:28-0700\n"
 "PO-Revision-Date: 2023-04-07 19:45+0200\n"
 "Last-Translator: Holger Bruch <holger.bruch@wattbewerb.de>\n"
 "Language: de\n"
@@ -1229,6 +1229,9 @@ msgstr "Wird abgebrochen"
 msgid "About"
 msgstr "Über"
 
+msgid "Accept"
+msgstr ""
+
 msgid "Access"
 msgstr "Zugriff"
 
@@ -1665,6 +1668,9 @@ msgstr "Aggregation"
 
 msgid "Aggregation Method"
 msgstr "Aggregationsmethode"
+
+msgid "Aggregation function"
+msgstr ""
 
 msgid ""
 "Aggregation used for the summary row. By default each metric keeps its "
@@ -4706,6 +4712,18 @@ msgstr ""
 
 msgid "Count"
 msgstr "Anzahl"
+
+msgid "Count Unique Values"
+msgstr ""
+
+msgid "Count as Fraction of Columns"
+msgstr ""
+
+msgid "Count as Fraction of Rows"
+msgstr ""
+
+msgid "Count as Fraction of Total"
+msgstr ""
 
 msgid "Country"
 msgstr "Land"
@@ -9291,6 +9309,9 @@ msgstr "Gruppen auflisten"
 msgid "List Roles"
 msgstr "Rollen auflisten"
 
+msgid "List Unique Values"
+msgstr ""
+
 msgid "List Users"
 msgstr "Benutzer*innen auflisten"
 
@@ -9645,6 +9666,9 @@ msgstr "Mittelwert der Werte über einen bestimmten Zeitraum"
 
 msgid "Mean values"
 msgstr "Mittelwerte"
+
+msgid "Median"
+msgstr ""
 
 msgid ""
 "Median edge width, the thickest edge will be 4 times thicker than the "
@@ -13949,11 +13973,11 @@ msgstr "Zeitstempel der Diagrammabfragen anzeigen"
 msgid "Show column headers"
 msgstr "Spaltenüberschriften anzeigen"
 
+msgid "Show column summaries"
+msgstr ""
+
 msgid "Show columns subtotal"
 msgstr "Spalten Zwischensumme anzeigen"
-
-msgid "Show columns total"
-msgstr "Spaltensumme anzeigen"
 
 msgid "Show empty columns"
 msgstr "Leere Spalten anzeigen"
@@ -14033,11 +14057,11 @@ msgstr "Abfragekennungen anzeigen"
 msgid "Show row labels"
 msgstr "Zeilenbeschriftung anzeigen"
 
+msgid "Show row summaries"
+msgstr ""
+
 msgid "Show rows subtotal"
 msgstr "Zwischensumme der Zeilen anzeigen"
-
-msgid "Show rows total"
-msgstr "Zeilensumme anzeigen"
 
 msgid "Show series values on the chart"
 msgstr "Reihenwerte im Diagramm anzeigen"
@@ -14712,6 +14736,15 @@ msgstr ""
 
 msgid "Sum"
 msgstr "Summe"
+
+msgid "Sum as Fraction of Columns"
+msgstr ""
+
+msgid "Sum as Fraction of Rows"
+msgstr ""
+
+msgid "Sum as Fraction of Total"
+msgstr ""
 
 msgid "Sum of values over specified period"
 msgstr "Summe der Werte über einen bestimmten Zeitraum"
@@ -16700,6 +16733,9 @@ msgstr ""
 msgid "This chart only"
 msgstr ""
 
+msgid "This chart was updated to use the restored aggregation"
+msgstr ""
+
 msgid "This chart will be restored to the following version:"
 msgstr ""
 
@@ -17040,6 +17076,13 @@ msgid "This password is too common; please choose a less guessable one."
 msgstr ""
 "Dieses Passwort ist zu gebräuchlich; bitte wählen Sie ein schwerer zu "
 "erratendes."
+
+msgid ""
+"This pivot table used a legacy per-table aggregation setting that "
+"Superset previously ignored. It now computes correctly, so totals and "
+"subtotals may look different than before. Please validate them, then "
+"accept this notice or save the chart."
+msgstr ""
 
 msgid ""
 "This section allows you to configure how to use the slice\n"
@@ -18109,8 +18152,18 @@ msgstr ""
 "Verwenden Sie die Datumsformatierung, auch wenn der Metrikwert kein "
 "Zeitstempel ist"
 
+msgid ""
+"Use each metric’s own definition for cells and summaries (the default "
+"since SIP-216), or aggregate a second time over the metric’s own grouped "
+"results — e.g. the median of a set of per-store averages. Query limits "
+"apply before a result aggregation runs."
+msgstr ""
+
 msgid "Use gradient"
 msgstr "Farbverlauf verwenden"
+
+msgid "Use metric definition"
+msgstr ""
 
 msgid "Use metrics as a top level group for columns or for rows"
 msgstr ""
